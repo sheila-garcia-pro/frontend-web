@@ -1,46 +1,199 @@
-# Getting Started with Create React App
+# Sheila Garcia Pro
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Um template moderno e completo para aplicações React com TypeScript, Material UI, Redux Toolkit + Redux Saga, e muito mais.
 
-## Available Scripts
+## Visão Geral
 
-In the project directory, you can run:
+Este template foi criado para fornecer uma base sólida para o desenvolvimento de aplicações web de médio a grande porte. Ele inclui configurações prontas para as principais bibliotecas e ferramentas utilizadas no desenvolvimento moderno com React.
 
-### `yarn start`
+## Tecnologias Principais
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+- **React com TypeScript**: Para tipagem estática e melhor experiência de desenvolvimento.
+- **Material UI**: Biblioteca de componentes com implementação do Material Design.
+- **React Router DOM**: Para navegação entre páginas.
+- **Redux Toolkit + Redux Saga**: Para gerenciamento de estado e efeitos colaterais.
+- **Axios**: Para consumo de APIs REST.
+- **ESLint + Prettier**: Para padronização de código.
+- **Husky + Lint-staged**: Para hooks de pré-commit.
+- **Jest + React Testing Library**: Para testes unitários e de integração.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Estrutura de Pastas
 
-### `yarn test`
+```
+src/
+  ├── assets/       # Arquivos estáticos (imagens, fontes, etc.)
+  ├── components/   # Componentes reutilizáveis da aplicação
+  │   ├── common/   # Componentes comuns (GlobalLoader, NotificationsManager, etc.)
+  │   ├── layouts/  # Layouts da aplicação (MainLayout, AuthLayout)
+  │   └── ui/       # Componentes de interface (Navbar, Sidebar, etc.)
+  ├── config/       # Configurações globais
+  ├── hooks/        # Custom hooks
+  ├── pages/        # Páginas da aplicação
+  │   ├── Auth/     # Páginas de autenticação
+  │   ├── Dashboard/# Página do dashboard
+  │   └── Home/     # Página inicial
+  ├── routes/       # Configuração de rotas
+  ├── services/     # Serviços externos (API, etc.)
+  │   ├── api/      # Configuração e chamadas de API
+  │   └── interceptors/ # Interceptors para requisições Axios
+  ├── store/        # Configuração do Redux
+  │   ├── sagas/    # Sagas para operações assíncronas
+  │   └── slices/   # Slices do Redux Toolkit
+  ├── themes/       # Configuração de temas
+  └── utils/        # Funções utilitárias
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Funcionalidades Implementadas
 
-### `yarn build`
+### Sistema de Autenticação
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- Login e Registro de usuários
+- Proteção de rotas para usuários autenticados
+- Integração com Redux Saga para operações assíncronas
+- Armazenamento de tokens JWT
+- Interceptors para adicionar token às requisições
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Gerenciamento de Temas
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- Suporte para temas light/dark
+- Persistência da preferência do usuário
+- Tema personalizado com Material UI
 
-### `yarn eject`
+### Sistema de Notificações
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+- Feedback visual para ações do usuário
+- Diferentes tipos de notificações (success, error, warning, info)
+- Gerenciamento centralizado via Redux
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Layout Responsivo
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+- Sidebar retrátil
+- Adaptação para diferentes tamanhos de tela
+- Navbar com menu de usuário
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## Páginas de Exemplo
 
-## Learn More
+- **Home**: Página inicial pública
+- **Login/Registro**: Páginas de autenticação
+- **Dashboard**: Área protegida com exemplos de widgets
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Começando
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Pré-requisitos
+
+- Node.js (versão 14 ou superior)
+- Yarn ou npm
+
+### Instalação
+
+1. Clone o repositório:
+```bash
+git clone [URL_DO_REPOSITORIO]
+cd projeto-react-template
+```
+
+2. Instale as dependências:
+
+**Utilizando o script de configuração completa (recomendado):**
+
+No Windows:
+```bash
+setup-project.bat
+```
+
+Este script:
+- Instala todas as dependências necessárias
+- Configura o Craco para path aliases
+- Atualiza os scripts no package.json
+- Configura o Husky para pré-commits
+
+**Ou utilizando os scripts de instalação básica:**
+
+No Linux/Mac:
+```bash
+chmod +x install-dependencies.sh
+./install-dependencies.sh
+```
+
+No Windows:
+```bash
+install-dependencies.bat
+```
+
+**Ou manualmente:**
+```bash
+yarn install
+# ou
+npm install
+```
+
+3. Inicie o servidor de desenvolvimento:
+```bash
+yarn start
+# ou
+npm start
+```
+
+4. Acesse a aplicação em `http://localhost:3000`
+
+## Variáveis de Ambiente
+
+O projeto utiliza variáveis de ambiente para configuração. Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
+
+```
+# API
+REACT_APP_API_URL=http://localhost:3001/api
+
+# Auth
+REACT_APP_TOKEN_KEY=@sheila-garcia-pro-token
+REACT_APP_USER_KEY=@sheila-garcia-pro-user
+
+# App
+REACT_APP_NAME=Sheila Garcia Pro
+REACT_APP_DESCRIPTION=Template para projetos React com TypeScript
+```
+
+## Scripts Disponíveis
+
+- `yarn start`: Inicia o servidor de desenvolvimento
+- `yarn build`: Gera a versão de produção
+- `yarn test`: Executa os testes
+- `yarn lint`: Verifica o código com ESLint
+- `yarn lint:fix`: Corrige automaticamente problemas de linting
+- `yarn format`: Formata o código com Prettier
+
+## Customização
+
+### Adicionando Novas Rotas
+
+Edite o arquivo `src/routes/index.tsx` para adicionar novas rotas à aplicação:
+
+```tsx
+// Exemplo de adição de nova rota
+<Route path="/nova-rota" element={<NovaComponente />} />
+```
+
+### Adicionando Novos Slices ao Redux
+
+1. Crie um novo arquivo em `src/store/slices/`
+2. Adicione o novo reducer ao arquivo `src/store/index.ts`
+
+### Adicionando Novas Sagas
+
+1. Crie um novo arquivo em `src/store/sagas/`
+2. Adicione a nova saga à combinação de sagas em `src/store/index.ts`
+
+## Boas Práticas
+
+- Use os aliases de import para manter o código organizado (ex: `@components/`, `@store/`)
+- Mantenha os componentes pequenos e focados em uma única responsabilidade
+- Utilize os hooks customizados para lógica reutilizável
+- Escreva testes para funcionalidades críticas
+
+## Contribuição
+
+Sinta-se à vontade para contribuir com melhorias para este template. Abra uma issue ou envie um pull request.
+
+## Licença
+
+MIT
