@@ -16,7 +16,8 @@ import {
   VisibilityOff as VisibilityOffIcon,
 } from '@mui/icons-material';
 import { RootState } from '@store/index';
-import { registerRequest } from '@store/slices/authSlice';
+import { registerRequest, registerSuccess } from '@store/slices/authSlice';
+import { addNotification } from '@store/slices/uiSlice';
 
 const RegisterPage: React.FC = () => {
   const dispatch = useDispatch();
@@ -32,7 +33,6 @@ const RegisterPage: React.FC = () => {
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -40,54 +40,111 @@ const RegisterPage: React.FC = () => {
       ...formData,
       [name]: value,
     });
-
-    // Limpa o erro do campo quando o usuário começa a digitar
-    if (formErrors[name]) {
-      setFormErrors({
-        ...formErrors,
-        [name]: '',
-      });
-    }
   };
 
   const validateForm = () => {
-    const errors: Record<string, string> = {};
-
+    // Validação de campos vazios
     if (!formData.name.trim()) {
-      errors.name = 'Nome é obrigatório';
+      dispatch(addNotification({
+        message: 'Nome é obrigatório',
+        type: 'error',
+      }));
+      return false;
     }
 
     if (!formData.email.trim()) {
-      errors.email = 'Email é obrigatório';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'Email inválido';
+      dispatch(addNotification({
+        message: 'Email é obrigatório',
+        type: 'error',
+      }));
+      return false;
+    } 
+    
+    // Validação de formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      dispatch(addNotification({
+        message: 'Email inválido',
+        type: 'error',
+      }));
+      return false;
     }
 
     if (!formData.password) {
-      errors.password = 'Senha é obrigatória';
-    } else if (formData.password.length < 6) {
-      errors.password = 'A senha deve ter pelo menos 6 caracteres';
+      dispatch(addNotification({
+        message: 'Senha é obrigatória',
+        type: 'error',
+      }));
+      return false;
+    } 
+    
+    if (formData.password.length < 6) {
+      dispatch(addNotification({
+        message: 'A senha deve ter pelo menos 6 caracteres',
+        type: 'error',
+      }));
+      return false;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = 'As senhas não coincidem';
+      dispatch(addNotification({
+        message: 'As senhas não coincidem',
+        type: 'error',
+      }));
+      return false;
     }
 
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
+    return true;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (validateForm()) {
-      dispatch(
-        registerRequest({
+      try {
+        // Simulação de registro bem-sucedido
+        const mockUser = {
+          id: '2',
           name: formData.name,
           email: formData.email,
-          password: formData.password,
-        }),
-      );
+          role: 'user',
+        };
+        
+        // Disparar ação do Redux (não fará nada real, só para manter compatibilidade)
+        dispatch(
+          registerRequest({
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+          })
+        );
+        
+        // Simular sucesso após um pequeno delay
+        setTimeout(() => {
+          // Gerar resposta de sucesso
+          dispatch(registerSuccess({
+            user: mockUser,
+            token: 'mock-register-token'
+          }));
+          
+          // Exibir notificação de sucesso
+          dispatch(addNotification({
+            message: 'Cadastro realizado com sucesso!',
+            type: 'success',
+          }));
+          
+          // Redirecionar para tela de login
+          navigate('/login');
+        }, 1000);
+        
+      } catch (error) {
+        // Exibir erro caso ocorra algum problema
+        console.error('Erro no registro:', error);
+        dispatch(addNotification({
+          message: 'Erro ao realizar cadastro. Tente novamente.',
+          type: 'error',
+        }));
+      }
     }
   };
 
@@ -128,8 +185,8 @@ const RegisterPage: React.FC = () => {
         autoFocus
         value={formData.name}
         onChange={handleChange}
-        error={!!formErrors.name}
-        helperText={formErrors.name}
+        disabled={loading}
+        required
       />
 
       <TextField
@@ -141,8 +198,8 @@ const RegisterPage: React.FC = () => {
         autoComplete="email"
         value={formData.email}
         onChange={handleChange}
-        error={!!formErrors.email}
-        helperText={formErrors.email}
+        disabled={loading}
+        required
       />
 
       <TextField
@@ -155,8 +212,8 @@ const RegisterPage: React.FC = () => {
         autoComplete="new-password"
         value={formData.password}
         onChange={handleChange}
-        error={!!formErrors.password}
-        helperText={formErrors.password}
+        disabled={loading}
+        required
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
@@ -182,12 +239,12 @@ const RegisterPage: React.FC = () => {
         autoComplete="new-password"
         value={formData.confirmPassword}
         onChange={handleChange}
-        error={!!formErrors.confirmPassword}
-        helperText={formErrors.confirmPassword}
+        disabled={loading}
+        required
       />
 
       <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }} disabled={loading}>
-        {loading ? <CircularProgress size={24} /> : 'Registrar'}
+        {loading ? <CircularProgress size={24} /> : 'Cadastrar'}
       </Button>
 
       <Box sx={{ mt: 1, textAlign: 'center' }}>

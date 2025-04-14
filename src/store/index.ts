@@ -5,6 +5,7 @@ import { all } from 'redux-saga/effects';
 // Importa reducers
 import authReducer from '@store/slices/authSlice';
 import uiReducer from '@store/slices/uiSlice';
+import dashboardReducer from '@store/slices/dashboardSlice';
 
 // Importa sagas
 import authSagas from '@store/sagas/authSagas';
@@ -17,6 +18,7 @@ const sagaMiddleware = createSagaMiddleware();
 const rootReducer = combineReducers({
   auth: authReducer,
   ui: uiReducer,
+  dashboard: dashboardReducer,
   // Adicione outros reducers aqui
 });
 
@@ -25,7 +27,7 @@ export const store = configureStore({
   reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      thunk: false,
+      thunk: true, // Habilitando thunk para poder usar createAsyncThunk
       serializableCheck: {
         // Ignorar ações ou caminhos específicos que não são serializáveis
         ignoredActions: ['YOUR_ACTION_TYPE'],

@@ -1,137 +1,193 @@
-import React, { ElementType } from 'react';
+import React, { ElementType, useEffect, useState } from 'react';
+import { Box, Typography, Button, Divider, Container } from '@mui/material';
+import { useDispatch } from 'react-redux';
 import { Link as RouterLink } from 'react-router-dom';
-import { Box, Typography, Button, Grid, Card, CardContent, CardActions } from '@mui/material';
-import {
-  Dashboard as DashboardIcon,
-  Info as InfoIcon,
-  Lock as LockIcon,
-  Code as CodeIcon,
-} from '@mui/icons-material';
+
+// Componentes
+import Carousel from '@components/ui/Carousel';
+import IngredientCard from '@components/ui/IngredientCard';
+import RecipeCard from '@components/ui/RecipeCard';
+import IngredientSkeleton from '@components/ui/SkeletonLoading/IngredientSkeleton';
+import RecipeSkeleton from '@components/ui/SkeletonLoading/RecipeSkeleton';
+import CarouselSkeleton from '@components/ui/SkeletonLoading/CarouselSkeleton';
+
+// Serviços e Redux
+import { fetchHomeData } from '@services/dataService';
+import { addNotification } from '@store/slices/uiSlice';
 
 // Componente da página inicial
 const HomePage: React.FC = () => {
+  // Estados
+  const [loading, setLoading] = useState(true);
+  const [ingredientes, setIngredientes] = useState<any[]>([]);
+  const [receitas, setReceitas] = useState<any[]>([]);
+  
+  // Redux
+  const dispatch = useDispatch();
+  
+  // Efeito para carregar os dados
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      
+      try {
+        // Carregar dados simulando requisição à API
+        const data = await fetchHomeData();
+        
+        // Atualizar estados com os dados recebidos
+        setIngredientes(data.ingredientes.slice(0, 12)); // Limitar para 12 ingredientes
+        setReceitas(data.receitas.slice(0, 10)); // Limitar para 10 receitas
+        
+        // Notificação de sucesso
+        dispatch(addNotification({
+          message: 'Dados carregados com sucesso!',
+          type: 'success',
+          duration: 4000, // 4 segundos
+        }));
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        
+        // Notificação de erro
+        dispatch(addNotification({
+          message: 'Erro ao carregar os dados da Home.',
+          type: 'error',
+          duration: 5000, // 5 segundos
+        }));
+        
+        // Definir alguns dados para evitar tela vazia em caso de erro
+        setIngredientes([]);
+        setReceitas([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadData();
+  }, [dispatch]);
+  
   return (
-    <Box sx={{ py: 4 }}>
-      {/* Hero Section */}
-      <Box sx={{ textAlign: 'center', mb: 6 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Bem-vindo à Sheila Garcia Pro
-        </Typography>
-        <Typography variant="h5" color="text.secondary" paragraph>
-          Um template completo para aplicações React com TypeScript, Material UI e muito mais.
-        </Typography>
-        <Box sx={{ mt: 4 }}>
-          <Button
-            variant="contained"
-            color="primary"
-            size="large"
-            component={RouterLink}
-            to="/dashboard"
-            sx={{ mx: 1 }}
-          >
-            Dashboard
-          </Button>
-          <Button
-            variant="outlined"
-            color="primary"
-            size="large"
-            component={RouterLink}
-            to="/login"
-            sx={{ mx: 1 }}
-          >
-            Login
-          </Button>
+    <Container maxWidth="xl">
+      <Box sx={{ py: 4 }}>
+        {/* Título de boas-vindas */}
+        <Box sx={{ 
+          textAlign: 'center', 
+          mb: 6, 
+          p: 3, 
+          borderRadius: 2,
+          background: (theme) => 
+            `linear-gradient(135deg, ${theme.palette.primary.light}20, ${theme.palette.primary.main}10)`,
+        }}>
+          <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 500 }}>
+            Bem-vindo à Sheila Garcia Pro
+          </Typography>
+          <Typography variant="h6" color="text.secondary" sx={{ maxWidth: '800px', mx: 'auto', mb: 2 }}>
+            Descubra ingredientes exclusivos e receitas incríveis
+          </Typography>
+        </Box>
+
+        {/* Seção de Ingredientes */}
+        <Box sx={{ my: 6 }}>
+          <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 3, fontWeight: 500 }}>
+            🥦 Ingredientes
+          </Typography>
+          
+          {loading ? (
+            <CarouselSkeleton 
+              SkeletonComponent={IngredientSkeleton} 
+              count={6} 
+              itemsPerRow={{ xs: 1, sm: 2, md: 3, lg: 4, xl: 6 }} 
+            />
+          ) : (
+            <>
+              {ingredientes.length > 0 ? (
+                <Carousel itemsPerPage={{ xs: 1, sm: 2, md: 3, lg: 4, xl: 6 }}>
+                  {ingredientes.map((ingredient) => (
+                    <IngredientCard
+                      key={ingredient.id}
+                      id={ingredient.id}
+                      name={ingredient.name}
+                      image={ingredient.image}
+                      price={ingredient.price}
+                      recipesCount={ingredient.recipesCount}
+                    />
+                  ))}
+                </Carousel>
+              ) : (
+                <Box sx={{ p: 4, textAlign: 'center' }}>
+                  <Typography variant="body1" color="text.secondary">
+                    Nenhum ingrediente encontrado. Tente novamente mais tarde.
+                  </Typography>
+                </Box>
+              )}
+              
+              <Box sx={{ textAlign: 'center', mt: 2 }}>
+                <Button 
+                  variant="outlined" 
+                  color="primary"
+                  component={RouterLink}
+                  to="/ingredients"
+                  sx={{ borderRadius: 6, px: 3 }}
+                >
+                  Ver todos os ingredientes
+                </Button>
+              </Box>
+            </>
+          )}
+        </Box>
+
+        <Divider sx={{ my: 5 }} />
+
+        {/* Seção de Receitas */}
+        <Box sx={{ my: 6 }}>
+          <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 3, fontWeight: 500 }}>
+            🍽️ Receitas
+          </Typography>
+          
+          {loading ? (
+            <CarouselSkeleton 
+              SkeletonComponent={RecipeSkeleton} 
+              count={4} 
+              itemsPerRow={{ xs: 1, sm: 2, md: 2, lg: 3, xl: 4 }} 
+            />
+          ) : (
+            <>
+              {receitas.length > 0 ? (
+                <Carousel itemsPerPage={{ xs: 1, sm: 2, md: 2, lg: 3, xl: 4 }}>
+                  {receitas.map((recipe) => (
+                    <RecipeCard
+                      key={recipe.id}
+                      id={recipe.id}
+                      name={recipe.name}
+                      image={recipe.image}
+                      dishType={recipe.dishType}
+                      servings={recipe.servings}
+                    />
+                  ))}
+                </Carousel>
+              ) : (
+                <Box sx={{ p: 4, textAlign: 'center' }}>
+                  <Typography variant="body1" color="text.secondary">
+                    Nenhuma receita encontrada. Tente novamente mais tarde.
+                  </Typography>
+                </Box>
+              )}
+              
+              <Box sx={{ textAlign: 'center', mt: 2 }}>
+                <Button 
+                  variant="outlined" 
+                  color="primary"
+                  component={RouterLink}
+                  to="/recipes"
+                  sx={{ borderRadius: 6, px: 3 }}
+                >
+                  Ver todas as receitas
+                </Button>
+              </Box>
+            </>
+          )}
         </Box>
       </Box>
-
-      {/* Features */}
-      <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 3 }}>
-        Principais Recursos
-      </Typography>
-      <Grid container spacing={4}>
-        {/* Item 1 */}
-        <Grid item xs={12} sm={6} md={3} component={'div' as ElementType}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <DashboardIcon color="primary" sx={{ fontSize: 40, mb: 2 }} />
-              <Typography variant="h5" component="h3" gutterBottom>
-                Material UI
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Interface moderna e responsiva utilizando o Material UI, com suporte a temas
-                light/dark.
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button size="small" color="primary">
-                Saiba mais
-              </Button>
-            </CardActions>
-          </Card>
-        </Grid>
-
-        {/* Item 2 */}
-        <Grid item xs={12} sm={6} md={3} component={'div' as ElementType}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <LockIcon color="primary" sx={{ fontSize: 40, mb: 2 }} />
-              <Typography variant="h5" component="h3" gutterBottom>
-                Autenticação
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Sistema completo de autenticação com Redux Saga, incluindo proteção de rotas e
-                tokens JWT.
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button size="small" color="primary">
-                Saiba mais
-              </Button>
-            </CardActions>
-          </Card>
-        </Grid>
-
-        {/* Item 3 */}
-        <Grid item xs={12} sm={6} md={3} component={'div' as ElementType}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <InfoIcon color="primary" sx={{ fontSize: 40, mb: 2 }} />
-              <Typography variant="h5" component="h3" gutterBottom>
-                Notificações
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Sistema global de notificações e feedbacks para o usuário.
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button size="small" color="primary">
-                Saiba mais
-              </Button>
-            </CardActions>
-          </Card>
-        </Grid>
-
-        {/* Item 4 */}
-        <Grid item xs={12} sm={6} md={3} component={'div' as ElementType}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <CodeIcon color="primary" sx={{ fontSize: 40, mb: 2 }} />
-              <Typography variant="h5" component="h3" gutterBottom>
-                Estrutura Sólida
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Organização de código escalável e testável, com padrões modernos de desenvolvimento.
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button size="small" color="primary">
-                Saiba mais
-              </Button>
-            </CardActions>
-          </Card>
-        </Grid>
-      </Grid>
-    </Box>
+    </Container>
   );
 };
 

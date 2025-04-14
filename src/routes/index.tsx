@@ -11,8 +11,11 @@ import AuthLayout from '@components/layouts/AuthLayout';
 import HomePage from '@pages/Home';
 import LoginPage from '@pages/Auth/Login';
 import RegisterPage from '@pages/Auth/Register';
+import ForgotPasswordPage from '@pages/Auth/ForgotPassword';
 import DashboardPage from '@pages/Dashboard';
 import NotFoundPage from '@pages/NotFound';
+import IngredientsPage from '@pages/Ingredients';
+import RecipesPage from '@pages/Recipes';
 
 // Interface para definir propriedades do componente PrivateRoute
 interface PrivateRouteProps {
@@ -40,12 +43,15 @@ const AppRoutes: React.FC = () => {
         {/* Rotas públicas */}
         <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />
+          <Route path="ingredients" element={<IngredientsPage />} />
+          <Route path="recipes" element={<RecipesPage />} />
         </Route>
 
         {/* Rotas de autenticação */}
         <Route path="/" element={<AuthLayout />}>
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
+          <Route path="forgot-password" element={<ForgotPasswordPage />} />
         </Route>
 
         {/* Rotas protegidas */}

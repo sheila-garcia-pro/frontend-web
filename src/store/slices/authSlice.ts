@@ -75,6 +75,20 @@ const authSlice = createSlice({
       state.error = action.payload;
     },
 
+    // Recuperação de senha
+    forgotPasswordRequest: (state, action: PayloadAction<{ email: string }>) => {
+      state.loading = true;
+      state.error = null;
+    },
+    forgotPasswordSuccess: (state) => {
+      state.loading = false;
+      state.error = null;
+    },
+    forgotPasswordFailure: (state, action: PayloadAction<string>) => {
+      state.loading = false;
+      state.error = action.payload;
+    },
+
     // Verificação de token
     checkAuthRequest: (state) => {
       state.loading = true;
@@ -121,6 +135,9 @@ export const {
   registerRequest,
   registerSuccess,
   registerFailure,
+  forgotPasswordRequest,
+  forgotPasswordSuccess,
+  forgotPasswordFailure,
   checkAuthRequest,
   checkAuthSuccess,
   checkAuthFailure,

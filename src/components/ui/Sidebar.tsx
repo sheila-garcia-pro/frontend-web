@@ -18,6 +18,9 @@ import {
   Person as PersonIcon,
   Settings as SettingsIcon,
   ChevronLeft as ChevronLeftIcon,
+  Restaurant as RestaurantIcon,
+  Kitchen as KitchenIcon,
+  Home as HomeIcon,
 } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@store/index';
@@ -76,9 +79,27 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
         <ListItem disablePadding>
           <ListItemButton onClick={() => handleNavigation('/')}>
             <ListItemIcon>
-              <DashboardIcon />
+              <HomeIcon />
             </ListItemIcon>
             <ListItemText primary="Home" />
+          </ListItemButton>
+        </ListItem>
+
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => handleNavigation('/ingredients')}>
+            <ListItemIcon>
+              <KitchenIcon />
+            </ListItemIcon>
+            <ListItemText primary="Ingredientes" />
+          </ListItemButton>
+        </ListItem>
+
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => handleNavigation('/recipes')}>
+            <ListItemIcon>
+              <RestaurantIcon />
+            </ListItemIcon>
+            <ListItemText primary="Receitas" />
           </ListItemButton>
         </ListItem>
 

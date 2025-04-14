@@ -16,7 +16,8 @@ import {
   VisibilityOff as VisibilityOffIcon,
 } from '@mui/icons-material';
 import { RootState } from '@store/index';
-import { loginRequest } from '@store/slices/authSlice';
+import { loginRequest, loginSuccess } from '@store/slices/authSlice';
+import { addNotification } from '@store/slices/uiSlice';
 
 // Componente da página de login
 const LoginPage: React.FC = () => {
@@ -47,7 +48,67 @@ const LoginPage: React.FC = () => {
   // Envio do formulário
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(loginRequest(formData));
+    
+    // Validação de campos vazios
+    if (!formData.email || !formData.password) {
+      dispatch(addNotification({
+        message: 'Preencha todos os campos!',
+        type: 'error',
+      }));
+      return;
+    }
+    
+    // Validação de formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      dispatch(addNotification({
+        message: 'Digite um e-mail válido.',
+        type: 'error',
+      }));
+      return;
+    }
+    
+    // Autenticação mockada
+    try {
+      // Credenciais mockadas
+      if (formData.email === 'teste@teste.com' && formData.password === 'Abc1234') {
+        // Login bem-sucedido
+        const mockUser = {
+          id: '1',
+          name: 'Usuário Teste',
+          email: 'teste@teste.com',
+          role: 'user',
+        };
+        
+        // Despachar ação de sucesso com usuário e token
+        dispatch(loginSuccess({ 
+          user: mockUser, 
+          token: 'mock-jwt-token'
+        }));
+        
+        // Exibir mensagem de sucesso
+        dispatch(addNotification({
+          message: 'Login realizado com sucesso!',
+          type: 'success',
+        }));
+        
+        // Redirecionar para o dashboard
+        navigate('/dashboard');
+      } else {
+        // Credenciais inválidas
+        dispatch(addNotification({
+          message: 'E-mail ou senha incorretos!',
+          type: 'error',
+        }));
+      }
+    } catch (error) {
+      // Erro inesperado
+      console.error('Erro de login:', error);
+      dispatch(addNotification({
+        message: 'Erro ao tentar realizar o login. Tente novamente.',
+        type: 'error',
+      }));
+    }
   };
 
   return (
@@ -56,7 +117,7 @@ const LoginPage: React.FC = () => {
         Entrar
       </Typography>
 
-      {/* Mensagem de erro */}
+      {/* Mensagem de erro do Redux */}
       {error && (
         <Typography color="error" align="center" sx={{ mt: 2, mb: 2 }}>
           {error}
