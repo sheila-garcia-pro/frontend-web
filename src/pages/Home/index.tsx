@@ -78,7 +78,7 @@ const HomePage: React.FC = () => {
             `linear-gradient(135deg, ${theme.palette.primary.light}20, ${theme.palette.primary.main}10)`,
         }}>
           <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 500 }}>
-            Bem-vindo à Sheila Garcia Pro
+            TESTE 32
           </Typography>
           <Typography variant="h6" color="text.secondary" sx={{ maxWidth: '800px', mx: 'auto', mb: 2 }}>
             Descubra ingredientes exclusivos e receitas incríveis
