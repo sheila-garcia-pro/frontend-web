@@ -9,5 +9,5 @@ jobs:
     uses: sheila-garcia-pro/pipeline-deploy/.github/workflows/deploy.yml@main
     secrets:
       SQUARE_API_KEY: ${{ secrets.SQUARE_CLOUD_TOKEN }}
-      API_ID_KEY: ${{ secrets.APP_ID }}
+      API_ID_KEY: ${{ secrets.API_ID }}
       TOKEN: ${{ secrets.GITHUB_TOKEN }}
