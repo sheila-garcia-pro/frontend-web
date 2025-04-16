@@ -41,6 +41,9 @@
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
   },
   "eslintConfig": {
+    "rules": {
+      "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
+    },
     "extends": [
       "react-app",
       "react-app/jest"
