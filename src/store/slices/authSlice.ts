@@ -58,7 +58,7 @@ const authSlice = createSlice({
     // Registro
     registerRequest: (
       state,
-      action: PayloadAction<{ name: string; email: string; password: string }>,
+      action: PayloadAction<{ name: string; email: string; password: string; phone: string }>,
     ) => {
       state.loading = true;
       state.error = null;

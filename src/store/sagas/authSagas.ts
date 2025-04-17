@@ -1,5 +1,6 @@
 import { call, put, takeLatest } from 'redux-saga/effects';
 import { PayloadAction } from '@reduxjs/toolkit';
+import { SagaIterator } from 'redux-saga';
 import {
   loginRequest,
   loginSuccess,
@@ -17,22 +18,32 @@ import {
 } from '@store/slices/authSlice';
 import { setGlobalLoading } from '@store/slices/uiSlice';
 import * as authService from '@services/api/auth';
+import * as usersService from '@services/api/users';
 
 // Tipos
 type LoginPayload = { email: string; password: string };
-type RegisterPayload = { name: string; email: string; password: string };
+type RegisterPayload = { name: string; email: string; password: string; phone: string };
 type UpdateUserPayload = { id: string; [key: string]: any };
 
 // Saga Login
-function* loginSaga(action: PayloadAction<LoginPayload>) {
+function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
   try {
     yield put(setGlobalLoading(true));
 
-    // Chama o serviço de API
-    const { user, token } = yield call(authService.login, action.payload);
+    // Adaptar credenciais para o formato da API
+    const credentials = {
+      login: action.payload.email, // Usar email como login
+      password: action.payload.password,
+    };
+
+    // Chama o serviço de API para login
+    const { token } = yield call(authService.login, credentials);
 
     // Salva o token no localStorage
     localStorage.setItem(process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token', token);
+
+    // Busca os dados do usuário atual
+    const user = yield call(usersService.getCurrentUser);
 
     // Despacha a ação de sucesso
     yield put(loginSuccess({ user, token }));
@@ -45,12 +56,29 @@ function* loginSaga(action: PayloadAction<LoginPayload>) {
 }
 
 // Saga Registro
-function* registerSaga(action: PayloadAction<RegisterPayload>) {
+function* registerSaga(action: PayloadAction<RegisterPayload>): SagaIterator {
   try {
     yield put(setGlobalLoading(true));
 
-    // Chama o serviço de API
-    const { user, token } = yield call(authService.register, action.payload);
+    // Preparar credenciais para o formato da API usando todos os campos do payload
+    const credentials = {
+      name: action.payload.name,
+      email: action.payload.email,
+      password: action.payload.password,
+      phone: action.payload.phone, // Usar o valor fornecido pelo usuário
+    };
+
+    // Chama o serviço de API para registro
+    const user = yield call(authService.register, credentials);
+
+    // Após registro, fazer login automaticamente
+    const loginCredentials = {
+      login: action.payload.email,
+      password: action.payload.password,
+    };
+
+    // Obter token de login
+    const { token } = yield call(authService.login, loginCredentials);
 
     // Salva o token no localStorage
     localStorage.setItem(process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token', token);
@@ -68,7 +96,7 @@ function* registerSaga(action: PayloadAction<RegisterPayload>) {
 }
 
 // Saga Verificação de Token
-function* checkAuthSaga() {
+function* checkAuthSaga(): SagaIterator {
   const token = localStorage.getItem(process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token');
 
   if (!token) {
@@ -77,8 +105,8 @@ function* checkAuthSaga() {
   }
 
   try {
-    // Chama o serviço de API para verificar o token
-    const { user } = yield call(authService.verifyToken);
+    // Chama o serviço de API para verificar o token obtendo o usuário atual
+    const user = yield call(usersService.getCurrentUser);
 
     // Despacha a ação de sucesso
     yield put(checkAuthSuccess({ user, token }));
@@ -92,7 +120,7 @@ function* checkAuthSaga() {
 }
 
 // Saga Atualização do Usuário
-function* updateUserSaga(action: PayloadAction<UpdateUserPayload>): Generator<any, void, User> {
+function* updateUserSaga(action: PayloadAction<UpdateUserPayload>): SagaIterator {
   try {
     yield put(setGlobalLoading(true));
 

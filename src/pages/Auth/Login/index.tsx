@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import {
   Box,
   TextField,
@@ -15,15 +15,14 @@ import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
 } from '@mui/icons-material';
-import { RootState } from '@store/index';
-import { loginRequest, loginSuccess } from '@store/slices/authSlice';
 import { addNotification } from '@store/slices/uiSlice';
+import { useAuth } from '@hooks/useAuth';
 
 // Componente da página de login
 const LoginPage: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error } = useSelector((state: RootState) => state.auth);
+  const { login, isAuthenticated, loading, error } = useAuth();
 
   // Estado do formulário
   const [formData, setFormData] = useState({
@@ -33,6 +32,13 @@ const LoginPage: React.FC = () => {
 
   // Estado para mostrar/esconder a senha
   const [showPassword, setShowPassword] = useState(false);
+
+  // Redirecionar se já estiver autenticado
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   // Manipulador de mudança nos campos
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,47 +74,11 @@ const LoginPage: React.FC = () => {
       return;
     }
     
-    // Autenticação mockada
-    try {
-      // Credenciais mockadas
-      if (formData.email === 'teste@teste.com' && formData.password === 'Abc1234') {
-        // Login bem-sucedido
-        const mockUser = {
-          id: '1',
-          name: 'Usuário Teste',
-          email: 'teste@teste.com',
-          role: 'user',
-        };
-        
-        // Despachar ação de sucesso com usuário e token
-        dispatch(loginSuccess({ 
-          user: mockUser, 
-          token: 'mock-jwt-token'
-        }));
-        
-        // Exibir mensagem de sucesso
-        dispatch(addNotification({
-          message: 'Login realizado com sucesso!',
-          type: 'success',
-        }));
-        
-        // Redirecionar para o dashboard
-        navigate('/dashboard');
-      } else {
-        // Credenciais inválidas
-        dispatch(addNotification({
-          message: 'E-mail ou senha incorretos!',
-          type: 'error',
-        }));
-      }
-    } catch (error) {
-      // Erro inesperado
-      console.error('Erro de login:', error);
-      dispatch(addNotification({
-        message: 'Erro ao tentar realizar o login. Tente novamente.',
-        type: 'error',
-      }));
-    }
+    // Enviar credenciais para login usando o hook useAuth
+    login({
+      email: formData.email,
+      password: formData.password,
+    });
   };
 
   return (

@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { RootState } from '@store/index';
+import { useAuth } from '@hooks/useAuth';
 
 // Layouts
 import MainLayout from '@components/layouts/MainLayout';
@@ -24,7 +23,17 @@ interface PrivateRouteProps {
 
 // Componente para proteger rotas
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ element }) => {
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, loading, checkAuth } = useAuth();
+  
+  // Verificar autenticação quando o componente montar
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+  
+  // Mostrar nada enquanto verifica autenticação
+  if (loading) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     // Redireciona para a página de login se não estiver autenticado
@@ -37,6 +46,13 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ element }) => {
 
 // Componente principal de rotas
 const AppRoutes: React.FC = () => {
+  const { checkAuth } = useAuth();
+  
+  // Verificar autenticação quando a aplicação iniciar
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+  
   return (
     <BrowserRouter>
       <Routes>
