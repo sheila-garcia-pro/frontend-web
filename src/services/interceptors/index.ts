@@ -29,22 +29,49 @@ export const setupInterceptors = (api: AxiosInstance): void => {
       return response;
     },
     (error: AxiosError): Promise<AxiosError> => {
-      // Verifica se é erro de autenticação
-      if (error.response && error.response.status === 401) {
-        // Limpa o token e redireciona para login
-        localStorage.removeItem(TOKEN_KEY);
-        // Redireciona para a página de login
-        window.location.href = '/login';
-      }
-
-      // Customize o tratamento de erros conforme necessário
+      // Obter código de status e mensagem de erro
+      const status = error.response?.status;
       const errorMessage = extractErrorMessage(error);
+
+      // Tratar diferentes códigos de status
+      switch (status) {
+        case 401: // Não autorizado
+          // Limpa o token e redireciona para login
+          localStorage.removeItem(TOKEN_KEY);
+          window.location.href = '/login';
+          break;
+        
+        case 403: // Proibido (sem permissão)
+          console.error('Acesso negado:', errorMessage);
+          // Pode redirecionar para uma página de "Acesso negado" ou mostrar um alerta
+          break;
+        
+        case 404: // Não encontrado
+          console.error('Recurso não encontrado:', errorMessage);
+          break;
+        
+        case 422: // Erro de validação
+          console.error('Erro de validação:', errorMessage);
+          break;
+        
+        case 500: // Erro de servidor
+        case 502: // Bad Gateway
+        case 503: // Serviço indisponível
+          console.error('Erro do servidor:', errorMessage);
+          // Pode mostrar uma página de "Serviço indisponível" ou uma mensagem global
+          break;
+        
+        default:
+          console.error(`Erro ${status || 'desconhecido'}:`, errorMessage);
+      }
 
       // Aqui você pode integrar com um sistema de notificações global
       // Por exemplo: toast.error(errorMessage);
-      console.error('API Error:', errorMessage);
-
-      return Promise.reject(error);
+      
+      return Promise.reject({
+        ...error,
+        message: errorMessage,
+      });
     },
   );
 };
@@ -59,6 +86,10 @@ const extractErrorMessage = (error: AxiosError): string => {
     if (responseData) {
       if (responseData.message) return responseData.message;
       if (responseData.error) return responseData.error;
+      if (Array.isArray(responseData.errors)) {
+        // Alguns APIs retornam um array de erros
+        return responseData.errors.map((e: any) => e.message || e).join(', ');
+      }
       if (typeof responseData === 'string') return responseData;
     }
     return `Erro ${error.response.status}: ${error.response.statusText}`;

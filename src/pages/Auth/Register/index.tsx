@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import {
   Box,
   TextField,
@@ -15,14 +15,13 @@ import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
 } from '@mui/icons-material';
-import { RootState } from '@store/index';
-import { registerRequest, registerSuccess } from '@store/slices/authSlice';
 import { addNotification } from '@store/slices/uiSlice';
+import { useAuth } from '@hooks/useAuth';
 
 const RegisterPage: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error } = useSelector((state: RootState) => state.auth);
+  const { register, loading, error, isAuthenticated } = useAuth();
 
   // Estado do formulário
   const [formData, setFormData] = useState({
@@ -30,9 +29,17 @@ const RegisterPage: React.FC = () => {
     email: '',
     password: '',
     confirmPassword: '',
+    phone: '',
   });
 
   const [showPassword, setShowPassword] = useState(false);
+
+  // Redirecionar se já estiver autenticado
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -94,6 +101,14 @@ const RegisterPage: React.FC = () => {
       return false;
     }
 
+    if (!formData.phone.trim()) {
+      dispatch(addNotification({
+        message: 'Telefone é obrigatório',
+        type: 'error',
+      }));
+      return false;
+    }
+
     return true;
   };
 
@@ -101,50 +116,13 @@ const RegisterPage: React.FC = () => {
     e.preventDefault();
 
     if (validateForm()) {
-      try {
-        // Simulação de registro bem-sucedido
-        const mockUser = {
-          id: '2',
-          name: formData.name,
-          email: formData.email,
-          role: 'user',
-        };
-        
-        // Disparar ação do Redux (não fará nada real, só para manter compatibilidade)
-        dispatch(
-          registerRequest({
-            name: formData.name,
-            email: formData.email,
-            password: formData.password,
-          })
-        );
-        
-        // Simular sucesso após um pequeno delay
-        setTimeout(() => {
-          // Gerar resposta de sucesso
-          dispatch(registerSuccess({
-            user: mockUser,
-            token: 'mock-register-token'
-          }));
-          
-          // Exibir notificação de sucesso
-          dispatch(addNotification({
-            message: 'Cadastro realizado com sucesso!',
-            type: 'success',
-          }));
-          
-          // Redirecionar para tela de login
-          navigate('/login');
-        }, 1000);
-        
-      } catch (error) {
-        // Exibir erro caso ocorra algum problema
-        console.error('Erro no registro:', error);
-        dispatch(addNotification({
-          message: 'Erro ao realizar cadastro. Tente novamente.',
-          type: 'error',
-        }));
-      }
+      // Enviar dados para registro usando o hook
+      register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+      });
     }
   };
 
@@ -197,6 +175,19 @@ const RegisterPage: React.FC = () => {
         name="email"
         autoComplete="email"
         value={formData.email}
+        onChange={handleChange}
+        disabled={loading}
+        required
+      />
+
+      <TextField
+        margin="normal"
+        fullWidth
+        id="phone"
+        label="Telefone"
+        name="phone"
+        autoComplete="tel"
+        value={formData.phone}
         onChange={handleChange}
         disabled={loading}
         required
