@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, Navigate } from 'react-router-dom';
+import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { Box, Container, Paper, Typography, CssBaseline } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
@@ -14,9 +14,15 @@ const AuthLayout: React.FC = () => {
   // Verifica se o usuário já está autenticado
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const theme = useTheme();
+  const location = useLocation();
 
-  // Se estiver autenticado, redireciona para o dashboard
-  if (isAuthenticated) {
+  // Se estiver autenticado, redireciona para o dashboard,
+  // mas não redireciona se estiver nas páginas de recuperação de senha
+  const isPasswordResetPath = 
+    location.pathname.includes('/forgot-password') || 
+    location.pathname.includes('/reset-password');
+    
+  if (isAuthenticated && !isPasswordResetPath) {
     return <Navigate to="/dashboard" replace />;
   }
 

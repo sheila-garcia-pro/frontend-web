@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { RootState } from '@store/index';
 import { useAuth } from '@hooks/useAuth';
 
 // Layouts
@@ -11,6 +13,7 @@ import HomePage from '@pages/Home';
 import LoginPage from '@pages/Auth/Login';
 import RegisterPage from '@pages/Auth/Register';
 import ForgotPasswordPage from '@pages/Auth/ForgotPassword';
+import ResetPasswordPage from '@pages/Auth/ResetPassword';
 import DashboardPage from '@pages/Dashboard';
 import NotFoundPage from '@pages/NotFound';
 import IngredientsPage from '@pages/Ingredients';
@@ -21,9 +24,15 @@ interface PrivateRouteProps {
   element: React.ReactElement;
 }
 
-// Componente para proteger rotas
+// Interface para rotas públicas protegidas
+interface PublicRouteProps {
+  element: React.ReactElement;
+}
+
+// Componente para proteger rotas - este componente DEVE estar dentro do contexto Router
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ element }) => {
   const { isAuthenticated, loading, checkAuth } = useAuth();
+  const navigate = useNavigate();
   
   // Verificar autenticação quando o componente montar
   useEffect(() => {
@@ -44,8 +53,27 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ element }) => {
   return element;
 };
 
-// Componente principal de rotas
-const AppRoutes: React.FC = () => {
+// Componente para rotas públicas que não devem ser acessíveis após logout
+const PublicRoute: React.FC<PublicRouteProps> = ({ element }) => {
+  const { isAuthenticated, checkAuth } = useAuth();
+  const navigate = useNavigate();
+  
+  // Verificar autenticação
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+  
+  // Se não estiver autenticado, redireciona para a página de login
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // Renderiza o elemento se estiver autenticado
+  return element;
+};
+
+// Componente que contém as rotas - este componente está DENTRO do contexto Router
+const AppRoutesContent: React.FC = () => {
   const { checkAuth } = useAuth();
   
   // Verificar autenticação quando a aplicação iniciar
@@ -54,31 +82,39 @@ const AppRoutes: React.FC = () => {
   }, [checkAuth]);
   
   return (
+    <Routes>
+      {/* Rotas públicas que exigem autenticação */}
+      <Route element={<PublicRoute element={<MainLayout />} />}>
+        <Route index element={<HomePage />} />
+        <Route path="ingredients" element={<IngredientsPage />} />
+        <Route path="recipes" element={<RecipesPage />} />
+      </Route>
+
+      {/* Rotas de autenticação */}
+      <Route path="/" element={<AuthLayout />}>
+        <Route path="login" element={<LoginPage />} />
+        <Route path="register" element={<RegisterPage />} />
+        <Route path="forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="reset-password" element={<ResetPasswordPage />} />
+      </Route>
+
+      {/* Rotas protegidas */}
+      <Route path="/dashboard" element={<PrivateRoute element={<MainLayout />} />}>
+        <Route index element={<DashboardPage />} />
+        {/* Adicione mais rotas protegidas aqui */}
+      </Route>
+
+      {/* Rota 404 */}
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
+  );
+};
+
+// Componente principal que cria o Router
+const AppRoutes: React.FC = () => {
+  return (
     <BrowserRouter>
-      <Routes>
-        {/* Rotas públicas */}
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="ingredients" element={<IngredientsPage />} />
-          <Route path="recipes" element={<RecipesPage />} />
-        </Route>
-
-        {/* Rotas de autenticação */}
-        <Route path="/" element={<AuthLayout />}>
-          <Route path="login" element={<LoginPage />} />
-          <Route path="register" element={<RegisterPage />} />
-          <Route path="forgot-password" element={<ForgotPasswordPage />} />
-        </Route>
-
-        {/* Rotas protegidas */}
-        <Route path="/dashboard" element={<PrivateRoute element={<MainLayout />} />}>
-          <Route index element={<DashboardPage />} />
-          {/* Adicione mais rotas protegidas aqui */}
-        </Route>
-
-        {/* Rota 404 */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+      <AppRoutesContent />
     </BrowserRouter>
   );
 };

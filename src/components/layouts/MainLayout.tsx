@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Box, CssBaseline, Container, Toolbar, useMediaQuery, styled } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -41,6 +41,14 @@ const MainLayout: React.FC = () => {
   // Redux
   const dispatch = useDispatch();
   const { sidebarOpen } = useSelector((state: RootState) => state.ui);
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+
+  // Verificar autenticação
+  useEffect(() => {
+    if (!isAuthenticated) {
+      window.location.href = '/login';
+    }
+  }, [isAuthenticated]);
 
   // Responsividade
   const theme = useTheme();
@@ -50,6 +58,9 @@ const MainLayout: React.FC = () => {
   const handleDrawerToggle = () => {
     dispatch(toggleSidebar());
   };
+
+  // Se não estiver autenticado, não renderizar nada até o redirecionamento
+  if (!isAuthenticated) return null;
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
