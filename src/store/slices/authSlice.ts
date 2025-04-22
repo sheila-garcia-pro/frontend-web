@@ -45,6 +45,9 @@ const authSlice = createSlice({
     loginFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
       state.error = action.payload;
+      state.isAuthenticated = false;
+      state.user = null;
+      state.token = null;
     },
 
     // Logout
@@ -73,6 +76,9 @@ const authSlice = createSlice({
     registerFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
       state.error = action.payload;
+      state.isAuthenticated = false;
+      state.user = null;
+      state.token = null;
     },
 
     // Recuperação de senha
@@ -85,6 +91,20 @@ const authSlice = createSlice({
       state.error = null;
     },
     forgotPasswordFailure: (state, action: PayloadAction<string>) => {
+      state.loading = false;
+      state.error = action.payload;
+    },
+
+    // Redefinição de senha com token
+    resetPasswordRequest: (state, action: PayloadAction<{ token: string; newPassword: string }>) => {
+      state.loading = true;
+      state.error = null;
+    },
+    resetPasswordSuccess: (state) => {
+      state.loading = false;
+      state.error = null;
+    },
+    resetPasswordFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
       state.error = action.payload;
     },
@@ -138,6 +158,9 @@ export const {
   forgotPasswordRequest,
   forgotPasswordSuccess,
   forgotPasswordFailure,
+  resetPasswordRequest,
+  resetPasswordSuccess,
+  resetPasswordFailure,
   checkAuthRequest,
   checkAuthSuccess,
   checkAuthFailure,

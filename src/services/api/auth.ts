@@ -16,6 +16,8 @@ interface RegisterCredentials {
 
 interface AuthResponse {
   token: string;
+  status?: number;
+  message?: string;
 }
 
 interface UserUpdateParams {
@@ -25,7 +27,7 @@ interface UserUpdateParams {
 
 // Login
 export const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
-  const response = await api.post<AuthResponse>('/auth/v1/login', credentials);
+  const response = await api.post<AuthResponse>('/v1/auth/login', credentials);
   return response.data;
 };
 
@@ -59,5 +61,25 @@ export const updatePassword = async (
 // Logout (apenas local, não envolve API)
 export const logout = (): void => {
   const tokenKey = process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token';
+  
+  // Remover o token do localStorage
   localStorage.removeItem(tokenKey);
+  
+  // Limpar também qualquer outro dado de autenticação que possa existir
+  sessionStorage.removeItem(tokenKey);
+};
+
+// Recuperação de senha (solicitação de email)
+export const forgotPassword = async (email: string): Promise<{ message: string }> => {
+  const response = await api.post<{ message: string }>('/v1/auth/forgot-password', { email });
+  return response.data;
+};
+
+// Redefinição de senha com token
+export const resetPassword = async (token: string, newPassword: string): Promise<{ message: string }> => {
+  const response = await api.post<{ message: string }>('/v1/auth/reset-password', { 
+    token, 
+    newPassword 
+  });
+  return response.data;
 };

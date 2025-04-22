@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   TextField,
@@ -18,8 +18,9 @@ import {
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
 } from '@mui/icons-material';
+import { RootState } from '@store/index';
+import { resetPasswordRequest, logout } from '@store/slices/authSlice';
 import { addNotification } from '@store/slices/uiSlice';
-import { useAuth } from '@hooks/useAuth';
 
 // Componente para mostrar a força da senha
 const PasswordStrengthIndicator: React.FC<{ strength: 'weak' | 'medium' | 'strong' }> = ({ strength }) => {
@@ -70,26 +71,55 @@ const PasswordStrengthIndicator: React.FC<{ strength: 'weak' | 'medium' | 'stron
   );
 };
 
-const RegisterPage: React.FC = () => {
+// Componente da página de redefinição de senha
+const ResetPasswordPage: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { register, loading, error, isAuthenticated } = useAuth();
+  const location = useLocation();
+  const { loading, error } = useSelector((state: RootState) => state.auth);
+
+  // Limpar token e fazer logout quando acessar esta página
+  useEffect(() => {
+    // Limpar o token do localStorage para evitar login automático
+    const tokenKey = process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token';
+    localStorage.removeItem(tokenKey);
+    
+    // Despachar ação de logout para garantir que o estado de autenticação seja limpo
+    dispatch(logout());
+  }, [dispatch]);
+
+  // Obter token da URL
+  const [token, setToken] = useState<string>('');
+
+  useEffect(() => {
+    // Extrair o token da query string ou da URL
+    const queryParams = new URLSearchParams(location.search);
+    const tokenFromQuery = queryParams.get('token');
+    
+    if (tokenFromQuery) {
+      setToken(tokenFromQuery);
+    } else {
+      // Se não houver token, mostrar mensagem e redirecionar
+      dispatch(
+        addNotification({
+          message: 'Token de redefinição inválido ou expirado. Solicite novamente.',
+          type: 'error',
+        })
+      );
+      navigate('/forgot-password');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Executar apenas uma vez na montagem do componente
 
   // Estado do formulário
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
+    newPassword: '',
     confirmPassword: '',
-    phone: '',
   });
 
   // Estado para erros de validação
   const [formErrors, setFormErrors] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
+    newPassword: '',
     confirmPassword: '',
   });
 
@@ -101,13 +131,6 @@ const RegisterPage: React.FC = () => {
 
   // Estado para mostrar/esconder a senha
   const [showPassword, setShowPassword] = useState(false);
-
-  // Redirecionar se já estiver autenticado
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
-    }
-  }, [isAuthenticated, navigate]);
 
   // Função para avaliar a força da senha
   const evaluatePasswordStrength = (password: string): 'weak' | 'medium' | 'strong' => {
@@ -132,43 +155,9 @@ const RegisterPage: React.FC = () => {
     let error = '';
     
     switch (name) {
-      case 'name':
-        if (!value.trim()) {
-          error = 'Nome é obrigatório';
-        } else if (value.trim().length < 3) {
-          error = 'O nome deve ter pelo menos 3 caracteres';
-        } else if (!/^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/.test(value)) {
-          error = 'O nome deve conter apenas letras e espaços';
-        }
-        break;
-        
-      case 'email':
-        if (!value.trim()) {
-          error = 'Email é obrigatório';
-        } else {
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          if (!emailRegex.test(value)) {
-            error = 'Email inválido';
-          }
-        }
-        break;
-        
-      case 'phone':
-        if (!value.trim()) {
-          error = 'Telefone é obrigatório';
-        } else {
-          const numericValue = value.replace(/\D/g, '');
-          if (!/^\d+$/.test(numericValue)) {
-            error = 'O telefone deve conter apenas números';
-          } else if (numericValue.length < 10 || numericValue.length > 11) {
-            error = 'O telefone deve ter entre 10 e 11 dígitos com DDD';
-          }
-        }
-        break;
-        
-      case 'password':
+      case 'newPassword':
         if (!value) {
-          error = 'Senha é obrigatória';
+          error = 'Nova senha é obrigatória';
         } else {
           const strength = evaluatePasswordStrength(value);
           setPasswordStrength(strength);
@@ -195,7 +184,7 @@ const RegisterPage: React.FC = () => {
       case 'confirmPassword':
         if (!value) {
           error = 'Confirme sua senha';
-        } else if (value !== formData.password) {
+        } else if (value !== formData.newPassword) {
           error = 'As senhas não coincidem';
         }
         break;
@@ -209,13 +198,8 @@ const RegisterPage: React.FC = () => {
     // Validar formulário completo com delay para garantir atualização
     setTimeout(() => {
       const newErrors = { ...formErrors, [name]: error };
-      const allFieldsValid = Object.values(newErrors).every(err => !err);
-      const allFieldsFilled = 
-        formData.name.trim() !== '' && 
-        formData.email.trim() !== '' && 
-        formData.phone.trim() !== '' && 
-        formData.password !== '' && 
-        formData.confirmPassword !== '';
+      const allFieldsValid = !newErrors.newPassword && !newErrors.confirmPassword;
+      const allFieldsFilled = formData.newPassword !== '' && formData.confirmPassword !== '';
       const isPasswordStrongEnough = passwordStrength === 'strong';
       
       setIsFormValid(allFieldsValid && allFieldsFilled && isPasswordStrongEnough);
@@ -246,13 +230,8 @@ const RegisterPage: React.FC = () => {
     });
     
     // Verificar todas as condições
-    const noErrors = Object.values(formErrors).every(err => !err);
-    const allFilled = 
-      formData.name.trim() !== '' && 
-      formData.email.trim() !== '' && 
-      formData.phone.trim() !== '' && 
-      formData.password !== '' && 
-      formData.confirmPassword !== '';
+    const noErrors = !formErrors.newPassword && !formErrors.confirmPassword;
+    const allFilled = formData.newPassword !== '' && formData.confirmPassword !== '';
     const strongPassword = passwordStrength === 'strong';
     
     return noErrors && allFilled && strongPassword;
@@ -261,6 +240,14 @@ const RegisterPage: React.FC = () => {
   // Envio do formulário com validação completa
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!token) {
+      dispatch(addNotification({
+        message: 'Token de redefinição ausente ou inválido.',
+        type: 'error',
+      }));
+      return;
+    }
 
     // Validar formulário antes de enviar
     if (!validateForm()) {
@@ -271,13 +258,11 @@ const RegisterPage: React.FC = () => {
       return;
     }
 
-    // Enviar dados para registro usando o hook
-    register({
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-      phone: formData.phone,
-    });
+    // Enviar solicitação de redefinição de senha
+    dispatch(resetPasswordRequest({
+      token,
+      newPassword: formData.newPassword,
+    }));
   };
 
   return (
@@ -294,7 +279,11 @@ const RegisterPage: React.FC = () => {
       }}
     >
       <Typography variant="h5" component="h1" gutterBottom>
-        Criar Conta
+        Redefinir Senha
+      </Typography>
+
+      <Typography variant="body2" sx={{ mb: 2, textAlign: 'center' }}>
+        Digite sua nova senha abaixo para redefinir seu acesso.
       </Typography>
 
       {error && (
@@ -303,115 +292,38 @@ const RegisterPage: React.FC = () => {
         </Typography>
       )}
 
-      {/* Campo de nome */}
-      <TextField
-        margin="normal"
-        fullWidth
-        id="name"
-        label="Nome completo"
-        name="name"
-        autoComplete="name"
-        autoFocus
-        value={formData.name}
-        onChange={handleChange}
-        onBlur={(e) => validateField('name', e.target.value)}
-        disabled={loading}
-        required
-        error={!!formErrors.name}
-        helperText={formErrors.name}
-        InputProps={{
-          endAdornment: formData.name ? (
-            <InputAdornment position="end">
-              {!formErrors.name ? (
-                <CheckCircleIcon color="success" />
-              ) : (
-                <ErrorIcon color="error" />
-              )}
-            </InputAdornment>
-          ) : null,
-        }}
-      />
+      {!token && (
+        <Typography color="error" sx={{ mb: 2, textAlign: 'center' }}>
+          Token de redefinição ausente ou inválido. 
+          <Link component={RouterLink} to="/forgot-password" sx={{ ml: 1 }}>
+            Solicitar um novo link
+          </Link>
+        </Typography>
+      )}
 
-      {/* Campo de email */}
+      {/* Campo de nova senha */}
       <TextField
         margin="normal"
         fullWidth
-        id="email"
-        label="Email"
-        name="email"
-        autoComplete="email"
-        value={formData.email}
-        onChange={handleChange}
-        onBlur={(e) => validateField('email', e.target.value)}
-        disabled={loading}
-        required
-        error={!!formErrors.email}
-        helperText={formErrors.email}
-        InputProps={{
-          endAdornment: formData.email ? (
-            <InputAdornment position="end">
-              {!formErrors.email ? (
-                <CheckCircleIcon color="success" />
-              ) : (
-                <ErrorIcon color="error" />
-              )}
-            </InputAdornment>
-          ) : null,
-        }}
-      />
-
-      {/* Campo de telefone */}
-      <TextField
-        margin="normal"
-        fullWidth
-        id="phone"
-        label="Telefone"
-        name="phone"
-        autoComplete="tel"
-        value={formData.phone}
-        onChange={handleChange}
-        onBlur={(e) => validateField('phone', e.target.value)}
-        disabled={loading}
-        required
-        error={!!formErrors.phone}
-        helperText={formErrors.phone}
-        placeholder="11912345678"
-        InputProps={{
-          endAdornment: formData.phone ? (
-            <InputAdornment position="end">
-              {!formErrors.phone ? (
-                <CheckCircleIcon color="success" />
-              ) : (
-                <ErrorIcon color="error" />
-              )}
-            </InputAdornment>
-          ) : null,
-        }}
-      />
-
-      {/* Campo de senha */}
-      <TextField
-        margin="normal"
-        fullWidth
-        name="password"
-        label="Senha"
+        name="newPassword"
+        label="Nova Senha"
         type={showPassword ? 'text' : 'password'}
-        id="password"
+        id="newPassword"
         autoComplete="new-password"
-        value={formData.password}
+        value={formData.newPassword}
         onChange={handleChange}
-        onBlur={(e) => validateField('password', e.target.value)}
-        disabled={loading}
+        onBlur={(e) => validateField('newPassword', e.target.value)}
+        disabled={loading || !token}
         required
-        error={!!formErrors.password}
-        helperText={formErrors.password}
+        error={!!formErrors.newPassword}
+        helperText={formErrors.newPassword}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
-              {formData.password && passwordStrength === 'strong' && (
+              {formData.newPassword && passwordStrength === 'strong' && (
                 <CheckCircleIcon color="success" sx={{ mr: 1 }} />
               )}
-              {formData.password && passwordStrength !== 'strong' && (
+              {formData.newPassword && passwordStrength !== 'strong' && (
                 <ErrorIcon color="error" sx={{ mr: 1 }} />
               )}
               <IconButton
@@ -427,7 +339,7 @@ const RegisterPage: React.FC = () => {
       />
       
       {/* Indicador de força da senha */}
-      {formData.password && (
+      {formData.newPassword && (
         <PasswordStrengthIndicator strength={passwordStrength} />
       )}
 
@@ -443,7 +355,7 @@ const RegisterPage: React.FC = () => {
         value={formData.confirmPassword}
         onChange={handleChange}
         onBlur={(e) => validateField('confirmPassword', e.target.value)}
-        disabled={loading}
+        disabled={loading || !token}
         required
         error={!!formErrors.confirmPassword}
         helperText={formErrors.confirmPassword}
@@ -460,24 +372,24 @@ const RegisterPage: React.FC = () => {
         }}
       />
 
-      {/* Botão de cadastro com validação */}
+      {/* Botão de redefiniação com validação */}
       <Button 
         type="submit" 
         fullWidth 
         variant="contained" 
         sx={{ mt: 3, mb: 2 }} 
-        disabled={loading || !isFormValid}
+        disabled={loading || !isFormValid || !token}
       >
-        {loading ? <CircularProgress size={24} /> : 'Cadastrar'}
+        {loading ? <CircularProgress size={24} /> : 'Redefinir Senha'}
       </Button>
 
       <Box sx={{ mt: 1, textAlign: 'center' }}>
         <Link component={RouterLink} to="/login" variant="body2">
-          Já tem uma conta? Faça login
+          Lembrou sua senha? Faça login
         </Link>
       </Box>
     </Box>
   );
 };
 
-export default RegisterPage;
+export default ResetPasswordPage; 

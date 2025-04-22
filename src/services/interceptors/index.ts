@@ -1,6 +1,18 @@
 import { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import { sanitizeData } from '@utils/security';
+import { log } from '@utils/logger';
 
 const TOKEN_KEY = process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token';
+
+/**
+ * Função para sanitizar o payload da requisição, removendo dados sensíveis dos logs
+ * Realiza verificação profunda em objetos aninhados e arrays
+ * @deprecated Use sanitizeData de @utils/security em seu lugar
+ */
+const sanitizeRequestData = (data: any): any => {
+  // Usar a implementação mais robusta de sanitizeData
+  return sanitizeData(data);
+};
 
 /**
  * Função que configura os interceptors do Axios
@@ -15,6 +27,27 @@ export const setupInterceptors = (api: AxiosInstance): void => {
         config.headers = config.headers || {};
         config.headers.Authorization = `Bearer ${token}`;
       }
+      
+      // Sanitizar dados em logs (em qualquer ambiente, não apenas em desenvolvimento)
+      const methodsWithData = ['post', 'put', 'patch'];
+      const method = config.method?.toLowerCase();
+      
+      if (method && methodsWithData.includes(method) && config.data) {
+        // Não modifique dados reais, apenas faça log sanitizado
+        const sanitizedData = sanitizeData(config.data);
+        
+        // Em desenvolvimento, loga os dados sanitizados usando o logger seguro
+        if (process.env.NODE_ENV !== 'production') {
+          log.request(method, config.url || '', sanitizedData);
+        }
+        
+        // Opcionalmente, podemos adicionar um cabeçalho personalizado para sinalizar
+        // que esta requisição contém dados sensíveis
+        if (JSON.stringify(sanitizedData) !== JSON.stringify(config.data)) {
+          config.headers = config.headers || {};
+          config.headers['X-Contains-Sensitive-Data'] = 'true';
+        }
+      }
 
       return config;
     },
@@ -23,9 +56,14 @@ export const setupInterceptors = (api: AxiosInstance): void => {
     },
   );
 
-  // Interceptor de resposta para tratamento de erros
+  // Interceptor de resposta para tratamento de erros e sanitização
   api.interceptors.response.use(
     (response: AxiosResponse): AxiosResponse => {
+      // Sanitizar dados sensíveis nas respostas bem-sucedidas para logs
+      if (process.env.NODE_ENV !== 'production' && response.data) {
+        // Somente para logging, não modifica os dados reais usando logger seguro
+        log.response(response.status, response.config.url || '', response.data);
+      }
       return response;
     },
     (error: AxiosError): Promise<AxiosError> => {
@@ -38,31 +76,32 @@ export const setupInterceptors = (api: AxiosInstance): void => {
         case 401: // Não autorizado
           // Limpa o token e redireciona para login
           localStorage.removeItem(TOKEN_KEY);
+          log.warn('Sessão expirada ou inválida. Redirecionando para login...');
           window.location.href = '/login';
           break;
         
         case 403: // Proibido (sem permissão)
-          console.error('Acesso negado:', errorMessage);
+          log.error('Acesso negado:', errorMessage);
           // Pode redirecionar para uma página de "Acesso negado" ou mostrar um alerta
           break;
         
         case 404: // Não encontrado
-          console.error('Recurso não encontrado:', errorMessage);
+          log.error('Recurso não encontrado:', errorMessage);
           break;
         
         case 422: // Erro de validação
-          console.error('Erro de validação:', errorMessage);
+          log.error('Erro de validação:', errorMessage);
           break;
         
         case 500: // Erro de servidor
         case 502: // Bad Gateway
         case 503: // Serviço indisponível
-          console.error('Erro do servidor:', errorMessage);
+          log.error('Erro do servidor:', errorMessage);
           // Pode mostrar uma página de "Serviço indisponível" ou uma mensagem global
           break;
         
         default:
-          console.error(`Erro ${status || 'desconhecido'}:`, errorMessage);
+          log.error(`Erro ${status || 'desconhecido'}:`, errorMessage);
       }
 
       // Aqui você pode integrar com um sistema de notificações global

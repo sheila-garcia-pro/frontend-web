@@ -63,8 +63,10 @@ export const useAuth = (): UseAuthReturn => {
   const logout = useCallback(() => {
     // Chamada direta ao serviço para limpar o localStorage
     authService.logout();
+    
     // Atualiza o estado do Redux
     dispatch(logoutAction());
+    
     // Notificação de sucesso
     dispatch(
       addNotification({
@@ -72,6 +74,9 @@ export const useAuth = (): UseAuthReturn => {
         type: 'success',
       })
     );
+    
+    // Redireciona para a página de login
+    window.location.href = '/login';
   }, [dispatch]);
 
   // Verificação de autenticação

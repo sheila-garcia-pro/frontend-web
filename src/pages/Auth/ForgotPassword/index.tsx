@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -8,9 +8,14 @@ import {
   Typography,
   Link,
   CircularProgress,
+  InputAdornment,
 } from '@mui/material';
+import {
+  CheckCircle as CheckCircleIcon,
+  Error as ErrorIcon,
+} from '@mui/icons-material';
 import { RootState } from '@store/index';
-import { forgotPasswordRequest, forgotPasswordSuccess } from '@store/slices/authSlice';
+import { forgotPasswordRequest, logout } from '@store/slices/authSlice';
 import { addNotification } from '@store/slices/uiSlice';
 
 // Componente da página de recuperação de senha
@@ -19,34 +24,46 @@ const ForgotPasswordPage: React.FC = () => {
   const navigate = useNavigate();
   const { loading, error } = useSelector((state: RootState) => state.auth);
 
+  // Limpar token e fazer logout quando acessar esta página
+  useEffect(() => {
+    // Limpar o token do localStorage
+    const tokenKey = process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token';
+    localStorage.removeItem(tokenKey);
+    
+    // Despachar ação de logout para garantir que o estado de autenticação seja limpo
+    dispatch(logout());
+  }, [dispatch]);
+
   // Estado do formulário
   const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [isEmailValid, setIsEmailValid] = useState(false);
 
   // Manipulador de mudança no campo de email
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    validateEmail(newEmail);
   };
 
   // Validação do email
-  const validateEmail = () => {
-    if (!email.trim()) {
-      dispatch(addNotification({
-        message: 'O campo de e-mail é obrigatório.',
-        type: 'error',
-      }));
+  const validateEmail = (value: string) => {
+    if (!value.trim()) {
+      setEmailError('O campo de e-mail é obrigatório');
+      setIsEmailValid(false);
       return false;
     }
 
     // Validação de formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      dispatch(addNotification({
-        message: 'Digite um e-mail válido.',
-        type: 'error',
-      }));
+    if (!emailRegex.test(value)) {
+      setEmailError('Digite um e-mail válido');
+      setIsEmailValid(false);
       return false;
     }
 
+    setEmailError('');
+    setIsEmailValid(true);
     return true;
   };
 
@@ -54,44 +71,13 @@ const ForgotPasswordPage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (validateEmail()) {
-      try {
-        // Enviando solicitação para o Redux (para compatibilidade futura com API)
-        dispatch(forgotPasswordRequest({ email }));
-
-        // Simulando um tempo de processamento
-        setTimeout(() => {
-          // Verificando se o email é o mesmo do mock
-          if (email === 'teste@teste.com') {
-            // Simulando sucesso
-            dispatch(forgotPasswordSuccess());
-            
-            // Exibindo mensagem de sucesso
-            dispatch(addNotification({
-              message: 'Instruções de redefinição enviadas para seu e-mail!',
-              type: 'success',
-            }));
-            
-            // Redirecionando para a página de login
-            navigate('/login');
-          } else {
-            // Simulando erro para outros emails
-            dispatch(addNotification({
-              message: 'Erro ao enviar instruções de redefinição. Tente novamente.',
-              type: 'error',
-            }));
-          }
-        }, 1000);
-      } catch (error) {
-        // Tratamento de erros inesperados
-        console.error('Erro ao solicitar redefinição de senha:', error);
-        dispatch(addNotification({
-          message: 'Erro ao enviar instruções de redefinição. Tente novamente.',
-          type: 'error',
-        }));
-      }
+    if (validateEmail(email)) {
+      // Usando o Redux para enviar a solicitação para a API
+      dispatch(forgotPasswordRequest({ email }));
     }
   };
+
+  // Se sucesso (controlado pelo saga) - o redirecionamento para login será feito automaticamente
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
@@ -122,11 +108,31 @@ const ForgotPasswordPage: React.FC = () => {
         autoFocus
         value={email}
         onChange={handleChange}
+        onBlur={() => validateEmail(email)}
         disabled={loading}
+        error={!!emailError}
+        helperText={emailError}
+        InputProps={{
+          endAdornment: email ? (
+            <InputAdornment position="end">
+              {isEmailValid ? (
+                <CheckCircleIcon color="success" />
+              ) : (
+                <ErrorIcon color="error" />
+              )}
+            </InputAdornment>
+          ) : null,
+        }}
       />
 
       {/* Botão de submit */}
-      <Button type="submit" fullWidth variant="contained" disabled={loading} sx={{ mt: 3, mb: 2 }}>
+      <Button 
+        type="submit" 
+        fullWidth 
+        variant="contained" 
+        disabled={loading || !isEmailValid} 
+        sx={{ mt: 3, mb: 2 }}
+      >
         {loading ? <CircularProgress size={24} color="inherit" /> : 'Enviar instruções de redefinição'}
       </Button>
 
