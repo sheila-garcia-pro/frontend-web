@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { store } from '@store/index';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { CssBaseline } from '@mui/material';
+import NotificationsManager from '@components/common/NotificationsManager';
 
 const App: React.FC = () => {
   return (
@@ -11,6 +12,7 @@ const App: React.FC = () => {
       <ThemeProvider>
         <CssBaseline />
         <AppRoutes />
+        <NotificationsManager />
       </ThemeProvider>
     </Provider>
   );

@@ -1,7 +1,7 @@
 import React, { ElementType, useEffect, useState } from 'react';
-import { Box, Typography, Button, Divider, Container } from '@mui/material';
-import { useDispatch } from 'react-redux';
-import { Link as RouterLink } from 'react-router-dom';
+import { Box, Typography, Button, Divider, Container, Grid, Paper } from '@mui/material';
+import { useDispatch, useSelector } from 'react-redux';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 // Componentes
 import Carousel from '@components/ui/Carousel';
@@ -10,61 +10,67 @@ import RecipeCard from '@components/ui/RecipeCard';
 import IngredientSkeleton from '@components/ui/SkeletonLoading/IngredientSkeleton';
 import RecipeSkeleton from '@components/ui/SkeletonLoading/RecipeSkeleton';
 import CarouselSkeleton from '@components/ui/SkeletonLoading/CarouselSkeleton';
+import Logo from '@components/common/Logo';
 
 // Serviços e Redux
 import { fetchHomeData } from '@services/dataService';
 import { addNotification } from '@store/slices/uiSlice';
+import { RootState } from '@store/index';
+import useNotification from '@hooks/useNotification';
 
 // Componente da página inicial
 const HomePage: React.FC = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { user } = useSelector((state: RootState) => state.auth);
+  const notification = useNotification();
+
   // Estados
   const [loading, setLoading] = useState(true);
   const [ingredientes, setIngredientes] = useState<any[]>([]);
   const [receitas, setReceitas] = useState<any[]>([]);
   
-  // Redux
-  const dispatch = useDispatch();
-  
   // Efeito para carregar os dados
   useEffect(() => {
+    // Função para carregar dados
     const loadData = async () => {
       setLoading(true);
-      
       try {
-        // Carregar dados simulando requisição à API
-        const data = await fetchHomeData();
-        
-        // Atualizar estados com os dados recebidos
-        setIngredientes(data.ingredientes.slice(0, 12)); // Limitar para 12 ingredientes
-        setReceitas(data.receitas.slice(0, 10)); // Limitar para 10 receitas
+        // Dados de exemplo
+        const response = await fetchHomeData();
+        setIngredientes(response.ingredientes);
+        setReceitas(response.receitas);
         
         // Notificação de sucesso
-        dispatch(addNotification({
-          message: 'Dados carregados com sucesso!',
-          type: 'success',
-          duration: 4000, // 4 segundos
-        }));
+        notification.showSuccess('Dados carregados com sucesso!', {
+          priority: 'low', // Baixa prioridade
+          duration: 3000
+        });
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
-        
         // Notificação de erro
-        dispatch(addNotification({
-          message: 'Erro ao carregar os dados da Home.',
-          type: 'error',
-          duration: 5000, // 5 segundos
-        }));
-        
-        // Definir alguns dados para evitar tela vazia em caso de erro
-        setIngredientes([]);
-        setReceitas([]);
+        notification.showError('Erro ao carregar os dados. Tente novamente mais tarde.');
       } finally {
         setLoading(false);
       }
     };
     
     loadData();
-  }, [dispatch]);
+  }, [dispatch, notification]);
   
+  // Função para navegar para diferentes seções
+  const handleNavigate = (path: string, feature: string) => {
+    navigate(path);
+    
+    // Se for uma feature em desenvolvimento, mostrar notificação informativa
+    if (feature) {
+      notification.showInfo(`Bem-vindo à seção "${feature}"`, {
+        category: 'navigation', // Agrupar notificações de navegação
+        priority: 'low' // Baixa prioridade
+      });
+    }
+  };
+
   return (
     <Container maxWidth="xl">
       <Box sx={{ py: 4 }}>
@@ -77,11 +83,19 @@ const HomePage: React.FC = () => {
           background: (theme) => 
             `linear-gradient(135deg, ${theme.palette.primary.light}20, ${theme.palette.primary.main}10)`,
         }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
+            <Logo 
+              variant="square" 
+              size="large" 
+              showText={false}
+              sx={{ mb: 2 }}
+            />
+          </Box>
           <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 500 }}>
-            Bem-vindo à Sheila Garcia Pro
+            Bem-vindo à Sheila Garcia
           </Typography>
           <Typography variant="h6" color="text.secondary" sx={{ maxWidth: '800px', mx: 'auto', mb: 2 }}>
-            Descubra ingredientes exclusivos e receitas incríveis
+          DO FOGO AO AÇUCAR
           </Typography>
         </Box>
 

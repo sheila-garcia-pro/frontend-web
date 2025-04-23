@@ -20,8 +20,10 @@ import {
 
 // Importações do Redux
 import { RootState, AppDispatch } from '@store/index';
-import { addNotification } from '@store/slices/uiSlice';
 import { fetchDashboardData } from '@store/slices/dashboardSlice';
+
+// Hooks
+import useNotification from '@hooks/useNotification';
 
 // Componentes
 import DashboardCard from '@components/dashboard/DashboardCard';
@@ -32,6 +34,20 @@ const DashboardPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
   const { summary, loading, error } = useSelector((state: RootState) => state.dashboard);
+  const notification = useNotification();
+
+  // Verificar se já exibiu notificação de boas-vindas hoje
+  const hasShownWelcomeToday = () => {
+    const lastShown = localStorage.getItem('dashboard_welcome_shown');
+    if (!lastShown) return false;
+    
+    const lastDate = new Date(lastShown);
+    const today = new Date();
+    
+    return lastDate.getDate() === today.getDate() && 
+           lastDate.getMonth() === today.getMonth() && 
+           lastDate.getFullYear() === today.getFullYear();
+  };
 
   // Efeito para carregar os dados ao montar o componente
   useEffect(() => {
@@ -39,48 +55,43 @@ const DashboardPage: React.FC = () => {
     dispatch(fetchDashboardData())
       .unwrap()
       .then(() => {
-        // Exibir notificação de boas-vindas
-        dispatch(
-          addNotification({
-            message: `Bem-vindo à sua Dashboard, ${user?.name || 'Usuário'}!`,
-            type: 'success',
+        // Exibir notificação de boas-vindas apenas uma vez por dia
+        if (!hasShownWelcomeToday()) {
+          notification.showSuccess(`Bem-vindo à sua Dashboard, ${user?.name || 'Usuário'}!`, {
+            priority: 'low', // Baixa prioridade para não distrair
             duration: 5000,
-          })
-        );
+          });
+          
+          // Marcar que exibiu a notificação hoje
+          localStorage.setItem('dashboard_welcome_shown', new Date().toISOString());
+        }
       })
       .catch((error) => {
-        // Exibir notificação de erro
-        dispatch(
-          addNotification({
-            message: 'Erro ao carregar dados da Dashboard.',
-            type: 'error',
-            duration: 5000,
-          })
-        );
+        // Exibir notificação de erro (sempre alta prioridade)
+        notification.showError('Erro ao carregar dados da Dashboard.');
       });
-  }, [dispatch, user]);
+  }, [dispatch, user, notification]);
 
   // Funções de navegação
+  // Variável para evitar mostrar múltiplas notificações do mesmo tipo
+  const functionalityNotificationCategory = 'development-notification';
+  
   const handleNavigateToPedidos = () => {
     navigate('/orders');
-    dispatch(
-      addNotification({
-        message: 'Funcionalidade "Pedidos" em desenvolvimento.',
-        type: 'info',
-        duration: 3000,
-      })
-    );
+    notification.showInfo('Funcionalidade "Pedidos" em desenvolvimento.', {
+      category: functionalityNotificationCategory,
+      priority: 'low',
+      duration: 3000,
+    });
   };
 
   const handleNavigateToClientes = () => {
     navigate('/customers');
-    dispatch(
-      addNotification({
-        message: 'Funcionalidade "Clientes" em desenvolvimento.',
-        type: 'info',
-        duration: 3000,
-      })
-    );
+    notification.showInfo('Funcionalidade "Clientes" em desenvolvimento.', {
+      category: functionalityNotificationCategory,
+      priority: 'low',
+      duration: 3000,
+    });
   };
 
   return (

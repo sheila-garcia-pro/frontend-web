@@ -1,8 +1,13 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Snackbar, Alert, Typography, useTheme } from '@mui/material';
+import { Snackbar, Alert, Typography, useTheme, Badge } from '@mui/material';
 import { RootState } from '@store/index';
-import { removeNotification } from '@store/slices/uiSlice';
+import { removeNotification, Notification } from '@store/slices/uiSlice';
+
+// Interface estendida para notificações agrupadas
+interface GroupedNotification extends Notification {
+  count?: number;
+}
 
 // Componente que exibe notificações do sistema
 const NotificationsManager: React.FC = () => {
@@ -15,9 +20,38 @@ const NotificationsManager: React.FC = () => {
     dispatch(removeNotification(id));
   };
 
+  // Filtrar notificações por prioridade (mostrar apenas high e medium)
+  // e agrupar notificações similares por categoria
+  const filteredNotifications = useMemo(() => {
+    // Primeiro, filtrar para mostrar apenas high e medium por padrão
+    const priorityFiltered = notifications.filter(
+      (notification) => notification.priority !== 'low'
+    );
+
+    // Agrupar notificações por categoria (se definida)
+    const grouped = priorityFiltered.reduce((acc, notification) => {
+      if (notification.category) {
+        // Verificar se já existe um grupo para esta categoria
+        const existingGroup = acc.find((n) => n.category === notification.category);
+        if (existingGroup) {
+          // Incrementar contador no grupo existente
+          existingGroup.count = (existingGroup.count || 1) + 1;
+          return acc;
+        }
+        // Criar um novo grupo com contador
+        return [...acc, { ...notification, count: 1 }];
+      }
+      // Não agrupar se não tiver categoria
+      return [...acc, notification];
+    }, [] as GroupedNotification[]);
+
+    // Limitar a 3 notificações visíveis de cada vez
+    return grouped.slice(0, 3);
+  }, [notifications]);
+
   return (
     <>
-      {notifications.map((notification, index) => (
+      {filteredNotifications.map((notification, index) => (
         <Snackbar
           key={notification.id}
           open={true}
@@ -37,7 +71,16 @@ const NotificationsManager: React.FC = () => {
             elevation={6}
             sx={{ width: '100%', maxWidth: '400px' }}
           >
-            <Typography variant="body2">{notification.message}</Typography>
+            <Typography variant="body2">
+              {notification.message}
+              {(notification as GroupedNotification).count && (notification as GroupedNotification).count! > 1 && (
+                <Badge 
+                  badgeContent={(notification as GroupedNotification).count} 
+                  color="secondary"
+                  sx={{ ml: 1 }}
+                />
+              )}
+            </Typography>
           </Alert>
         </Snackbar>
       ))}

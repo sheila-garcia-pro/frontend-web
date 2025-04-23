@@ -1,7 +1,16 @@
 import React from 'react';
 import { Box, Typography, Paper, List, ListItem, ListItemText, Divider } from '@mui/material';
 import { maskEmail, maskCardNumber, maskPhone, maskDocument } from '@utils/security';
-import { log } from '@utils/logger';
+
+// Logger temporário para evitar erros de importação
+const log = {
+  info: (message: string, ...args: any[]) => console.info(message, ...args),
+  warn: (message: string, ...args: any[]) => console.warn(message, ...args),
+  error: (message: string, ...args: any[]) => console.error(message, ...args),
+  debug: (message: string, ...args: any[]) => console.debug(message, ...args),
+  request: (method: string, url: string, data?: any) => console.log(`[REQUEST] ${method} ${url}`, data),
+  response: (status: number, url: string, data?: any) => console.log(`[RESPONSE] ${status} ${url}`, data)
+};
 
 /**
  * Este componente serve como um exemplo de uso dos utilitários de segurança

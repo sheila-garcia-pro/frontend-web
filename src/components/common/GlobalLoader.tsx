@@ -7,6 +7,7 @@ import { RootState } from '@store/index';
 const GlobalLoader: React.FC = () => {
   const theme = useTheme();
   const { loading } = useSelector((state: RootState) => state.ui);
+  const isDarkMode = theme.palette.mode === 'dark';
 
   // Verifica se o carregamento global está ativo
   const isLoading = loading.global;
@@ -15,15 +16,32 @@ const GlobalLoader: React.FC = () => {
     <Backdrop
       sx={{
         zIndex: theme.zIndex.drawer + 2,
-        color: 'primary.main',
+        color: isDarkMode ? '#E8EDAA' : 'primary.main', // Amarelo mais vibrante no modo escuro
         flexDirection: 'column',
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backgroundColor: isDarkMode 
+          ? 'rgba(35, 41, 28, 0.85)' // Fundo verde escuro mais forte com transparência
+          : 'rgba(245, 243, 231, 0.8)', // Fundo bege claro com transparência
       }}
       open={isLoading}
     >
-      <CircularProgress color="inherit" size={60} thickness={4} />
+      <CircularProgress 
+        color="inherit" 
+        size={60} 
+        thickness={4}
+        sx={{
+          boxShadow: isDarkMode ? '0px 0px 15px rgba(232, 237, 170, 0.3)' : 'none',
+        }}
+      />
       <Box sx={{ mt: 2 }}>
-        <Typography variant="h6" color="primary.contrastText">
+        <Typography 
+          variant="h6" 
+          color={isDarkMode ? '#FFFFFF' : 'primary.main'} // Texto branco no modo escuro para melhor contraste
+          sx={{
+            fontWeight: 600,
+            letterSpacing: '0.5px',
+            textShadow: isDarkMode ? '0px 1px 2px rgba(0, 0, 0, 0.5)' : 'none',
+          }}
+        >
           Carregando...
         </Typography>
       </Box>

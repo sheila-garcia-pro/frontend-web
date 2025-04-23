@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   TextField,
@@ -19,12 +19,16 @@ import {
 } from '@mui/icons-material';
 import { addNotification } from '@store/slices/uiSlice';
 import { useAuth } from '@hooks/useAuth';
+import useNotification from '@hooks/useNotification';
+import { RootState } from '@store/index';
 
 // Componente da página de login
 const LoginPage: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { login, isAuthenticated, loading, error } = useAuth();
+  const { isAuthenticated: reduxIsAuthenticated } = useSelector((state: RootState) => state.auth);
+  const notification = useNotification();
 
   // Estado do formulário
   const [formData, setFormData] = useState({
@@ -48,7 +52,7 @@ const LoginPage: React.FC = () => {
   useEffect(() => {
     // Só redireciona se estiver autenticado, sem erro e não estiver em carregamento
     if (isAuthenticated && !error && !loading) {
-      navigate('/dashboard');
+      navigate('/');
     }
   }, [isAuthenticated, navigate, error, loading]);
 
@@ -122,10 +126,7 @@ const LoginPage: React.FC = () => {
     
     // Validar formulário novamente antes de enviar
     if (!validateForm()) {
-      dispatch(addNotification({
-        message: 'Preencha todos os campos corretamente!',
-        type: 'error',
-      }));
+      notification.showError('Preencha todos os campos corretamente!');
       return;
     }
     
@@ -145,7 +146,7 @@ const LoginPage: React.FC = () => {
       {/* Mensagem de erro do Redux */}
       {error && (
         <Typography color="error" align="center" sx={{ mt: 2, mb: 2 }}>
-          {error}
+          Erro de autenticação. Verifique suas credenciais e tente novamente.
         </Typography>
       )}
 
@@ -239,4 +240,4 @@ const LoginPage: React.FC = () => {
   );
 };
 
-export default LoginPage;
+export default LoginPage; 

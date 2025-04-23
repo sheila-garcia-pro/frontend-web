@@ -1,6 +1,6 @@
 import { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { sanitizeData } from '@utils/security';
-import { log } from '@utils/logger';
+import { log } from '../../utils/logger';
 
 const TOKEN_KEY = process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token';
 

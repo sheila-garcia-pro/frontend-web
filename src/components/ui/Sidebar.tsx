@@ -25,6 +25,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@store/index';
 import { toggleSidebar } from '@store/slices/uiSlice';
+import Logo from '@components/common/Logo';
 
 interface SidebarProps {
   open: boolean;
@@ -70,9 +71,19 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
       onClose={handleDrawerToggle}
     >
       <DrawerHeader>
-        <IconButton onClick={handleDrawerToggle}>
-          <ChevronLeftIcon />
-        </IconButton>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', px: 1 }}>
+          <Logo 
+            variant="round" 
+            size="medium" 
+            showText={false}
+            sx={{ 
+              justifyContent: 'flex-start',
+            }}
+          />
+          <IconButton onClick={handleDrawerToggle}>
+            <ChevronLeftIcon />
+          </IconButton>
+        </Box>
       </DrawerHeader>
       <Divider />
       <List>
