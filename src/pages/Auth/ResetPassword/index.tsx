@@ -99,14 +99,8 @@ const ResetPasswordPage: React.FC = () => {
     if (tokenFromQuery) {
       setToken(tokenFromQuery);
     } else {
-      // Se não houver token, mostrar mensagem e redirecionar
-      dispatch(
-        addNotification({
-          message: 'Token de redefinição inválido ou expirado. Solicite novamente.',
-          type: 'error',
-        })
-      );
-      navigate('/forgot-password');
+      // Se não houver token, não fazer nada - a UI já mostrará uma mensagem
+      // Removemos a notificação para evitar duplicação de mensagens
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Executar apenas uma vez na montagem do componente
@@ -243,9 +237,20 @@ const ResetPasswordPage: React.FC = () => {
 
     if (!token) {
       dispatch(addNotification({
-        message: 'Token de redefinição ausente ou inválido.',
+        message: 'Token de redefinição ausente ou inválido. Por favor, volte à página de login.',
         type: 'error',
       }));
+      navigate('/login');
+      return;
+    }
+
+    // Verificação adicional para garantir que o token seja válido
+    if (token.trim().length < 10) {
+      dispatch(addNotification({
+        message: 'O token fornecido é inválido. Por favor, volte à página de login.',
+        type: 'error',
+      }));
+      navigate('/login');
       return;
     }
 
@@ -293,12 +298,19 @@ const ResetPasswordPage: React.FC = () => {
       )}
 
       {!token && (
-        <Typography color="error" sx={{ mb: 2, textAlign: 'center' }}>
-          Token de redefinição ausente ou inválido. 
-          <Link component={RouterLink} to="/forgot-password" sx={{ ml: 1 }}>
-            Solicitar um novo link
-          </Link>
-        </Typography>
+        <Box sx={{ mb: 3, p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
+          <Typography color="error.dark" align="center" sx={{ mb: 1, fontWeight: 'medium' }}>
+            Token de redefinição ausente ou inválido
+          </Typography>
+          <Typography color="error.dark" variant="body2">
+            Para redefinir sua senha, você precisa de um token válido, normalmente enviado por email.
+            Se o link que você recebeu é inválido ou expirou, por favor, retorne à
+            <Link component={RouterLink} to="/login" sx={{ mx: 1 }}>
+              página de login
+            </Link>
+            e utilize a opção &quot;Esqueci minha senha&quot;.
+          </Typography>
+        </Box>
       )}
 
       {/* Campo de nova senha */}

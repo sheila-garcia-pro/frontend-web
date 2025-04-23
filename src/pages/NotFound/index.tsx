@@ -27,8 +27,8 @@ const NotFoundPage: React.FC = () => {
         <Typography variant="body1" color="text.secondary" paragraph sx={{ mb: 4 }}>
           A página que você está procurando não existe ou foi movida.
         </Typography>
-        <Button variant="contained" color="primary" onClick={() => navigate('/')} sx={{ mt: 2 }}>
-          Voltar para a página inicial
+        <Button variant="contained" color="primary" onClick={() => navigate('/login')} sx={{ mt: 2 }}>
+          Ir para a página de login
         </Button>
       </Paper>
     </Container>
