@@ -244,10 +244,13 @@ function* resetPasswordSaga(action: PayloadAction<ResetPasswordPayload>): SagaIt
     // Notificação de erro
     yield put(
       addNotification({
-        message: 'Não foi possível redefinir sua senha. Tente novamente.',
+        message: 'Não foi possível redefinir sua senha. Por favor, retorne à página de login.',
         type: 'error',
       })
     );
+    
+    // Redirecionar para a página de login em caso de erro
+    window.location.href = '/login';
   } finally {
     yield put(setGlobalLoading(false));
   }

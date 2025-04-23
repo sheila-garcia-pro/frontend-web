@@ -17,12 +17,8 @@ const AuthLayout: React.FC = () => {
   const location = useLocation();
 
   // Se estiver autenticado, redireciona para o dashboard,
-  // mas não redireciona se estiver nas páginas de recuperação de senha
-  const isPasswordResetPath = 
-    location.pathname.includes('/forgot-password') || 
-    location.pathname.includes('/reset-password');
-    
-  if (isAuthenticated && !isPasswordResetPath) {
+  // mesmo estando em páginas de recuperação de senha
+  if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
 
