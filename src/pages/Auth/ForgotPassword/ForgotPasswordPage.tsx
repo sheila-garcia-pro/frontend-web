@@ -92,7 +92,7 @@ const ForgotPasswordPage: React.FC = () => {
       {/* Mensagem de erro do Redux */}
       {error && (
         <Typography color="error" align="center" sx={{ mt: 2, mb: 2 }}>
-          {error}
+          Erro de autenticação. Por favor, verifique seu email e tente novamente.
         </Typography>
       )}
 

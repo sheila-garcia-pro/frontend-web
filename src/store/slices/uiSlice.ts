@@ -2,12 +2,16 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 // Tipos de notificação
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
+// Níveis de prioridade para notificações
+export type NotificationPriority = 'high' | 'medium' | 'low';
 
 // Interface de notificação
 export interface Notification {
   id: string;
   message: string;
   type: NotificationType;
+  priority?: NotificationPriority;
+  category?: string;
   duration?: number;
 }
 
@@ -46,12 +50,50 @@ const uiSlice = createSlice({
     },
 
     // Notificações
-    addNotification: (state, action: PayloadAction<Omit<Notification, 'id'>>) => {
+    addNotification: (state, action: PayloadAction<Omit<Notification, 'id' | 'priority'> & { priority?: NotificationPriority }>) => {
       const id = Date.now().toString();
-      state.notifications.push({
-        id,
-        ...action.payload,
-      });
+      
+      // Definir prioridade baseada no tipo, se não fornecida
+      let priority = action.payload.priority;
+      if (!priority) {
+        switch (action.payload.type) {
+          case 'error':
+            priority = 'high';
+            break;
+          case 'warning':
+            priority = 'medium';
+            break;
+          default:
+            priority = 'low';
+        }
+      }
+      
+      // Verificar se já existe uma notificação similar (mesma mensagem e tipo)
+      const hasSimilar = state.notifications.some(
+        (n) => n.message === action.payload.message && n.type === action.payload.type
+      );
+      
+      // Não adicionar se já existir uma notificação similar
+      if (!hasSimilar) {
+        // Limitar a quantidade de notificações na fila (máximo 5)
+        if (state.notifications.length >= 5) {
+          // Remover a notificação mais antiga que não seja de alta prioridade
+          const lowPriorityIndex = state.notifications.findIndex((n) => n.priority !== 'high');
+          if (lowPriorityIndex >= 0) {
+            state.notifications.splice(lowPriorityIndex, 1);
+          } else {
+            // Se todas forem de alta prioridade, remove a mais antiga
+            state.notifications.shift();
+          }
+        }
+        
+        // Adicionar a nova notificação
+        state.notifications.push({
+          id,
+          ...action.payload,
+          priority,
+        });
+      }
     },
     removeNotification: (state, action: PayloadAction<string>) => {
       state.notifications = state.notifications.filter(

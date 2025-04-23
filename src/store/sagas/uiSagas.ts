@@ -5,9 +5,9 @@ import { addNotification, removeNotification, setGlobalLoading } from '@store/sl
 // Generator para auto-remover notificações após um tempo
 function* handleAddNotificationSaga(action: PayloadAction<any>) {
   const { id } = action.payload;
-  // Espera por 5 segundos (ou o tempo definido na notificação)
-  const timeout = action.payload.timeout || 5000;
-  yield delay(timeout);
+  // Espera pelo tempo definido na notificação ou um valor padrão
+  const duration = action.payload.duration || 5000;
+  yield delay(duration);
   // Remove a notificação
   yield put(removeNotification(id));
 }

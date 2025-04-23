@@ -50,7 +50,7 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
     
     // Verifica se obteve um token válido
     if (!response || !response.token) {
-      throw new Error('Token de autenticação não recebido');
+      throw new Error('Não foi possível realizar o login. Por favor, tente novamente.');
     }
     
     const { token } = response;
@@ -77,7 +77,7 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
     localStorage.removeItem(process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token');
     
     // Despacha a ação de falha
-    yield put(loginFailure(error instanceof Error ? error.message : 'Erro ao realizar login'));
+    yield put(loginFailure(error instanceof Error ? error.message : 'Erro de autenticação. Verifique suas credenciais e tente novamente.'));
   } finally {
     yield put(setGlobalLoading(false));
   }
@@ -238,13 +238,13 @@ function* resetPasswordSaga(action: PayloadAction<ResetPasswordPayload>): SagaIt
   } catch (error) {
     // Despacha a ação de falha
     yield put(
-      resetPasswordFailure(error instanceof Error ? error.message : 'Erro ao redefinir senha')
+      resetPasswordFailure(error instanceof Error ? error.message : 'Erro de autenticação. Não foi possível redefinir a senha.')
     );
     
     // Notificação de erro
     yield put(
       addNotification({
-        message: 'Não foi possível redefinir sua senha. Por favor, retorne à página de login.',
+        message: 'Erro de autenticação. Por favor, tente novamente mais tarde.',
         type: 'error',
       })
     );

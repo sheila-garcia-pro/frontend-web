@@ -10,10 +10,10 @@ import AuthLayout from '@components/layouts/AuthLayout';
 
 // Pages
 import HomePage from '@pages/Home';
-import LoginPage from '@pages/Auth/Login';
-import RegisterPage from '@pages/Auth/Register';
-import ForgotPasswordPage from '@pages/Auth/ForgotPassword';
-import ResetPasswordPage from '@pages/Auth/ResetPassword';
+import LoginPage from '@pages/Auth/Login/LoginPage';
+import RegisterPage from '@pages/Auth/Register/RegisterPage';
+import ForgotPasswordPage from '@pages/Auth/ForgotPassword/ForgotPasswordPage';
+import ResetPasswordPage from '@pages/Auth/ResetPassword/ResetPasswordPage';
 import DashboardPage from '@pages/Dashboard';
 import NotFoundPage from '@pages/NotFound';
 import IngredientsPage from '@pages/Ingredients';
