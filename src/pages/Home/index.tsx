@@ -49,7 +49,7 @@ const HomePage: React.FC = () => {
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
         // Notificação de erro
-        notification.showError('Erro ao carregar os dados. Tente novamente mais tarde.');
+        //notification.showError('Erro ao carregar os dados. Tente novamente mais tarde.');
       } finally {
         setLoading(false);
       }
@@ -85,15 +85,12 @@ const HomePage: React.FC = () => {
         }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
             <Logo 
-              variant="square" 
+              variant="with-text" 
               size="large" 
               showText={false}
               sx={{ mb: 2 }}
             />
           </Box>
-          <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 500 }}>
-            Bem-vindo à Sheila Garcia
-          </Typography>
           <Typography variant="h6" color="text.secondary" sx={{ maxWidth: '800px', mx: 'auto', mb: 2 }}>
           DO FOGO AO AÇUCAR
           </Typography>

@@ -1,12 +1,13 @@
 import React from 'react';
 import { Box, Typography, SxProps, Theme } from '@mui/material';
 import { Link } from 'react-router-dom';
-import logoSquare from '../../assets/logo_quadrado.png';
-import logoRound from '../../assets/logo_redondo.png';
+import logoSquare from '../../assets/logo_transparente.png';
+import logoRound from '../../assets/logo_transparente.png';
+import logoWithText from '../../assets/logo_transparente_com_nome.png';
 import { useTheme } from '@mui/material/styles';
 
 interface LogoProps {
-  variant?: 'square' | 'round';
+  variant?: 'square' | 'round' | 'with-text';
   size?: 'small' | 'medium' | 'large' | number;
   showText?: boolean;
   onClick?: () => void;
@@ -34,17 +35,22 @@ const Logo: React.FC<LogoProps> = ({
       sizeInPx = 30;
       break;
     case 'medium':
-      sizeInPx = 40;
+      sizeInPx = variant === 'with-text' ? 60 : 60;
       break;
     case 'large':
-      sizeInPx = 80;
+      sizeInPx = variant === 'with-text' ? 120 : 80;
       break;
     default:
       sizeInPx = typeof size === 'number' ? size : 40;
   }
 
   // Escolher a imagem com base na variante
-  const logoSrc = variant === 'square' ? logoSquare : logoRound;
+  let logoSrc;
+  if (variant === 'with-text') {
+    logoSrc = logoWithText;
+  } else {
+    logoSrc = variant === 'square' ? logoSquare : logoRound;
+  }
 
   const logoComponent = (
     <Box
@@ -73,7 +79,7 @@ const Logo: React.FC<LogoProps> = ({
           },
         }}
       />
-      {showText && (
+      {showText && variant !== 'with-text' && (
         <Typography
           variant={size === 'large' ? 'h4' : size === 'small' ? 'body1' : 'h6'}
           component="span"

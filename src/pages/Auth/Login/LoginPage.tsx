@@ -146,8 +146,7 @@ const LoginPage: React.FC = () => {
       {/* Mensagem de erro do Redux */}
       {error && (
         <Typography color="error" align="center" sx={{ mt: 2, mb: 2 }}>
-          Erro de autenticação. Verifique suas credenciais e tente novamente.
-        </Typography>
+Por favor, verifique seu email ou senha e Tente novamente        </Typography>
       )}
 
       {/* Campo de email/usuário */}

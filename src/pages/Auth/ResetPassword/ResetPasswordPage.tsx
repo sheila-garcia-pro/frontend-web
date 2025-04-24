@@ -237,7 +237,7 @@ const ResetPasswordPage: React.FC = () => {
 
     if (!token) {
       dispatch(addNotification({
-        message: 'Erro de autenticação. Por favor, tente novamente.',
+        message: 'Por favor, tente novamente.',
         type: 'error',
       }));
       navigate('/login');
@@ -247,7 +247,7 @@ const ResetPasswordPage: React.FC = () => {
     // Verificação adicional para garantir que o token seja válido
     if (token.trim().length < 10) {
       dispatch(addNotification({
-        message: 'Erro de autenticação. Por favor, tente novamente.',
+        message: 'Por favor, tente novamente.',
         type: 'error',
       }));
       navigate('/login');
@@ -298,7 +298,7 @@ const ResetPasswordPage: React.FC = () => {
       )}
 
       {!token && (
-        <Box sx={{ mb: 3, p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
+        <Box sx={{ mb: 3, p: 2, borderRadius: 1 }}>
           <Typography color="error.dark" align="center" sx={{ mb: 1, fontWeight: 'medium' }}>
             Erro de Autenticação
           </Typography>

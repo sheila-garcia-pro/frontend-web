@@ -289,7 +289,7 @@ const RegisterPage: React.FC = () => {
       {/* Mensagem de erro do Redux */}
       {error && (
         <Typography color="error" align="center" sx={{ mt: 2, mb: 2 }}>
-          Erro de autenticação. Por favor, verifique seus dados e tente novamente.
+          Por favor, verifique seus dados e tente novamente.
         </Typography>
       )}
 

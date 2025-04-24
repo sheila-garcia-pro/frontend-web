@@ -24,15 +24,14 @@ interface PrivateRouteProps {
   element: React.ReactElement;
 }
 
-// Interface para rotas públicas protegidas
-interface PublicRouteProps {
+// Interface para rotas de autenticação
+interface AuthRouteProps {
   element: React.ReactElement;
 }
 
-// Componente para proteger rotas - este componente DEVE estar dentro do contexto Router
+// Componente para proteger rotas - redireciona para login quando não autenticado
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ element }) => {
   const { isAuthenticated, loading, checkAuth } = useAuth();
-  const navigate = useNavigate();
   
   // Verificar autenticação quando o componente montar
   useEffect(() => {
@@ -53,22 +52,26 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ element }) => {
   return element;
 };
 
-// Componente para rotas públicas que não devem ser acessíveis após logout
-const PublicRoute: React.FC<PublicRouteProps> = ({ element }) => {
-  const { isAuthenticated, checkAuth } = useAuth();
-  const navigate = useNavigate();
+// Componente para rotas de autenticação - acessíveis quando não autenticado
+const AuthRoute: React.FC<AuthRouteProps> = ({ element }) => {
+  const { isAuthenticated, loading, checkAuth } = useAuth();
   
-  // Verificar autenticação
+  // Verificar autenticação quando o componente montar
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
   
-  // Se não estiver autenticado, redireciona para a página de login
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+  // Mostrar nada enquanto verifica autenticação
+  if (loading) {
+    return null;
   }
   
-  // Renderiza o elemento se estiver autenticado
+  // Se estiver autenticado, redireciona para a página principal
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  
+  // Renderiza o elemento se não estiver autenticado
   return element;
 };
 
@@ -83,29 +86,25 @@ const AppRoutesContent: React.FC = () => {
   
   return (
     <Routes>
-      {/* Rotas públicas que exigem autenticação */}
-      <Route element={<PublicRoute element={<MainLayout />} />}>
-        <Route index element={<HomePage />} />
-        <Route path="ingredients" element={<IngredientsPage />} />
-        <Route path="recipes" element={<RecipesPage />} />
-      </Route>
-
-      {/* Rotas de autenticação */}
-      <Route path="/" element={<AuthLayout />}>
+      {/* Rotas de autenticação - acessíveis apenas quando NÃO autenticado */}
+      <Route element={<AuthRoute element={<AuthLayout />} />}>
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
       </Route>
 
-      {/* Rotas protegidas */}
-      <Route path="/dashboard" element={<PrivateRoute element={<MainLayout />} />}>
-        <Route index element={<DashboardPage />} />
+      {/* Rotas protegidas - requerem autenticação */}
+      <Route path="/" element={<PrivateRoute element={<MainLayout />} />}>
+        <Route index element={<HomePage />} />
+        <Route path="ingredients" element={<IngredientsPage />} />
+        <Route path="recipes" element={<RecipesPage />} />
+        <Route path="dashboard" element={<DashboardPage />} />
         {/* Adicione mais rotas protegidas aqui */}
       </Route>
 
-      {/* Rota 404 */}
-      <Route path="*" element={<NotFoundPage />} />
+      {/* Rota 404 - Protegida por padrão, redireciona para login se não autenticado */}
+      <Route path="*" element={<PrivateRoute element={<NotFoundPage />} />} />
     </Routes>
   );
 };
