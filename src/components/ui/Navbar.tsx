@@ -24,7 +24,7 @@ import {
   ExitToApp as LogoutIcon,
 } from '@mui/icons-material';
 import { RootState } from '@store/index';
-import { logout } from '@store/slices/authSlice';
+import { useAuth } from '@hooks/useAuth';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
 import Logo from '@components/common/Logo';
@@ -42,6 +42,7 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
   const { mode, toggleTheme } = useTheme();
   const muiTheme = useMuiTheme();
   const { user } = useSelector((state: RootState) => state.auth);
+  const { logout } = useAuth();
 
   // Estado do menu de usuário
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -57,7 +58,7 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
 
   // Manipulador de logout
   const handleLogout = () => {
-    dispatch(logout());
+    logout();
     handleCloseMenu();
   };
 
@@ -103,20 +104,23 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
         {/* Logo */}
         <Box sx={{ flexGrow: 1 }}>
           <Logo 
-            variant="square" 
+            variant="with-text" 
             size="medium" 
-            showText={true}
+            showText={false}
             to="/"
-            textColor={mode === 'light' ? '#F5F3E7' : '#FFFFFF'} // Texto bege claro no modo light e branco no modo dark
+            textColor={mode === 'light' ? '#F5F3E7' : '#FFFFFF'}
             sx={{ 
               display: 'flex',
               alignItems: 'center',
+              '& img': {
+                height: '50px', // Ajuste específico para o navbar
+              },
               '& .MuiTypography-root': {
-                fontWeight: 600, // Texto mais em negrito
-                letterSpacing: '0.5px', // Espaçamento entre letras
+                fontWeight: 600,
+                letterSpacing: '0.5px',
                 textShadow: mode === 'light' 
                   ? '0px 1px 1px rgba(0, 0, 0, 0.2)' 
-                  : '0px 1px 2px rgba(0, 0, 0, 0.3)', // Sombra sutil também no modo light
+                  : '0px 1px 2px rgba(0, 0, 0, 0.3)',
               }
             }} 
           />

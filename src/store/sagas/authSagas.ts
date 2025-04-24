@@ -26,6 +26,7 @@ import { setGlobalLoading } from '@store/slices/uiSlice';
 import * as authService from '@services/api/auth';
 import * as usersService from '@services/api/users';
 import { addNotification } from '@store/slices/uiSlice';
+import { delay } from 'redux-saga/effects';
 
 // Tipos
 type LoginPayload = { email: string; password: string };
@@ -77,7 +78,7 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
     localStorage.removeItem(process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token');
     
     // Despacha a ação de falha
-    yield put(loginFailure(error instanceof Error ? error.message : 'Erro de autenticação. Verifique suas credenciais e tente novamente.'));
+    yield put(loginFailure(error instanceof Error ? error.message : 'Por favor, verifique seu email e senha. Tente novamente.'));
   } finally {
     yield put(setGlobalLoading(false));
   }
@@ -184,13 +185,11 @@ function* forgotPasswordSaga(action: PayloadAction<ForgotPasswordPayload>): Saga
     // Notificação de sucesso
     yield put(
       addNotification({
-        message: 'Instruções de redefinição enviadas para seu email!',
+        message: 'Enviamos por email o link de recuperaçao',
         type: 'success',
       })
     );
-    
-    // Remover o redirecionamento automático para permitir que o usuário permaneça na mesma tela
-    // window.location.href = '/login';
+
   } catch (error) {
     // Despacha a ação de falha
     yield put(

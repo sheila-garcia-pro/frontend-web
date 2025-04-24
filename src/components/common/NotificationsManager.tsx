@@ -20,13 +20,23 @@ const NotificationsManager: React.FC = () => {
     dispatch(removeNotification(id));
   };
 
-  // Filtrar notificações por prioridade (mostrar apenas high e medium)
-  // e agrupar notificações similares por categoria
+  // Filtrar e priorizar notificações, e agrupar notificações similares por categoria
   const filteredNotifications = useMemo(() => {
-    // Primeiro, filtrar para mostrar apenas high e medium por padrão
-    const priorityFiltered = notifications.filter(
-      (notification) => notification.priority !== 'low'
-    );
+    // Separar notificações por prioridade
+    const highPriority = notifications.filter(notification => notification.priority === 'high');
+    const mediumPriority = notifications.filter(notification => notification.priority === 'medium');
+    const lowPriority = notifications.filter(notification => notification.priority === 'low');
+    
+    // Primeiro, adicionar as de alta prioridade
+    let priorityFiltered = [...highPriority];
+    
+    // Adicionar as de média prioridade se houver espaço
+    priorityFiltered = [...priorityFiltered, ...mediumPriority];
+    
+    // Adicionar as de baixa prioridade apenas se não tivermos notificações suficientes
+    if (priorityFiltered.length < 3) {
+      priorityFiltered = [...priorityFiltered, ...lowPriority].slice(0, 3);
+    }
 
     // Agrupar notificações por categoria (se definida)
     const grouped = priorityFiltered.reduce((acc, notification) => {

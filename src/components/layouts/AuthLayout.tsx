@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, Navigate, useLocation } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Box, Container, Paper, CssBaseline } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
@@ -11,17 +11,9 @@ import Logo from '@components/common/Logo';
 
 // Layout para páginas de autenticação (login, registro, recuperação de senha)
 const AuthLayout: React.FC = () => {
-  // Verifica se o usuário já está autenticado
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const theme = useTheme();
   const location = useLocation();
   const isDarkMode = theme.palette.mode === 'dark';
-
-  // Se estiver autenticado, redireciona para o dashboard,
-  // mesmo estando em páginas de recuperação de senha
-  if (isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
 
   return (
     <Box
@@ -57,10 +49,10 @@ const AuthLayout: React.FC = () => {
           {/* Logo */}
           <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
             <Logo 
-              variant="square" 
+              variant="with-text" 
               size="large" 
-              showText={true}
-              textColor={isDarkMode ? '#E8EDAA' : 'primary.main'} // Cor amarela mais vibrante no modo escuro
+              showText={false}
+              textColor={isDarkMode ? '#E8EDAA' : 'primary.main'}
               to="/"
               sx={{ 
                 justifyContent: 'center',

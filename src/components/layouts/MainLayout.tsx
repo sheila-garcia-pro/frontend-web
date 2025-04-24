@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Box, CssBaseline, Container, Toolbar, useMediaQuery, styled } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -11,7 +11,6 @@ import Navbar from '@components/ui/Navbar';
 import Sidebar from '@components/ui/Sidebar';
 import Footer from '@components/ui/Footer';
 import GlobalLoader from '@components/common/GlobalLoader';
-import NotificationsManager from '@components/common/NotificationsManager';
 
 // Largura do sidebar quando aberto
 const DRAWER_WIDTH = 240;
@@ -43,13 +42,6 @@ const MainLayout: React.FC = () => {
   const { sidebarOpen } = useSelector((state: RootState) => state.ui);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
-  // Verificar autenticação
-  useEffect(() => {
-    if (!isAuthenticated) {
-      window.location.href = '/login';
-    }
-  }, [isAuthenticated]);
-
   // Responsividade
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -58,9 +50,6 @@ const MainLayout: React.FC = () => {
   const handleDrawerToggle = () => {
     dispatch(toggleSidebar());
   };
-
-  // Se não estiver autenticado, não renderizar nada até o redirecionamento
-  if (!isAuthenticated) return null;
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -94,9 +83,6 @@ const MainLayout: React.FC = () => {
 
       {/* Loader global */}
       <GlobalLoader />
-
-      {/* Gerenciador de notificações */}
-      <NotificationsManager />
     </Box>
   );
 };

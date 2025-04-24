@@ -117,14 +117,6 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
         {isAuthenticated && (
           <>
             <ListItem disablePadding>
-              <ListItemButton onClick={() => handleNavigation('/dashboard')}>
-                <ListItemIcon>
-                  <DashboardIcon />
-                </ListItemIcon>
-                <ListItemText primary="Dashboard" />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
               <ListItemButton onClick={() => handleNavigation('/profile')}>
                 <ListItemIcon>
                   <PersonIcon />
