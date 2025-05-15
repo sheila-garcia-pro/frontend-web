@@ -25,8 +25,9 @@ const apiCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos em milissegundos
 
 // Exporta uma API com cache para requisições GET
-export const cachedGet = async <T>(url: string, params?: any): Promise<T> => {
-  const cacheKey = `${url}?${new URLSearchParams(params || {}).toString()}`;
+export const cachedGet = async <T>(url: string, params?: any, customCacheKey?: string): Promise<T> => {
+  // Usa a chave personalizada se fornecida, caso contrário cria uma baseada na URL e parâmetros
+  const cacheKey = customCacheKey || `${url}?${new URLSearchParams(params || {}).toString()}`;
   const cachedResponse = apiCache.get(cacheKey);
   
   // Verifica se existe cache válido

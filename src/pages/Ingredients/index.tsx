@@ -14,170 +14,136 @@ import {
   SelectChangeEvent,
   Container,
   Divider,
+  Button,
+  CircularProgress,
 } from '@mui/material';
-import { Search } from '@mui/icons-material';
-import { useDispatch } from 'react-redux';
+import { Search, Add, Category } from '@mui/icons-material';
+import { useDispatch, useSelector } from 'react-redux';
 
 // Componentes
-import IngredientCard from '@components/ui/IngredientCard';
-import IngredientSkeleton from '@components/ui/SkeletonLoading/IngredientSkeleton';
+import { IngredientCard, IngredientSkeleton, IngredientModal, CategoryModal } from '../../components/ui';
 
 // Serviços e Redux
-import { fetchIngredientes } from '@services/dataService';
-import { addNotification } from '@store/slices/uiSlice';
+import { 
+  fetchIngredientsRequest, 
+  setSearchFilter, 
+  setCategoryFilter, 
+  setPage 
+} from '../../store/slices/ingredientsSlice';
+import { fetchCategoriesRequest } from '../../store/slices/categoriesSlice';
+import { RootState } from '../../store';
+
+// Hooks
+import { useDebounce } from '../../hooks/useDebounce';
 
 // Interface para as opções de ordenação
 interface SortOption {
   value: string;
   label: string;
-  sortFn: (a: any, b: any) => number;
 }
 
 // Componente da página de ingredientes
 const IngredientsPage: React.FC = () => {
-  // Estados
-  const [loading, setLoading] = useState(true);
-  const [ingredientes, setIngredientes] = useState<any[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [tabValue, setTabValue] = useState(0);
+  // Estados locais
   const [sortOption, setSortOption] = useState('name_asc');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
   
   // Redux
   const dispatch = useDispatch();
+  const { 
+    items: ingredients, 
+    loading: ingredientsLoading, 
+    total, 
+    page, 
+    itemPerPage,
+    filter
+  } = useSelector((state: RootState) => state.ingredients);
   
-  // Configurações de paginação
-  const itemsPerPage = 12;
+  const { items: categories, loading: categoriesLoading } = useSelector(
+    (state: RootState) => state.categories
+  );
   
-  // Efeito para carregar os dados
+  // Aplicar debounce ao termo de busca para evitar múltiplas requisições durante digitação
+  const debouncedSearchTerm = useDebounce(searchInput, 500);
+  
+  // Efeito para atualizar o filtro de busca quando o termo debounced mudar
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      
-      try {
-        // Carregar ingredientes simulando requisição à API
-        const data = await fetchIngredientes();
-        
-        // Atualizar estado com os dados recebidos
-        setIngredientes(data);
-        
-        // Notificação de sucesso
-        dispatch(addNotification({
-          message: 'Ingredientes carregados com sucesso!',
-          type: 'success',
-          duration: 4000, // 4 segundos
-        }));
-      } catch (error) {
-        console.error('Erro ao carregar ingredientes:', error);
-        
-        // Notificação de erro
-        dispatch(addNotification({
-          message: 'Erro ao carregar ingredientes.',
-          type: 'error',
-          duration: 5000, // 5 segundos
-        }));
-        
-        // Definir array vazio para evitar erros
-        setIngredientes([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    loadData();
+    if (debouncedSearchTerm !== filter.search) {
+      dispatch(setSearchFilter(debouncedSearchTerm));
+    }
+  }, [debouncedSearchTerm, dispatch, filter.search]);
+  
+  // Efeito para carregar os dados quando os filtros mudarem
+  useEffect(() => {
+    // Evita múltiplas requisições desnecessárias
+    if (!ingredientsLoading) {
+      dispatch(
+        fetchIngredientsRequest({ 
+          page, 
+          itemPerPage, 
+          category: filter.category || undefined,
+          search: filter.search || undefined
+        })
+      );
+    }
+  }, [dispatch, page, itemPerPage, filter.category, filter.search, ingredientsLoading]);
+  
+  // Efeito para carregar categorias apenas uma vez na montagem
+  useEffect(() => {
+    // Carregar categorias para o filtro
+    dispatch(fetchCategoriesRequest({ page: 1, itemPerPage: 100 }));
   }, [dispatch]);
   
   // Opções de ordenação
   const sortOptions: SortOption[] = [
-    { 
-      value: 'name_asc', 
-      label: 'Nome (A-Z)', 
-      sortFn: (a, b) => a.name.localeCompare(b.name) 
-    },
-    { 
-      value: 'name_desc', 
-      label: 'Nome (Z-A)', 
-      sortFn: (a, b) => b.name.localeCompare(a.name) 
-    },
-    { 
-      value: 'price_asc', 
-      label: 'Preço (menor-maior)', 
-      sortFn: (a, b) => parseFloat(a.price) - parseFloat(b.price) 
-    },
-    { 
-      value: 'price_desc', 
-      label: 'Preço (maior-menor)', 
-      sortFn: (a, b) => parseFloat(b.price) - parseFloat(a.price) 
-    },
-    { 
-      value: 'recipes_asc', 
-      label: 'Receitas (menor-maior)', 
-      sortFn: (a, b) => a.recipesCount - b.recipesCount 
-    },
-    { 
-      value: 'recipes_desc', 
-      label: 'Receitas (maior-menor)', 
-      sortFn: (a, b) => b.recipesCount - a.recipesCount 
-    },
+    { value: 'name_asc', label: 'Nome (A-Z)' },
+    { value: 'name_desc', label: 'Nome (Z-A)' },
+    { value: 'recent', label: 'Mais recentes' },
+    { value: 'oldest', label: 'Mais antigos' },
   ];
   
   // Manipuladores de eventos
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
-    setCurrentPage(1); // Reset da página ao buscar
+    setSearchInput(event.target.value);
   };
   
   const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
-    setCurrentPage(value);
+    dispatch(setPage(value));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-    setCurrentPage(1); // Reset da página ao mudar a aba
+  const handleTabChange = (event: React.SyntheticEvent, newValue: string | null) => {
+    dispatch(setCategoryFilter(newValue));
   };
   
   const handleSortChange = (event: SelectChangeEvent) => {
     setSortOption(event.target.value);
   };
   
-  // Filtragem dos ingredientes
-  let filteredIngredients = [...ingredientes];
+  const handleOpenModal = () => {
+    setModalOpen(true);
+  };
   
-  // Aplicar filtro de busca
-  if (searchTerm) {
-    filteredIngredients = filteredIngredients.filter(ingredient => 
-      ingredient.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }
+  const handleCloseModal = () => {
+    setModalOpen(false);
+  };
   
-  // Aplicar filtro de tab (simulação - na implementação real pode usar categorias)
-  if (tabValue === 1) {
-    // Filtrar para mostrar apenas ingredientes com preço acima de 25
-    filteredIngredients = filteredIngredients.filter(ingredient => 
-      parseFloat(ingredient.price) > 25
-    );
-  } else if (tabValue === 2) {
-    // Filtrar para mostrar apenas ingredientes com muitas receitas (> 10)
-    filteredIngredients = filteredIngredients.filter(ingredient => 
-      ingredient.recipesCount > 10
-    );
-  }
+  const handleOpenCategoryModal = () => {
+    setCategoryModalOpen(true);
+  };
   
-  // Aplicar ordenação
-  const currentSortOption = sortOptions.find(option => option.value === sortOption);
-  if (currentSortOption) {
-    filteredIngredients.sort(currentSortOption.sortFn);
-  }
+  const handleCloseCategoryModal = () => {
+    setCategoryModalOpen(false);
+  };
   
-  // Paginação
-  const totalPages = Math.ceil(filteredIngredients.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedIngredients = filteredIngredients.slice(startIndex, startIndex + itemsPerPage);
+  // Cálculo do total de páginas
+  const totalPages = Math.ceil(total / itemPerPage);
   
   // Renderização dos skeleton loaders durante o carregamento
   const renderSkeletons = () => {
-    return Array.from({ length: 8 }).map((_, index) => (
+    return Array.from({ length: itemPerPage }).map((_, index) => (
       <Grid item key={`skeleton-${index}`} xs={12} sm={6} md={4} lg={3} component={'div' as ElementType}>
         <IngredientSkeleton />
       </Grid>
@@ -187,20 +153,55 @@ const IngredientsPage: React.FC = () => {
   return (
     <Container maxWidth="xl">
       <Box sx={{ py: 4 }}>
-        {/* Título */}
+        {/* Cabeçalho com título e botão de adicionar */}
         <Box sx={{ 
           mb: 5,
           p: { xs: 2, md: 3 },
           borderRadius: 2,
           background: (theme) => 
             `linear-gradient(135deg, ${theme.palette.primary.light}20, ${theme.palette.primary.main}10)`,
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { sm: 'center' },
+          justifyContent: 'space-between',
+          gap: 2
         }}>
-          <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 500 }}>
-            Ingredientes disponíveis
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Encontre todos os ingredientes para suas receitas favoritas
-          </Typography>
+          <Box>
+            <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 500 }}>
+              Ingredientes disponíveis
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Encontre todos os ingredientes para suas receitas favoritas
+            </Typography>
+          </Box>
+          
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<Category />}
+              onClick={handleOpenCategoryModal}
+              sx={{ 
+                borderRadius: 3,
+                px: 2
+              }}
+            >
+              Nova Categoria
+            </Button>
+            
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<Add />}
+              onClick={handleOpenModal}
+              sx={{ 
+                borderRadius: 3,
+                px: 3
+              }}
+            >
+              Novo Ingrediente
+            </Button>
+          </Box>
         </Box>
         
         {/* Filtros */}
@@ -209,7 +210,7 @@ const IngredientsPage: React.FC = () => {
             placeholder="Buscar ingredientes..."
             variant="outlined"
             fullWidth
-            value={searchTerm}
+            value={searchInput}
             onChange={handleSearchChange}
             InputProps={{
               startAdornment: (
@@ -244,51 +245,52 @@ const IngredientsPage: React.FC = () => {
           </FormControl>
         </Box>
         
-        {/* Tabs */}
-        <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={tabValue} onChange={handleTabChange}>
-            <Tab label="Todos" />
-            <Tab label="Premium" />
-            <Tab label="Populares" />
-          </Tabs>
+        {/* Tabs de Categorias */}
+        <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider', position: 'relative' }}>
+          {categoriesLoading ? (
+            <Box sx={{ display: 'flex', p: 2, justifyContent: 'center' }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : (
+            <Tabs 
+              value={filter.category}
+              onChange={handleTabChange}
+              variant="scrollable"
+              scrollButtons="auto"
+            >
+              <Tab label="Todos" value={null} />
+              {categories.map(category => (
+                <Tab key={category._id} label={category.name} value={category._id} />
+              ))}
+            </Tabs>
+          )}
         </Box>
         
         {/* Contagem de resultados */}
-        {!loading && (
+        {!ingredientsLoading && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Mostrando {paginatedIngredients.length} de {filteredIngredients.length} ingredientes
+            Mostrando {ingredients.length} de {total} ingredientes
           </Typography>
         )}
         
         {/* Lista de ingredientes */}
         <Grid container spacing={3}>
-          {loading ? (
+          {ingredientsLoading ? (
             renderSkeletons()
-          ) : paginatedIngredients.length > 0 ? (
-            paginatedIngredients.map(ingredient => (
-              <Grid item key={ingredient.id} xs={12} sm={6} md={4} lg={3} component={'div' as ElementType}>
-                <IngredientCard
-                  id={ingredient.id}
-                  name={ingredient.name}
-                  image={ingredient.image}
-                  price={ingredient.price}
-                  recipesCount={ingredient.recipesCount}
-                />
+          ) : ingredients.length > 0 ? (
+            ingredients.map(ingredient => (
+              <Grid item key={ingredient._id} xs={12} sm={6} md={4} lg={3} component={'div' as ElementType}>
+                <IngredientCard ingredient={ingredient} />
               </Grid>
             ))
           ) : (
             <Grid item xs={12} component={'div' as ElementType}>
-              <Box sx={{ 
-                p: 5, 
-                textAlign: 'center',
-                border: '1px dashed',
-                borderColor: 'divider',
-                borderRadius: 2,
-                my: 4
-              }}>
-                <Typography variant="h6">Nenhum ingrediente encontrado</Typography>
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Typography variant="h6" color="text.secondary">
+                  Nenhum ingrediente encontrado
+                </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  Tente ajustar seus filtros de busca ou tente novamente mais tarde
+                  Tente mudar os filtros ou adicionar novos ingredientes
                 </Typography>
               </Box>
             </Grid>
@@ -296,24 +298,25 @@ const IngredientsPage: React.FC = () => {
         </Grid>
         
         {/* Paginação */}
-        {!loading && totalPages > 1 && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+        {!ingredientsLoading && totalPages > 1 && (
+          <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
             <Pagination 
               count={totalPages} 
-              page={currentPage} 
-              onChange={handlePageChange} 
-              color="primary" 
-              showFirstButton 
-              showLastButton 
-              sx={{
-                '& .MuiPaginationItem-root': {
-                  borderRadius: 2,
-                }
-              }}
+              page={page} 
+              onChange={handlePageChange}
+              color="primary"
+              shape="rounded"
+              size="large"
             />
           </Box>
         )}
       </Box>
+      
+      {/* Modal para adicionar ingrediente */}
+      <IngredientModal open={modalOpen} onClose={handleCloseModal} />
+      
+      {/* Modal para adicionar categoria */}
+      <CategoryModal open={categoryModalOpen} onClose={handleCloseCategoryModal} />
     </Container>
   );
 };
