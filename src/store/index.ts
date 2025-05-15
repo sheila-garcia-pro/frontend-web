@@ -3,13 +3,17 @@ import createSagaMiddleware from 'redux-saga';
 import { all } from 'redux-saga/effects';
 
 // Importa reducers
-import authReducer from '@store/slices/authSlice';
-import uiReducer from '@store/slices/uiSlice';
-import dashboardReducer from '@store/slices/dashboardSlice';
+import authReducer from './slices/authSlice';
+import uiReducer from './slices/uiSlice';
+import dashboardReducer from './slices/dashboardSlice';
+import ingredientsReducer from './slices/ingredientsSlice';
+import categoriesReducer from './slices/categoriesSlice';
 
 // Importa sagas
-import authSagas from '@store/sagas/authSagas';
-import uiSagas from '@store/sagas/uiSagas';
+import authSagas from './sagas/authSagas';
+import uiSagas from './sagas/uiSagas';
+import ingredientsSagas from './sagas/ingredientsSagas';
+import categoriesSagas from './sagas/categoriesSagas';
 
 // Cria middleware do Saga
 const sagaMiddleware = createSagaMiddleware();
@@ -19,6 +23,8 @@ const rootReducer = combineReducers({
   auth: authReducer,
   ui: uiReducer,
   dashboard: dashboardReducer,
+  ingredients: ingredientsReducer,
+  categories: categoriesReducer,
   // Adicione outros reducers aqui
 });
 
@@ -42,6 +48,8 @@ function* rootSaga() {
   yield all([
     ...authSagas,
     ...uiSagas,
+    ...ingredientsSagas,
+    ...categoriesSagas,
     // Adicione outras sagas aqui
   ]);
 }
