@@ -14,22 +14,27 @@ import {
 } from '../slices/categoriesSlice';
 import { setGlobalLoading, addNotification } from '../slices/uiSlice';
 import * as categoriesService from '../../services/api/categories';
-import { SearchParams, CreateCategoryParams } from '../../types/ingredients';
+import { SearchParams, CreateCategoryParams, CategoriesResponse } from '../../types/ingredients';
 
 // Saga para buscar categorias
 function* fetchCategoriesSaga(action: PayloadAction<Omit<SearchParams, 'category'>>): SagaIterator {
   try {
     yield put(setGlobalLoading(true));
+    console.log('fetchCategoriesSaga - iniciando busca com parâmetros:', action.payload);
 
-    // Chama o serviço de API
+    // Chama o serviço de API que já retorna a resposta formatada
     const response = yield call(categoriesService.getCategories, action.payload);
+    console.log('fetchCategoriesSaga - resposta:', response);
 
-    // Despacha a ação de sucesso
+    // Despacha a ação de sucesso com a resposta já formatada
     yield put(fetchCategoriesSuccess(response));
   } catch (error) {
+    console.error('fetchCategoriesSaga - erro:', error);
     // Despacha a ação de falha
     yield put(
-      fetchCategoriesFailure(error instanceof Error ? error.message : 'Erro ao carregar categorias')
+      fetchCategoriesFailure(
+        error instanceof Error ? error.message : 'Erro ao carregar categorias',
+      ),
     );
 
     // Notificação de erro
@@ -38,7 +43,7 @@ function* fetchCategoriesSaga(action: PayloadAction<Omit<SearchParams, 'category
         message: 'Erro ao carregar categorias.',
         type: 'error',
         duration: 5000,
-      })
+      }),
     );
   } finally {
     yield put(setGlobalLoading(false));
@@ -58,7 +63,9 @@ function* fetchCategoryByIdSaga(action: PayloadAction<string>): SagaIterator {
   } catch (error) {
     // Despacha a ação de falha
     yield put(
-      fetchCategoryByIdFailure(error instanceof Error ? error.message : 'Erro ao carregar categoria')
+      fetchCategoryByIdFailure(
+        error instanceof Error ? error.message : 'Erro ao carregar categoria',
+      ),
     );
 
     // Notificação de erro
@@ -67,7 +74,7 @@ function* fetchCategoryByIdSaga(action: PayloadAction<string>): SagaIterator {
         message: 'Erro ao carregar detalhes da categoria.',
         type: 'error',
         duration: 5000,
-      })
+      }),
     );
   } finally {
     yield put(setGlobalLoading(false));
@@ -91,12 +98,12 @@ function* createCategorySaga(action: PayloadAction<CreateCategoryParams>): SagaI
         message: 'Categoria criada com sucesso!',
         type: 'success',
         duration: 4000,
-      })
+      }),
     );
   } catch (error) {
     // Despacha a ação de falha
     yield put(
-      createCategoryFailure(error instanceof Error ? error.message : 'Erro ao criar categoria')
+      createCategoryFailure(error instanceof Error ? error.message : 'Erro ao criar categoria'),
     );
 
     // Notificação de erro
@@ -105,7 +112,7 @@ function* createCategorySaga(action: PayloadAction<CreateCategoryParams>): SagaI
         message: 'Erro ao criar categoria.',
         type: 'error',
         duration: 5000,
-      })
+      }),
     );
   } finally {
     yield put(setGlobalLoading(false));
@@ -119,4 +126,4 @@ const categoriesSagas = [
   takeLatest(createCategoryRequest.type, createCategorySaga),
 ];
 
-export default categoriesSagas; 
+export default categoriesSagas;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ElementType } from 'react';
 import {
   Card,
   CardMedia,
@@ -18,21 +18,7 @@ interface IngredientCardProps {
 }
 
 const IngredientCard: React.FC<IngredientCardProps> = ({ ingredient }) => {
-  console.log('IngredientCard - dados recebidos:', ingredient);
-
-  // Validação dos dados
-  if (!ingredient) {
-    console.error('IngredientCard - nenhum dado recebido');
-    return null;
-  }
-
-  const { _id, name, image, category } = ingredient;
-
-  // Validação dos campos obrigatórios
-  if (!_id || !name || !image || !category) {
-    console.error('IngredientCard - dados incompletos:', { _id, name, image, category });
-    return null;
-  }
+  const { _id, name, category, image } = ingredient;
 
   return (
     <Card
@@ -74,6 +60,7 @@ const IngredientCard: React.FC<IngredientCardProps> = ({ ingredient }) => {
           />
         </Box>
       </CardContent>
+
       <CardActions>
         <Button
           size="small"

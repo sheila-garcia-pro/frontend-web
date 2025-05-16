@@ -1,19 +1,41 @@
 import api, { cachedGet, clearCache } from './index';
-import { 
-  Category, 
-  CreateCategoryParams, 
-  CategoriesResponse, 
-  SearchParams 
+import {
+  Category,
+  CreateCategoryParams,
+  CategoriesResponse,
+  SearchParams,
 } from '../../types/ingredients';
 
 // Obter lista de categorias com paginação
-export const getCategories = async (params: Omit<SearchParams, 'category'>): Promise<CategoriesResponse> => {
-  const response = await api.get<CategoriesResponse>('/v1/category', { params });
-  return response.data;
+export const getCategories = async (
+  params: Omit<SearchParams, 'category'>,
+): Promise<CategoriesResponse> => {
+  console.log('getCategories - parâmetros:', params);
+  try {
+    // A API retorna um array de categorias diretamente
+    const response = await api.get<Category[]>('/v1/category', { params });
+    console.log('getCategories - resposta raw:', response.data);
+
+    // Mapeamos para o formato esperado pelo frontend
+    const formattedResponse: CategoriesResponse = {
+      data: Array.isArray(response.data) ? response.data : [],
+      total: Array.isArray(response.data) ? response.data.length : 0,
+      page: params.page || 1,
+      itemPerPage: params.itemPerPage || 10,
+    };
+
+    console.log('getCategories - resposta formatada:', formattedResponse);
+    return formattedResponse;
+  } catch (error) {
+    console.error('getCategories - erro:', error);
+    throw error;
+  }
 };
 
 // Obter lista de categorias com cache
-export const getCachedCategories = async (params: Omit<SearchParams, 'category'>): Promise<CategoriesResponse> => {
+export const getCachedCategories = async (
+  params: Omit<SearchParams, 'category'>,
+): Promise<CategoriesResponse> => {
   return await cachedGet<CategoriesResponse>('/v1/category', params);
 };
 
@@ -34,4 +56,4 @@ export const createCategory = async (params: CreateCategoryParams): Promise<Cate
   // Limpa o cache de categorias após criar uma nova
   clearCache('/v1/category');
   return response.data;
-}; 
+};
