@@ -11,9 +11,6 @@ export interface IngredientsState {
   items: Ingredient[];
   loading: boolean;
   error: string | null;
-  total: number;
-  page: number;
-  itemPerPage: number;
   filter: {
     category: string | null;
     search: string;
@@ -26,17 +23,12 @@ const initialState: IngredientsState = {
   items: [],
   loading: false,
   error: null,
-  total: 0,
-  page: 1,
-  itemPerPage: 12,
   filter: {
     category: null,
     search: '',
   },
   selectedIngredient: null,
 };
-
-console.log('initialState', initialState);
 
 // Slice de ingredientes
 const ingredientsSlice = createSlice({
@@ -52,28 +44,11 @@ const ingredientsSlice = createSlice({
       state.loading = false;
       state.error = null;
       state.items = action.payload.data;
-      state.total = action.payload.total;
-      state.page = action.payload.page;
-      state.itemPerPage = action.payload.itemPerPage;
     },
     fetchIngredientsFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
       state.error = action.payload;
       state.items = [];
-    },
-
-    // Obter ingrediente por ID
-    fetchIngredientByIdRequest: (state, _action: PayloadAction<string>) => {
-      state.loading = true;
-      state.error = null;
-    },
-    fetchIngredientByIdSuccess: (state, action: PayloadAction<Ingredient>) => {
-      state.loading = false;
-      state.selectedIngredient = action.payload;
-    },
-    fetchIngredientByIdFailure: (state, action: PayloadAction<string>) => {
-      state.loading = false;
-      state.error = action.payload;
     },
 
     // Criar ingrediente
@@ -84,7 +59,6 @@ const ingredientsSlice = createSlice({
     createIngredientSuccess: (state, action: PayloadAction<Ingredient>) => {
       state.loading = false;
       state.items = [action.payload, ...state.items];
-      state.total += 1;
     },
     createIngredientFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
@@ -92,16 +66,8 @@ const ingredientsSlice = createSlice({
     },
 
     // Atualizar filtros
-    setSearchFilter: (state, action: PayloadAction<string>) => {
-      state.filter.search = action.payload;
-      state.page = 1;
-    },
     setCategoryFilter: (state, action: PayloadAction<string | null>) => {
       state.filter.category = action.payload;
-      state.page = 1;
-    },
-    setPage: (state, action: PayloadAction<number>) => {
-      state.page = action.payload;
     },
   },
 });
@@ -111,15 +77,10 @@ export const {
   fetchIngredientsRequest,
   fetchIngredientsSuccess,
   fetchIngredientsFailure,
-  fetchIngredientByIdRequest,
-  fetchIngredientByIdSuccess,
-  fetchIngredientByIdFailure,
   createIngredientRequest,
   createIngredientSuccess,
   createIngredientFailure,
-  setSearchFilter,
   setCategoryFilter,
-  setPage,
 } = ingredientsSlice.actions;
 
 // Exporta reducer

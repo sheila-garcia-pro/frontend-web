@@ -6,6 +6,10 @@ import {
   SearchParams,
 } from '../../types/ingredients';
 
+type QueryParams = {
+  [key: string]: number | string | undefined;
+};
+
 /**
  * Cria uma chave de cache consistente para os parâmetros de busca
  * @param params Parâmetros de busca
@@ -29,8 +33,17 @@ const createCacheKey = (params: SearchParams): string => {
 
 // Obter lista de ingredientes com paginação e filtros
 export const getIngredients = async (params: SearchParams): Promise<IngredientsResponse> => {
-  const response = await api.get<IngredientsResponse>('/v1/users/me/ingredient', { params });
-  console.log('getIngredients - parâmetros:', params);
+  // Remove parâmetros vazios ou nulos
+  const queryParams = Object.entries(params).reduce((acc, [key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      acc[key] = value;
+    }
+    return acc;
+  }, {} as QueryParams);
+
+  const response = await api.get<IngredientsResponse>('/v1/users/me/ingredient', {
+    params: queryParams,
+  });
   return response.data;
 };
 
@@ -38,16 +51,21 @@ export const getIngredients = async (params: SearchParams): Promise<IngredientsR
 export const getCachedIngredients = async (params: SearchParams): Promise<IngredientsResponse> => {
   // Usa a função auxiliar para criar uma chave de cache consistente
   const cacheKey = createCacheKey(params);
-  console.log('getCachedIngredients - parâmetros:', params);
-  console.log('getCachedIngredients - chave de cache:', cacheKey);
 
   try {
+    // Remove parâmetros vazios ou nulos para a chamada à API
+    const queryParams = Object.entries(params).reduce((acc, [key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as QueryParams);
+
     const response = await cachedGet<IngredientsResponse>(
       '/v1/users/me/ingredient',
-      params,
+      queryParams,
       cacheKey,
     );
-    console.log('getCachedIngredients - resposta:', response);
     return response;
   } catch (error) {
     console.error('getCachedIngredients - erro:', error);
@@ -55,18 +73,15 @@ export const getCachedIngredients = async (params: SearchParams): Promise<Ingred
   }
 };
 
-// Obter ingrediente por ID
+// Obter ingrediente por ID (sem cache)
 export const getIngredientById = async (id: string): Promise<Ingredient> => {
   const response = await api.get<Ingredient>(`/v1/users/me/ingredient/${id}`);
-  console.log('getIngredientById - ID:', id);
   return response.data;
 };
 
 // Obter ingrediente por ID (com cache)
 export const getCachedIngredientById = async (id: string): Promise<Ingredient> => {
-  console.log('getCachedIngredientById - ID:', id);
   const response = await cachedGet<Ingredient>(`/v1/users/me/ingredient/${id}`);
-  console.log('getCachedIngredientById - resposta:', response);
   return response;
 };
 
@@ -75,7 +90,6 @@ export const createIngredient = async (params: CreateIngredientParams): Promise<
   const response = await api.post<Ingredient>('/v1/users/me/ingredient', params);
   // Limpa o cache de ingredientes após criar um novo
   clearCache('/v1/users/me/ingredient');
-  console.log('createIngredient - parâmetros:', params);
   return response.data;
 };
 
@@ -95,7 +109,6 @@ export const updateIngredient = async (
 export const deleteIngredient = async (id: string): Promise<void> => {
   await api.delete(`/v1/users/me/ingredient/${id}`);
   // Limpa o cache de ingredientes e do ingrediente específico
-  console.log('deleteIngredient - ID:', id);
   clearCache('/v1/users/me/ingredient');
   clearCache(`/v1/users/me/ingredient/${id}`);
 };

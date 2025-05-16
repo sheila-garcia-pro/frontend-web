@@ -47,6 +47,6 @@ export interface CategoriesResponse {
 export interface SearchParams {
   page: number;
   itemPerPage: number;
-  category?: string;
+  category?: string | null;
   search?: string;
 }

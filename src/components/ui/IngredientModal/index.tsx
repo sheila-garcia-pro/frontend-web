@@ -42,13 +42,22 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
     image: '',
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // Carregar categorias quando o modal for aberto
   useEffect(() => {
-    if (open && (!categories || categories.length === 0)) {
-      dispatch(fetchCategoriesRequest({ page: 1, itemPerPage: 100 }));
+    if (open) {
+      console.log('Carregando categorias para o modal...');
+      dispatch(
+        fetchCategoriesRequest({
+          page: 1,
+          itemPerPage: 100,
+          search: '',
+        }),
+      );
     }
-  }, [open, categories, dispatch]);
+  }, [open, dispatch]);
 
   // Manipuladores de eventos
   const handleChange = (
@@ -57,10 +66,41 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
     const { name, value } = e.target;
     if (name) {
       setFormData((prev) => ({ ...prev, [name]: value }));
+      console.log(`Campo ${name} atualizado para:`, value);
 
       // Limpar erro quando o usuário começa a digitar
       if (errors[name]) {
         setErrors((prev) => ({ ...prev, [name]: '' }));
+      }
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      try {
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('https://sgpro-api.squareweb.app/v1/update/image', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (data.url) {
+          setFormData((prev) => ({ ...prev, image: data.url }));
+          setErrors((prev) => ({ ...prev, image: '' }));
+        } else {
+          setErrors((prev) => ({ ...prev, image: 'Erro ao fazer upload da imagem' }));
+        }
+      } catch (error) {
+        setErrors((prev) => ({ ...prev, image: 'Erro ao fazer upload da imagem' }));
+      } finally {
+        setUploading(false);
       }
     }
   };
@@ -76,8 +116,8 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
       newErrors.category = 'A categoria é obrigatória';
     }
 
-    if (!formData.image.trim()) {
-      newErrors.image = 'A URL da imagem é obrigatória';
+    if (!formData.image) {
+      newErrors.image = 'A imagem é obrigatória';
     }
 
     setErrors(newErrors);
@@ -94,6 +134,7 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
         category: '',
         image: '',
       });
+      setSelectedFile(null);
     }
   };
 
@@ -162,32 +203,51 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
               )}
             </FormControl>
 
-            <TextField
-              label="URL da Imagem"
-              name="image"
-              value={formData.image}
-              onChange={handleChange}
-              fullWidth
-              required
-              variant="outlined"
-              error={!!errors.image}
-              helperText={errors.image}
-              disabled={ingredientLoading}
-              placeholder="https://exemplo.com/imagem.jpg"
-            />
+            <FormControl fullWidth error={!!errors.image}>
+              <Button
+                variant="outlined"
+                component="label"
+                disabled={uploading || ingredientLoading}
+                startIcon={uploading ? <CircularProgress size={20} /> : null}
+              >
+                {uploading ? 'Enviando...' : 'Escolher Imagem'}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  disabled={uploading || ingredientLoading}
+                />
+              </Button>
+              {selectedFile && (
+                <Typography variant="caption" sx={{ mt: 1 }}>
+                  Arquivo selecionado: {selectedFile.name}
+                </Typography>
+              )}
+              {formData.image && (
+                <Typography variant="caption" sx={{ mt: 1, color: 'success.main' }}>
+                  Upload realizado com sucesso!
+                </Typography>
+              )}
+              {errors.image && (
+                <Typography variant="caption" color="error" sx={{ mt: 1 }}>
+                  {errors.image}
+                </Typography>
+              )}
+            </FormControl>
           </Stack>
         </Box>
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} color="inherit" disabled={ingredientLoading}>
+        <Button onClick={onClose} color="inherit" disabled={ingredientLoading || uploading}>
           Cancelar
         </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
           color="primary"
-          disabled={ingredientLoading}
+          disabled={ingredientLoading || uploading}
           startIcon={ingredientLoading ? <CircularProgress size={20} /> : null}
         >
           {ingredientLoading ? 'Salvando...' : 'Salvar'}
