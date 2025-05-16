@@ -1,9 +1,9 @@
 import api, { cachedGet, clearCache } from './index';
-import { 
-  Ingredient, 
-  CreateIngredientParams, 
-  IngredientsResponse, 
-  SearchParams 
+import {
+  Ingredient,
+  CreateIngredientParams,
+  IngredientsResponse,
+  SearchParams,
 } from '../../types/ingredients';
 
 /**
@@ -19,7 +19,7 @@ const createCacheKey = (params: SearchParams): string => {
     category: params.category || '',
     search: params.search || '',
   };
-  
+
   // Cria uma chave ordenada para evitar diferenças por ordem dos parâmetros
   return Object.entries(normalizedParams)
     .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
@@ -30,6 +30,7 @@ const createCacheKey = (params: SearchParams): string => {
 // Obter lista de ingredientes com paginação e filtros
 export const getIngredients = async (params: SearchParams): Promise<IngredientsResponse> => {
   const response = await api.get<IngredientsResponse>('/v1/users/me/ingredient', { params });
+  console.log('getIngredients - parâmetros:', params);
   return response.data;
 };
 
@@ -37,18 +38,36 @@ export const getIngredients = async (params: SearchParams): Promise<IngredientsR
 export const getCachedIngredients = async (params: SearchParams): Promise<IngredientsResponse> => {
   // Usa a função auxiliar para criar uma chave de cache consistente
   const cacheKey = createCacheKey(params);
-  return await cachedGet<IngredientsResponse>('/v1/users/me/ingredient', params, cacheKey);
+  console.log('getCachedIngredients - parâmetros:', params);
+  console.log('getCachedIngredients - chave de cache:', cacheKey);
+
+  try {
+    const response = await cachedGet<IngredientsResponse>(
+      '/v1/users/me/ingredient',
+      params,
+      cacheKey,
+    );
+    console.log('getCachedIngredients - resposta:', response);
+    return response;
+  } catch (error) {
+    console.error('getCachedIngredients - erro:', error);
+    throw error;
+  }
 };
 
 // Obter ingrediente por ID
 export const getIngredientById = async (id: string): Promise<Ingredient> => {
   const response = await api.get<Ingredient>(`/v1/users/me/ingredient/${id}`);
+  console.log('getIngredientById - ID:', id);
   return response.data;
 };
 
 // Obter ingrediente por ID (com cache)
 export const getCachedIngredientById = async (id: string): Promise<Ingredient> => {
-  return await cachedGet<Ingredient>(`/v1/users/me/ingredient/${id}`);
+  console.log('getCachedIngredientById - ID:', id);
+  const response = await cachedGet<Ingredient>(`/v1/users/me/ingredient/${id}`);
+  console.log('getCachedIngredientById - resposta:', response);
+  return response;
 };
 
 // Criar um novo ingrediente
@@ -56,11 +75,15 @@ export const createIngredient = async (params: CreateIngredientParams): Promise<
   const response = await api.post<Ingredient>('/v1/users/me/ingredient', params);
   // Limpa o cache de ingredientes após criar um novo
   clearCache('/v1/users/me/ingredient');
+  console.log('createIngredient - parâmetros:', params);
   return response.data;
 };
 
 // Atualizar um ingrediente existente
-export const updateIngredient = async (id: string, params: Partial<CreateIngredientParams>): Promise<Ingredient> => {
+export const updateIngredient = async (
+  id: string,
+  params: Partial<CreateIngredientParams>,
+): Promise<Ingredient> => {
   const response = await api.put<Ingredient>(`/v1/users/me/ingredient/${id}`, params);
   // Limpa o cache de ingredientes e do ingrediente específico
   clearCache('/v1/users/me/ingredient');
@@ -72,6 +95,7 @@ export const updateIngredient = async (id: string, params: Partial<CreateIngredi
 export const deleteIngredient = async (id: string): Promise<void> => {
   await api.delete(`/v1/users/me/ingredient/${id}`);
   // Limpa o cache de ingredientes e do ingrediente específico
+  console.log('deleteIngredient - ID:', id);
   clearCache('/v1/users/me/ingredient');
   clearCache(`/v1/users/me/ingredient/${id}`);
-}; 
+};

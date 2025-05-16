@@ -2,14 +2,14 @@
 export interface Ingredient {
   _id: string;
   name: string;
-  categoryId: string;
+  category: string;
   image: string;
 }
 
 // Interface para criação de ingrediente
 export interface CreateIngredientParams {
   name: string;
-  categoryId: string;
+  category: string;
   image: string;
 }
 
@@ -49,4 +49,4 @@ export interface SearchParams {
   itemPerPage: number;
   category?: string;
   search?: string;
-} 
+}

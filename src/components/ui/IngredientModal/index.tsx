@@ -1,11 +1,11 @@
-import React, { useState, useEffect, ElementType } from 'react';
-import { 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions, 
-  TextField, 
-  Button, 
+import React, { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
   MenuItem,
   FormControl,
   InputLabel,
@@ -13,8 +13,8 @@ import {
   SelectChangeEvent,
   CircularProgress,
   Typography,
-  Grid,
-  Box
+  Stack,
+  Box,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { createIngredientRequest } from '../../../store/slices/ingredientsSlice';
@@ -30,79 +30,82 @@ interface IngredientModalProps {
 const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
   // Redux
   const dispatch = useDispatch();
-  const { items: categories, loading: categoriesLoading } = useSelector((state: RootState) => state.categories);
+  const { items: categories, loading: categoriesLoading } = useSelector(
+    (state: RootState) => state.categories,
+  );
   const { loading: ingredientLoading } = useSelector((state: RootState) => state.ingredients);
-  
+
   // Estado local do formulário
   const [formData, setFormData] = useState<CreateIngredientParams>({
     name: '',
-    categoryId: '',
-    image: ''
+    category: '',
+    image: '',
   });
-  const [errors, setErrors] = useState<{[key: string]: string}>({});
-  
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
   // Carregar categorias quando o modal for aberto
   useEffect(() => {
-    if (open && categories.length === 0) {
+    if (open && (!categories || categories.length === 0)) {
       dispatch(fetchCategoriesRequest({ page: 1, itemPerPage: 100 }));
     }
-  }, [open, categories.length, dispatch]);
-  
+  }, [open, categories, dispatch]);
+
   // Manipuladores de eventos
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }> | SelectChangeEvent) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }> | SelectChangeEvent,
+  ) => {
     const { name, value } = e.target;
     if (name) {
-      setFormData(prev => ({ ...prev, [name]: value }));
-      
+      setFormData((prev) => ({ ...prev, [name]: value }));
+
       // Limpar erro quando o usuário começa a digitar
       if (errors[name]) {
-        setErrors(prev => ({ ...prev, [name]: '' }));
+        setErrors((prev) => ({ ...prev, [name]: '' }));
       }
     }
   };
-  
+
   const validate = (): boolean => {
-    const newErrors: {[key: string]: string} = {};
-    
+    const newErrors: { [key: string]: string } = {};
+
     if (!formData.name.trim()) {
       newErrors.name = 'O nome é obrigatório';
     }
-    
-    if (!formData.categoryId) {
-      newErrors.categoryId = 'A categoria é obrigatória';
+
+    if (!formData.category) {
+      newErrors.category = 'A categoria é obrigatória';
     }
-    
+
     if (!formData.image.trim()) {
       newErrors.image = 'A URL da imagem é obrigatória';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
+
   const handleSubmit = () => {
     if (validate()) {
       dispatch(createIngredientRequest(formData));
-      // Fechar o modal apenas após o sucesso (implementado na saga)
       onClose();
       // Resetar o formulário
       setFormData({
         name: '',
-        categoryId: '',
-        image: ''
+        category: '',
+        image: '',
       });
     }
   };
-  
+
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{ 
+      PaperProps={{
         elevation: 5,
-        sx: { borderRadius: 2 }
+        sx: { borderRadius: 2 },
       }}
     >
       <DialogTitle sx={{ pb: 1 }}>
@@ -110,87 +113,79 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
           Novo Ingrediente
         </Typography>
       </DialogTitle>
-      
+
       <DialogContent dividers>
         <Box sx={{ py: 1 }}>
-          <Grid container spacing={3}>
-            <Grid item xs={12} component={'div' as ElementType}>
-              <TextField
-                label="Nome do Ingrediente"
-                name="name"
-                value={formData.name}
+          <Stack spacing={3}>
+            <TextField
+              label="Nome do Ingrediente"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              fullWidth
+              required
+              variant="outlined"
+              error={!!errors.name}
+              helperText={errors.name}
+              autoFocus
+              disabled={ingredientLoading}
+            />
+
+            <FormControl fullWidth required error={!!errors.category}>
+              <InputLabel id="category-label">Categoria</InputLabel>
+              <Select
+                labelId="category-label"
+                name="category"
+                value={formData.category}
                 onChange={handleChange}
-                fullWidth
-                required
-                variant="outlined"
-                error={!!errors.name}
-                helperText={errors.name}
-                autoFocus
-                disabled={ingredientLoading}
-              />
-            </Grid>
-            
-            <Grid item xs={12} component={'div' as ElementType}>
-              <FormControl fullWidth required error={!!errors.categoryId}>
-                <InputLabel id="category-label">Categoria</InputLabel>
-                <Select
-                  labelId="category-label"
-                  name="categoryId"
-                  value={formData.categoryId}
-                  onChange={handleChange as (event: SelectChangeEvent<string>, child: React.ReactNode) => void}
-                  label="Categoria"
-                  disabled={categoriesLoading || ingredientLoading}
-                >
-                  {categoriesLoading ? (
-                    <MenuItem value="">
-                      <CircularProgress size={20} />
+                label="Categoria"
+                disabled={categoriesLoading || ingredientLoading}
+              >
+                {categoriesLoading ? (
+                  <MenuItem value="">
+                    <CircularProgress size={20} />
+                  </MenuItem>
+                ) : categories && categories.length > 0 ? (
+                  categories.map((category) => (
+                    <MenuItem key={category._id} value={category.name}>
+                      {category.name}
                     </MenuItem>
-                  ) : (
-                    categories.map(category => (
-                      <MenuItem key={category._id} value={category._id}>
-                        {category.name}
-                      </MenuItem>
-                    ))
-                  )}
-                </Select>
-                {errors.categoryId && (
-                  <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1 }}>
-                    {errors.categoryId}
-                  </Typography>
+                  ))
+                ) : (
+                  <MenuItem value="">Nenhuma categoria disponível</MenuItem>
                 )}
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12} component={'div' as ElementType}>
-              <TextField
-                label="URL da Imagem"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
-                fullWidth
-                required
-                variant="outlined"
-                error={!!errors.image}
-                helperText={errors.image}
-                disabled={ingredientLoading}
-                placeholder="https://exemplo.com/imagem.jpg"
-              />
-            </Grid>
-          </Grid>
+              </Select>
+              {errors.category && (
+                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1 }}>
+                  {errors.category}
+                </Typography>
+              )}
+            </FormControl>
+
+            <TextField
+              label="URL da Imagem"
+              name="image"
+              value={formData.image}
+              onChange={handleChange}
+              fullWidth
+              required
+              variant="outlined"
+              error={!!errors.image}
+              helperText={errors.image}
+              disabled={ingredientLoading}
+              placeholder="https://exemplo.com/imagem.jpg"
+            />
+          </Stack>
         </Box>
       </DialogContent>
-      
+
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button 
-          onClick={onClose} 
-          color="inherit"
-          disabled={ingredientLoading}
-        >
+        <Button onClick={onClose} color="inherit" disabled={ingredientLoading}>
           Cancelar
         </Button>
-        <Button 
-          onClick={handleSubmit} 
-          variant="contained" 
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
           color="primary"
           disabled={ingredientLoading}
           startIcon={ingredientLoading ? <CircularProgress size={20} /> : null}
@@ -202,4 +197,4 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
   );
 };
 
-export default IngredientModal; 
+export default IngredientModal;

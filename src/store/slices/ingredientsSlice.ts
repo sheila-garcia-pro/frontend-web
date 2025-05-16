@@ -1,5 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Ingredient, IngredientsResponse, SearchParams } from '../../types/ingredients';
+import {
+  Ingredient,
+  IngredientsResponse,
+  SearchParams,
+  CreateIngredientParams,
+} from '../../types/ingredients';
 
 // Interface do estado
 export interface IngredientsState {
@@ -31,26 +36,21 @@ const initialState: IngredientsState = {
   selectedIngredient: null,
 };
 
+console.log('initialState', initialState);
+
 // Slice de ingredientes
 const ingredientsSlice = createSlice({
   name: 'ingredients',
   initialState,
   reducers: {
     // Obter lista de ingredientes
-    fetchIngredientsRequest: (state, action: PayloadAction<SearchParams>) => {
+    fetchIngredientsRequest: (state, _action: PayloadAction<SearchParams>) => {
       state.loading = true;
       state.error = null;
-      state.page = action.payload.page;
-      state.itemPerPage = action.payload.itemPerPage;
-      if (action.payload.category) {
-        state.filter.category = action.payload.category;
-      }
-      if (action.payload.search) {
-        state.filter.search = action.payload.search;
-      }
     },
     fetchIngredientsSuccess: (state, action: PayloadAction<IngredientsResponse>) => {
       state.loading = false;
+      state.error = null;
       state.items = action.payload.data;
       state.total = action.payload.total;
       state.page = action.payload.page;
@@ -59,10 +59,11 @@ const ingredientsSlice = createSlice({
     fetchIngredientsFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
       state.error = action.payload;
+      state.items = [];
     },
 
     // Obter ingrediente por ID
-    fetchIngredientByIdRequest: (state, action: PayloadAction<string>) => {
+    fetchIngredientByIdRequest: (state, _action: PayloadAction<string>) => {
       state.loading = true;
       state.error = null;
     },
@@ -76,15 +77,13 @@ const ingredientsSlice = createSlice({
     },
 
     // Criar ingrediente
-    createIngredientRequest: (state, action: PayloadAction<any>) => {
+    createIngredientRequest: (state, _action: PayloadAction<CreateIngredientParams>) => {
       state.loading = true;
       state.error = null;
     },
     createIngredientSuccess: (state, action: PayloadAction<Ingredient>) => {
       state.loading = false;
-      // Adicionar o novo ingrediente ao início da lista
       state.items = [action.payload, ...state.items];
-      // Atualizar o total
       state.total += 1;
     },
     createIngredientFailure: (state, action: PayloadAction<string>) => {
@@ -95,12 +94,10 @@ const ingredientsSlice = createSlice({
     // Atualizar filtros
     setSearchFilter: (state, action: PayloadAction<string>) => {
       state.filter.search = action.payload;
-      // Resetar página ao mudar filtro
       state.page = 1;
     },
     setCategoryFilter: (state, action: PayloadAction<string | null>) => {
       state.filter.category = action.payload;
-      // Resetar página ao mudar filtro
       state.page = 1;
     },
     setPage: (state, action: PayloadAction<number>) => {
@@ -126,4 +123,4 @@ export const {
 } = ingredientsSlice.actions;
 
 // Exporta reducer
-export default ingredientsSlice.reducer; 
+export default ingredientsSlice.reducer;

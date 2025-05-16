@@ -17,56 +17,59 @@ import { fetchHomeData } from '@services/dataService';
 import { addNotification } from '@store/slices/uiSlice';
 import { RootState } from '@store/index';
 import useNotification from '@hooks/useNotification';
+import { fetchIngredientsRequest } from '@store/slices/ingredientsSlice';
 
 // Componente da página inicial
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
+  const { items: ingredients } = useSelector((state: RootState) => state.ingredients);
   const notification = useNotification();
 
   // Estados
   const [loading, setLoading] = useState(true);
-  const [ingredientes, setIngredientes] = useState<any[]>([]);
   const [receitas, setReceitas] = useState<any[]>([]);
-  
+
   // Efeito para carregar os dados
   useEffect(() => {
-    // Função para carregar dados
     const loadData = async () => {
       setLoading(true);
       try {
-        // Dados de exemplo
+        // Carregar apenas as receitas, ingredientes virão do Redux
         const response = await fetchHomeData();
-        setIngredientes(response.ingredientes);
         setReceitas(response.receitas);
-        
-        // Notificação de sucesso
-        notification.showSuccess('Dados carregados com sucesso!', {
-          priority: 'low', // Baixa prioridade
-          duration: 3000
-        });
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
-        // Notificação de erro
-        //notification.showError('Erro ao carregar os dados. Tente novamente mais tarde.');
       } finally {
         setLoading(false);
       }
     };
-    
+
     loadData();
-  }, [dispatch, notification]);
-  
+
+    // Carregar ingredientes apenas se ainda não existirem no estado
+    if (ingredients.length === 0) {
+      dispatch(
+        fetchIngredientsRequest({
+          page: 1,
+          itemPerPage: 6,
+          category: undefined,
+          search: undefined,
+        }),
+      );
+    }
+  }, [dispatch, ingredients.length]);
+
   // Função para navegar para diferentes seções
   const handleNavigate = (path: string, feature: string) => {
     navigate(path);
-    
+
     // Se for uma feature em desenvolvimento, mostrar notificação informativa
     if (feature) {
       notification.showInfo(`Bem-vindo à seção "${feature}"`, {
         category: 'navigation', // Agrupar notificações de navegação
-        priority: 'low' // Baixa prioridade
+        priority: 'low', // Baixa prioridade
       });
     }
   };
@@ -75,24 +78,25 @@ const HomePage: React.FC = () => {
     <Container maxWidth="xl">
       <Box sx={{ py: 4 }}>
         {/* Título de boas-vindas */}
-        <Box sx={{ 
-          textAlign: 'center', 
-          mb: 6, 
-          p: 3, 
-          borderRadius: 2,
-          background: (theme) => 
-            `linear-gradient(135deg, ${theme.palette.primary.light}20, ${theme.palette.primary.main}10)`,
-        }}>
+        <Box
+          sx={{
+            textAlign: 'center',
+            mb: 6,
+            p: 3,
+            borderRadius: 2,
+            background: (theme) =>
+              `linear-gradient(135deg, ${theme.palette.primary.light}20, ${theme.palette.primary.main}10)`,
+          }}
+        >
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
-            <Logo 
-              variant="with-text" 
-              size="large" 
-              showText={false}
-              sx={{ mb: 2 }}
-            />
+            <Logo variant="with-text" size="large" showText={false} sx={{ mb: 2 }} />
           </Box>
-          <Typography variant="h6" color="text.secondary" sx={{ maxWidth: '800px', mx: 'auto', mb: 2 }}>
-          DO FOGO AO AÇUCAR
+          <Typography
+            variant="h6"
+            color="text.secondary"
+            sx={{ maxWidth: '800px', mx: 'auto', mb: 2 }}
+          >
+            DO FOGO AO AÇUCAR
           </Typography>
         </Box>
 
@@ -101,26 +105,19 @@ const HomePage: React.FC = () => {
           <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 3, fontWeight: 500 }}>
             🥦 Ingredientes
           </Typography>
-          
+
           {loading ? (
-            <CarouselSkeleton 
-              SkeletonComponent={IngredientSkeleton} 
-              count={6} 
-              itemsPerRow={{ xs: 1, sm: 2, md: 3, lg: 4, xl: 6 }} 
+            <CarouselSkeleton
+              SkeletonComponent={IngredientSkeleton}
+              count={6}
+              itemsPerRow={{ xs: 1, sm: 2, md: 3, lg: 4, xl: 6 }}
             />
           ) : (
             <>
-              {ingredientes.length > 0 ? (
+              {ingredients.length > 0 ? (
                 <Carousel itemsPerPage={{ xs: 1, sm: 2, md: 3, lg: 4, xl: 6 }}>
-                  {ingredientes.map((ingredient) => (
-                    <IngredientCard
-                      key={ingredient.id}
-                      id={ingredient.id}
-                      name={ingredient.name}
-                      image={ingredient.image}
-                      price={ingredient.price}
-                      recipesCount={ingredient.recipesCount}
-                    />
+                  {ingredients.map((ingredient) => (
+                    <IngredientCard key={ingredient._id} ingredient={ingredient} />
                   ))}
                 </Carousel>
               ) : (
@@ -130,10 +127,10 @@ const HomePage: React.FC = () => {
                   </Typography>
                 </Box>
               )}
-              
+
               <Box sx={{ textAlign: 'center', mt: 2 }}>
-                <Button 
-                  variant="outlined" 
+                <Button
+                  variant="outlined"
                   color="primary"
                   component={RouterLink}
                   to="/ingredients"
@@ -153,12 +150,12 @@ const HomePage: React.FC = () => {
           <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 3, fontWeight: 500 }}>
             🍽️ Receitas
           </Typography>
-          
+
           {loading ? (
-            <CarouselSkeleton 
-              SkeletonComponent={RecipeSkeleton} 
-              count={4} 
-              itemsPerRow={{ xs: 1, sm: 2, md: 2, lg: 3, xl: 4 }} 
+            <CarouselSkeleton
+              SkeletonComponent={RecipeSkeleton}
+              count={4}
+              itemsPerRow={{ xs: 1, sm: 2, md: 2, lg: 3, xl: 4 }}
             />
           ) : (
             <>
@@ -182,10 +179,10 @@ const HomePage: React.FC = () => {
                   </Typography>
                 </Box>
               )}
-              
+
               <Box sx={{ textAlign: 'center', mt: 2 }}>
-                <Button 
-                  variant="outlined" 
+                <Button
+                  variant="outlined"
                   color="primary"
                   component={RouterLink}
                   to="/recipes"

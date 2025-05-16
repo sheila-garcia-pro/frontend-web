@@ -17,36 +17,68 @@ import * as ingredientsService from '../../services/api/ingredients';
 import { SearchParams, CreateIngredientParams } from '../../types/ingredients';
 import { RootState } from '../index';
 
-// Função auxiliar para verificar se devemos realmente fazer uma nova requisição
+// Verifica se deve fazer a requisição de ingredientes
 const shouldFetchIngredients = (state: RootState, action: PayloadAction<SearchParams>): boolean => {
-  const { items, loading, filter, page, itemPerPage } = state.ingredients;
+  const { loading } = state.ingredients;
 
-  if (loading) return false;
+  // Se houver uma mudança nos parâmetros, força a requisição
+  const currentParams =
+    state.ingredients.page +
+    ',' +
+    state.ingredients.itemPerPage +
+    ',' +
+    state.ingredients.filter.category +
+    ',' +
+    state.ingredients.filter.search;
 
-  const sameParams =
-    page === action.payload.page &&
-    itemPerPage === action.payload.itemPerPage &&
-    filter.category === (action.payload.category || null) &&
-    filter.search === (action.payload.search || '');
+  const newParams =
+    action.payload.page +
+    ',' +
+    action.payload.itemPerPage +
+    ',' +
+    action.payload.category +
+    ',' +
+    action.payload.search;
 
-  return !(sameParams && items.length > 0);
+  const paramsChanged = currentParams !== newParams;
+
+  // Permite a requisição se não estiver carregando ou se os parâmetros mudaram
+  return !loading || paramsChanged;
 };
 
 // Saga para buscar ingredientes
 function* fetchIngredientsSaga(action: PayloadAction<SearchParams>): SagaIterator {
   try {
     const state: RootState = yield select();
+    console.log('fetchIngredientsSaga - parâmetros:', action.payload);
+
+    // Verifica se deve fazer a requisição
     if (!shouldFetchIngredients(state, action)) {
-      return; // Sai da saga se não for necessário requisitar
+      console.log('fetchIngredientsSaga - requisição ignorada:', {
+        loading: state.ingredients.loading,
+        currentParams: {
+          page: state.ingredients.page,
+          itemPerPage: state.ingredients.itemPerPage,
+          category: state.ingredients.filter.category,
+          search: state.ingredients.filter.search,
+        },
+        newParams: action.payload,
+      });
+      return;
     }
 
-    yield put(setGlobalLoading(true));
-
+    // Usa o serviço de ingredientes com cache para melhor performance
     const response = yield call(ingredientsService.getCachedIngredients, action.payload);
+    console.log('fetchIngredientsSaga - resposta da API:', response);
 
     yield put(fetchIngredientsSuccess(response));
   } catch (error) {
-    yield put(fetchIngredientsFailure(error instanceof Error ? error.message : 'Erro ao carregar ingredientes'));
+    console.error('fetchIngredientsSaga - erro:', error);
+    yield put(
+      fetchIngredientsFailure(
+        error instanceof Error ? error.message : 'Erro ao carregar ingredientes',
+      ),
+    );
   } finally {
     yield put(setGlobalLoading(false));
   }
@@ -56,16 +88,20 @@ function* fetchIngredientsSaga(action: PayloadAction<SearchParams>): SagaIterato
 function* fetchIngredientByIdSaga(action: PayloadAction<string>): SagaIterator {
   try {
     yield put(setGlobalLoading(true));
+    console.log('fetchIngredientByIdSaga - ID:', action.payload);
 
     // Chama o serviço de API COM CACHE
     const response = yield call(ingredientsService.getCachedIngredientById, action.payload);
+    console.log('fetchIngredientByIdSaga - resposta:', response);
 
     // Despacha a ação de sucesso
     yield put(fetchIngredientByIdSuccess(response));
   } catch (error) {
     // Despacha a ação de falha
     yield put(
-      fetchIngredientByIdFailure(error instanceof Error ? error.message : 'Erro ao carregar ingrediente')
+      fetchIngredientByIdFailure(
+        error instanceof Error ? error.message : 'Erro ao carregar ingrediente',
+      ),
     );
 
     // Notificação de erro
@@ -74,7 +110,7 @@ function* fetchIngredientByIdSaga(action: PayloadAction<string>): SagaIterator {
         message: 'Erro ao carregar detalhes do ingrediente.',
         type: 'error',
         duration: 5000,
-      })
+      }),
     );
   } finally {
     yield put(setGlobalLoading(false));
@@ -98,12 +134,12 @@ function* createIngredientSaga(action: PayloadAction<CreateIngredientParams>): S
         message: 'Ingrediente criado com sucesso!',
         type: 'success',
         duration: 4000,
-      })
+      }),
     );
   } catch (error) {
     // Despacha a ação de falha
     yield put(
-      createIngredientFailure(error instanceof Error ? error.message : 'Erro ao criar ingrediente')
+      createIngredientFailure(error instanceof Error ? error.message : 'Erro ao criar ingrediente'),
     );
 
     // Notificação de erro
@@ -112,7 +148,7 @@ function* createIngredientSaga(action: PayloadAction<CreateIngredientParams>): S
         message: 'Erro ao criar ingrediente.',
         type: 'error',
         duration: 5000,
-      })
+      }),
     );
   } finally {
     yield put(setGlobalLoading(false));
@@ -126,4 +162,4 @@ const ingredientsSagas = [
   takeLatest(createIngredientRequest.type, createIngredientSaga),
 ];
 
-export default ingredientsSagas; 
+export default ingredientsSagas;
