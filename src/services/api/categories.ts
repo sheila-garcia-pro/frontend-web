@@ -10,11 +10,9 @@ import {
 export const getCategories = async (
   params: Omit<SearchParams, 'category'>,
 ): Promise<CategoriesResponse> => {
-  console.log('getCategories - parâmetros:', params);
   try {
     // A API retorna um array de categorias diretamente
     const response = await api.get<Category[]>('/v1/category', { params });
-    console.log('getCategories - resposta raw:', response.data);
 
     // Mapeamos para o formato esperado pelo frontend
     const formattedResponse: CategoriesResponse = {
@@ -24,7 +22,6 @@ export const getCategories = async (
       itemPerPage: params.itemPerPage || 10,
     };
 
-    console.log('getCategories - resposta formatada:', formattedResponse);
     return formattedResponse;
   } catch (error) {
     console.error('getCategories - erro:', error);
