@@ -20,11 +20,9 @@ import { SearchParams, CreateCategoryParams, CategoriesResponse } from '../../ty
 function* fetchCategoriesSaga(action: PayloadAction<Omit<SearchParams, 'category'>>): SagaIterator {
   try {
     yield put(setGlobalLoading(true));
-    console.log('fetchCategoriesSaga - iniciando busca com parâmetros:', action.payload);
 
     // Chama o serviço de API que já retorna a resposta formatada
     const response = yield call(categoriesService.getCategories, action.payload);
-    console.log('fetchCategoriesSaga - resposta:', response);
 
     // Despacha a ação de sucesso com a resposta já formatada
     yield put(fetchCategoriesSuccess(response));
@@ -91,6 +89,15 @@ function* createCategorySaga(action: PayloadAction<CreateCategoryParams>): SagaI
 
     // Despacha a ação de sucesso
     yield put(createCategorySuccess(response));
+
+    // Recarregar a lista de categorias após criar uma nova
+    yield put(
+      fetchCategoriesRequest({
+        page: 1,
+        itemPerPage: 100, // Carrega todas as categorias
+        search: '',
+      }),
+    );
 
     // Notificação de sucesso
     yield put(

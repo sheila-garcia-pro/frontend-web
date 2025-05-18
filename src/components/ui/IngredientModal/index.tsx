@@ -48,7 +48,6 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
   // Carregar categorias quando o modal for aberto
   useEffect(() => {
     if (open) {
-      console.log('Carregando categorias para o modal...');
       dispatch(
         fetchCategoriesRequest({
           page: 1,
@@ -66,7 +65,6 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
     const { name, value } = e.target;
     if (name) {
       setFormData((prev) => ({ ...prev, [name]: value }));
-      console.log(`Campo ${name} atualizado para:`, value);
 
       // Limpar erro quando o usuário começa a digitar
       if (errors[name]) {
@@ -83,10 +81,18 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
         setUploading(true);
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('type', 'ingredients');
+
+        const token = localStorage.getItem(
+          process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token',
+        );
 
         const response = await fetch('https://sgpro-api.squareweb.app/v1/update/image', {
           method: 'POST',
           body: formData,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
 
         const data = await response.json();
@@ -95,9 +101,15 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
           setFormData((prev) => ({ ...prev, image: data.url }));
           setErrors((prev) => ({ ...prev, image: '' }));
         } else {
-          setErrors((prev) => ({ ...prev, image: 'Erro ao fazer upload da imagem' }));
+          const errorMessage = data.message
+            ? Array.isArray(data.message)
+              ? data.message[0]
+              : data.message
+            : 'Erro ao fazer upload da imagem';
+          setErrors((prev) => ({ ...prev, image: errorMessage }));
         }
       } catch (error) {
+        console.error('Erro no upload:', error);
         setErrors((prev) => ({ ...prev, image: 'Erro ao fazer upload da imagem' }));
       } finally {
         setUploading(false);

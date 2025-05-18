@@ -41,7 +41,6 @@ const categoriesSlice = createSlice({
       state.total = action.payload.total || action.payload.data.length;
       state.page = action.payload.page;
       state.itemPerPage = action.payload.itemPerPage;
-      console.log('categoriesSlice - dados recebidos:', action.payload);
     },
     fetchCategoriesFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
