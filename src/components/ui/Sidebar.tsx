@@ -16,11 +16,11 @@ import { styled, useTheme, Theme } from '@mui/material/styles';
 import {
   Dashboard as DashboardIcon,
   Person as PersonIcon,
-  Settings as SettingsIcon,
   ChevronLeft as ChevronLeftIcon,
   Restaurant as RestaurantIcon,
   Kitchen as KitchenIcon,
   Home as HomeIcon,
+  LocalShipping as SuppliersIcon,
 } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@store/index';
@@ -71,12 +71,20 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
       onClose={handleDrawerToggle}
     >
       <DrawerHeader>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', px: 1 }}>
-          <Logo 
-            variant="round" 
-            size="medium" 
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%',
+            px: 1,
+          }}
+        >
+          <Logo
+            variant="round"
+            size="medium"
             showText={false}
-            sx={{ 
+            sx={{
               justifyContent: 'flex-start',
             }}
           />
@@ -116,6 +124,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
 
         {isAuthenticated && (
           <>
+            {' '}
             <ListItem disablePadding>
               <ListItemButton onClick={() => handleNavigation('/profile')}>
                 <ListItemIcon>
@@ -125,11 +134,11 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
               </ListItemButton>
             </ListItem>
             <ListItem disablePadding>
-              <ListItemButton onClick={() => handleNavigation('/settings')}>
+              <ListItemButton onClick={() => handleNavigation('/suppliers')}>
                 <ListItemIcon>
-                  <SettingsIcon />
+                  <SuppliersIcon />
                 </ListItemIcon>
-                <ListItemText primary="Configurações" />
+                <ListItemText primary="Fornecedores" />
               </ListItemButton>
             </ListItem>
           </>

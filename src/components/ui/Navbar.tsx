@@ -20,7 +20,6 @@ import {
   AccountCircle,
   Brightness4 as DarkModeIcon,
   Brightness7 as LightModeIcon,
-  Settings as SettingsIcon,
   ExitToApp as LogoutIcon,
 } from '@mui/icons-material';
 import { RootState } from '@store/index';
@@ -73,73 +72,74 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
           duration: muiTheme.transitions.duration.leavingScreen,
         }),
         zIndex: muiTheme.zIndex.drawer + 1,
-        boxShadow: mode === 'light' 
-          ? '0px 2px 8px rgba(0, 0, 0, 0.15)' 
-          : '0px 2px 12px rgba(0, 0, 0, 0.3)',
-        borderBottom: mode === 'light'
-          ? '1px solid rgba(58, 69, 52, 0.12)'
-          : '1px solid rgba(232, 237, 170, 0.2)',
+        boxShadow:
+          mode === 'light' ? '0px 2px 8px rgba(0, 0, 0, 0.15)' : '0px 2px 12px rgba(0, 0, 0, 0.3)',
+        borderBottom:
+          mode === 'light'
+            ? '1px solid rgba(58, 69, 52, 0.12)'
+            : '1px solid rgba(232, 237, 170, 0.2)',
       }}
     >
-      <Toolbar sx={{ height: '68px' }}> {/* Altura aumentada para melhor aparência */}
+      <Toolbar sx={{ height: '120px' }}>
+        {' '}
+        {/* Altura aumentada para melhor aparência */}
         {/* Botão de menu */}
         <IconButton
           color="inherit"
           aria-label="open drawer"
           edge="start"
           onClick={handleDrawerToggle}
-          sx={{ 
+          sx={{
             mr: 2,
             borderRadius: '8px', // Borda mais arredondada
             '&:hover': {
-              backgroundColor: mode === 'light' 
-                ? 'rgba(245, 243, 231, 0.2)' 
-                : 'rgba(232, 237, 170, 0.2)'
-            }
+              backgroundColor:
+                mode === 'light' ? 'rgba(245, 243, 231, 0.2)' : 'rgba(232, 237, 170, 0.2)',
+            },
           }}
         >
           <MenuIcon />
         </IconButton>
-
         {/* Logo */}
         <Box sx={{ flexGrow: 1 }}>
-          <Logo 
-            variant="with-text" 
-            size="medium" 
+          {' '}
+          <Logo
+            variant="with-text"
+            size="medium"
             showText={false}
             to="/"
+            isHeader={true}
             textColor={mode === 'light' ? '#F5F3E7' : '#FFFFFF'}
-            sx={{ 
+            sx={{
               display: 'flex',
               alignItems: 'center',
               '& img': {
-                height: '50px', // Ajuste específico para o navbar
+                height: '140px', // Aumentado ainda mais o tamanho do logo no navbar
               },
               '& .MuiTypography-root': {
                 fontWeight: 600,
                 letterSpacing: '0.5px',
-                textShadow: mode === 'light' 
-                  ? '0px 1px 1px rgba(0, 0, 0, 0.2)' 
-                  : '0px 1px 2px rgba(0, 0, 0, 0.3)',
-              }
-            }} 
+                textShadow:
+                  mode === 'light'
+                    ? '0px 1px 1px rgba(0, 0, 0, 0.2)'
+                    : '0px 1px 2px rgba(0, 0, 0, 0.3)',
+              },
+            }}
           />
         </Box>
-
         {/* Ações da direita */}
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           {/* Botão de tema */}
           <Tooltip title={`Mudar para tema ${mode === 'light' ? 'escuro' : 'claro'}`}>
-            <IconButton 
-              color="inherit" 
+            <IconButton
+              color="inherit"
               onClick={toggleTheme}
-              sx={{ 
+              sx={{
                 borderRadius: '8px', // Borda mais arredondada
                 '&:hover': {
-                  backgroundColor: mode === 'light' 
-                    ? 'rgba(245, 243, 231, 0.2)' 
-                    : 'rgba(232, 237, 170, 0.2)'
-                }
+                  backgroundColor:
+                    mode === 'light' ? 'rgba(245, 243, 231, 0.2)' : 'rgba(232, 237, 170, 0.2)',
+                },
               }}
             >
               {mode === 'light' ? <DarkModeIcon /> : <LightModeIcon />}
@@ -148,25 +148,24 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
 
           {/* Botão de notificações */}
           <Tooltip title="Notificações">
-            <IconButton 
+            <IconButton
               color="inherit"
-              sx={{ 
+              sx={{
                 borderRadius: '8px', // Borda mais arredondada
                 '&:hover': {
-                  backgroundColor: mode === 'light' 
-                    ? 'rgba(245, 243, 231, 0.2)' 
-                    : 'rgba(232, 237, 170, 0.2)'
-                }
+                  backgroundColor:
+                    mode === 'light' ? 'rgba(245, 243, 231, 0.2)' : 'rgba(232, 237, 170, 0.2)',
+                },
               }}
             >
-              <Badge 
-                badgeContent={4} 
+              <Badge
+                badgeContent={4}
                 color="secondary" // Usa a cor secundária para o badge
                 sx={{
                   '& .MuiBadge-badge': {
                     fontWeight: 'bold',
                     boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.2)',
-                  }
+                  },
                 }}
               >
                 <NotificationsIcon />
@@ -177,32 +176,38 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
           {/* Menu de usuário */}
           <Box sx={{ ml: 1 }}>
             <Tooltip title="Opções da conta">
-              <IconButton 
-                onClick={handleMenu} 
-                color="inherit" 
-                size="small" 
-                sx={{ 
-                  p: 0, 
+              <IconButton
+                onClick={handleMenu}
+                color="inherit"
+                size="small"
+                sx={{
+                  p: 0,
                   ml: 1,
-                  border: mode === 'light' 
-                    ? '2px solid rgba(245, 243, 231, 0.6)' 
-                    : '2px solid rgba(232, 237, 170, 0.4)',
+                  border:
+                    mode === 'light'
+                      ? '2px solid rgba(245, 243, 231, 0.6)'
+                      : '2px solid rgba(232, 237, 170, 0.4)',
                   boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.2)',
                   transition: 'transform 0.2s ease-in-out, border 0.2s ease-in-out',
                   '&:hover': {
                     transform: 'scale(1.05)',
-                    border: mode === 'light' 
-                      ? '2px solid rgba(245, 243, 231, 0.9)' 
-                      : '2px solid rgba(232, 237, 170, 0.7)',
-                  }
+                    border:
+                      mode === 'light'
+                        ? '2px solid rgba(245, 243, 231, 0.9)'
+                        : '2px solid rgba(232, 237, 170, 0.7)',
+                  },
                 }}
               >
                 {user?.name ? (
-                  <Avatar alt={user.name} src="/static/images/avatar/1.jpg" sx={{ 
-                    bgcolor: mode === 'light' ? '#3A4534' : '#E8EDAA',
-                    color: mode === 'light' ? '#F5F3E7' : '#23291C',
-                    fontWeight: 'bold'
-                  }}>
+                  <Avatar
+                    alt={user.name}
+                    src="/static/images/avatar/1.jpg"
+                    sx={{
+                      bgcolor: mode === 'light' ? '#3A4534' : '#E8EDAA',
+                      color: mode === 'light' ? '#F5F3E7' : '#23291C',
+                      fontWeight: 'bold',
+                    }}
+                  >
                     {user.name.charAt(0)}
                   </Avatar>
                 ) : (
@@ -228,28 +233,26 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
                 sx: {
                   borderRadius: '12px', // Menu com bordas mais arredondadas
                   mt: 1.5,
-                  boxShadow: mode === 'light' 
-                    ? '0px 4px 12px rgba(58, 69, 52, 0.15)' 
-                    : '0px 4px 12px rgba(0, 0, 0, 0.4)',
-                  border: mode === 'light' 
-                    ? 'none' 
-                    : '1px solid rgba(232, 237, 170, 0.15)',
-                }
+                  boxShadow:
+                    mode === 'light'
+                      ? '0px 4px 12px rgba(58, 69, 52, 0.15)'
+                      : '0px 4px 12px rgba(0, 0, 0, 0.4)',
+                  border: mode === 'light' ? 'none' : '1px solid rgba(232, 237, 170, 0.15)',
+                },
               }}
             >
+              {' '}
               <MenuItem component={RouterLink} to="/profile" onClick={handleCloseMenu}>
-                <Avatar sx={{ 
-                  width: 24, 
-                  height: 24, 
-                  mr: 1,
-                  bgcolor: mode === 'light' ? '#3A4534' : '#E8EDAA',
-                  color: mode === 'light' ? '#F5F3E7' : '#23291C',
-                }} />
+                <Avatar
+                  sx={{
+                    width: 24,
+                    height: 24,
+                    mr: 1,
+                    bgcolor: mode === 'light' ? '#3A4534' : '#E8EDAA',
+                    color: mode === 'light' ? '#F5F3E7' : '#23291C',
+                  }}
+                />
                 Perfil
-              </MenuItem>
-              <MenuItem component={RouterLink} to="/settings" onClick={handleCloseMenu}>
-                <SettingsIcon fontSize="small" sx={{ mr: 1 }} />
-                Configurações
               </MenuItem>
               <MenuItem onClick={handleLogout}>
                 <LogoutIcon fontSize="small" sx={{ mr: 1 }} />

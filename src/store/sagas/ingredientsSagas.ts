@@ -1,4 +1,4 @@
-import { call, put, takeLatest, delay } from 'redux-saga/effects';
+import { call, put, takeLatest } from 'redux-saga/effects';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { SagaIterator } from 'redux-saga';
 import {
@@ -52,44 +52,25 @@ export function* createIngredientSaga(action: PayloadAction<CreateIngredientPara
 
     // Criar o ingrediente
     const response = yield call(ingredientsService.createIngredient, action.payload);
-    
-    yield put(createIngredientSuccess(response));
 
-    // Aguarda 2 segundos para garantir que o servidor processou completamente
-    yield delay(2000);
+    if (response) {
+      yield put(createIngredientSuccess(response));
 
-    // Limpa o cache antes de buscar novos dados
-    clearCache('/v1/users/me/ingredient');
+      const updatedList = yield call(ingredientsService.getIngredients, {
+        page: 1,
+        itemPerPage: 1000,
+      });
 
-    try {
-      // Tentar buscar o novo ingrediente especificamente para confirmar que está disponível
-      yield call(ingredientsService.getIngredientById, response._id);
-      
-      // Se chegou aqui, o ingrediente está disponível, então recarrega a lista
+      yield put(fetchIngredientsSuccess(updatedList));
+
       yield put(
-        fetchIngredientsRequest({
-          page: 1,
-          itemPerPage: 1000,
-        }),
-      );
-    } catch (retryError) {
-      // Se falhou em buscar o novo ingrediente, espera mais um pouco e tenta recarregar a lista
-      yield delay(1000);
-      yield put(
-        fetchIngredientsRequest({
-          page: 1,
-          itemPerPage: 1000,
+        addNotification({
+          message: 'Ingrediente criado com sucesso!',
+          type: 'success',
+          duration: 4000,
         }),
       );
     }
-
-    yield put(
-      addNotification({
-        message: 'Ingrediente criado com sucesso!',
-        type: 'success',
-        duration: 4000,
-      }),
-    );
   } catch (error) {
     yield put(
       createIngredientFailure(error instanceof Error ? error.message : 'Erro ao criar ingrediente'),
