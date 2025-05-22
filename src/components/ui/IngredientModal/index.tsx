@@ -33,9 +33,7 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
   const { items: categories, loading: categoriesLoading } = useSelector(
     (state: RootState) => state.categories,
   );
-  const { loading: ingredientLoading } = useSelector((state: RootState) => state.ingredients);
-
-  // Estado local do formulário
+  const { loading: ingredientLoading } = useSelector((state: RootState) => state.ingredients); // Estado local do formulário
   const [formData, setFormData] = useState<CreateIngredientParams>({
     name: '',
     category: '',
@@ -44,6 +42,17 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // Apenas fecha o modal quando o loading terminar após um submit
+  useEffect(() => {
+    if (isSubmitted && !ingredientLoading) {
+      setFormData({ name: '', category: '', image: '' });
+      setSelectedFile(null);
+      setIsSubmitted(false);
+      onClose();
+    }
+  }, [ingredientLoading, isSubmitted, onClose]);
 
   // Carregar categorias quando o modal for aberto
   useEffect(() => {
@@ -96,7 +105,7 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
         });
 
         const data = await response.json();
-
+        console.log('Resposta da API:', { status: response.status, data });
         if (data.url) {
           setFormData((prev) => ({ ...prev, image: data.url }));
           setErrors((prev) => ({ ...prev, image: '' }));
@@ -135,18 +144,10 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const handleSubmit = () => {
     if (validate()) {
+      setIsSubmitted(true);
       dispatch(createIngredientRequest(formData));
-      onClose();
-      // Resetar o formulário
-      setFormData({
-        name: '',
-        category: '',
-        image: '',
-      });
-      setSelectedFile(null);
     }
   };
 

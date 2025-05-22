@@ -58,7 +58,9 @@ const ingredientsSlice = createSlice({
     },
     createIngredientSuccess: (state, action: PayloadAction<Ingredient>) => {
       state.loading = false;
+      // Adiciona o novo ingrediente no início da lista, preservando a ordem existente
       state.items = [action.payload, ...state.items];
+      state.error = null;
     },
     createIngredientFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
