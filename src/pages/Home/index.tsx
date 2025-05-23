@@ -11,6 +11,7 @@ import IngredientSkeleton from '@components/ui/SkeletonLoading/IngredientSkeleto
 import RecipeSkeleton from '@components/ui/SkeletonLoading/RecipeSkeleton';
 import CarouselSkeleton from '@components/ui/SkeletonLoading/CarouselSkeleton';
 import Logo from '@components/common/Logo';
+import IngredientDetailsModal from '@components/ui/IngredientDetailsModal';
 
 // Serviços e Redux
 import { fetchHomeData } from '@services/dataService';
@@ -29,7 +30,20 @@ const HomePage: React.FC = () => {
 
   // Estados
   const [loading, setLoading] = useState(true);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedIngredientId, setSelectedIngredientId] = useState<string | null>(null);
   const [receitas, setReceitas] = useState<any[]>([]);
+
+  // Manipuladores de eventos
+  const handleViewDetails = (id: string) => {
+    setSelectedIngredientId(id);
+    setDetailsModalOpen(true);
+  };
+
+  const handleCloseDetails = () => {
+    setDetailsModalOpen(false);
+    setSelectedIngredientId(null);
+  };
 
   // Efeito para carregar os dados
   useEffect(() => {
@@ -114,10 +128,15 @@ const HomePage: React.FC = () => {
             />
           ) : (
             <>
+              {' '}
               {ingredients.length > 0 ? (
                 <Carousel itemsPerPage={{ xs: 1, sm: 2, md: 3, lg: 4, xl: 6 }}>
                   {ingredients.map((ingredient) => (
-                    <IngredientCard key={ingredient._id} ingredient={ingredient} />
+                    <IngredientCard
+                      key={ingredient._id}
+                      ingredient={ingredient}
+                      onViewDetails={handleViewDetails}
+                    />
                   ))}
                 </Carousel>
               ) : (
@@ -127,7 +146,6 @@ const HomePage: React.FC = () => {
                   </Typography>
                 </Box>
               )}
-
               <Box sx={{ textAlign: 'center', mt: 2 }}>
                 <Button
                   variant="outlined"
@@ -195,6 +213,13 @@ const HomePage: React.FC = () => {
           )}
         </Box>
       </Box>
+
+      {/* Modal de detalhes do ingrediente */}
+      <IngredientDetailsModal
+        open={detailsModalOpen}
+        onClose={handleCloseDetails}
+        ingredientId={selectedIngredientId}
+      />
     </Container>
   );
 };

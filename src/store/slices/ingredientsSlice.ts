@@ -71,10 +71,72 @@ const ingredientsSlice = createSlice({
     setCategoryFilter: (state, action: PayloadAction<string | null>) => {
       state.filter.category = action.payload;
     },
+
+    // Atualizar ingrediente
+    updateIngredientRequest: (
+      state,
+      _action: PayloadAction<{ id: string; params: Partial<CreateIngredientParams> }>,
+    ) => {
+      state.loading = true;
+      state.error = null;
+    },
+    updateIngredientSuccess: (state, action: PayloadAction<Ingredient>) => {
+      state.loading = false;
+      state.error = null;
+      // Atualiza o ingrediente na lista
+      state.items = state.items.map((item) =>
+        item._id === action.payload._id ? action.payload : item,
+      );
+      // Atualiza o ingrediente selecionado se estiver aberto
+      if (state.selectedIngredient?._id === action.payload._id) {
+        state.selectedIngredient = action.payload;
+      }
+    },
+    updateIngredientFailure: (state, action: PayloadAction<string>) => {
+      state.loading = false;
+      state.error = action.payload;
+    },
+    // Atualizar ingrediente específico
+    fetchIngredientByIdRequest: (state, _action: PayloadAction<string>) => {
+      state.loading = true;
+      state.error = null;
+    },
+    fetchIngredientByIdSuccess: (state, action: PayloadAction<Ingredient>) => {
+      state.loading = false;
+      state.error = null;
+      state.selectedIngredient = action.payload;
+      // Também atualiza o item na lista
+      state.items = state.items.map((item) =>
+        item._id === action.payload._id ? action.payload : item,
+      );
+    },
+    fetchIngredientByIdFailure: (state, action: PayloadAction<string>) => {
+      state.loading = false;
+      state.error = action.payload;
+    },
+
+    // Deletar ingrediente
+    deleteIngredientRequest: (state, _action: PayloadAction<string>) => {
+      state.loading = true;
+      state.error = null;
+    },
+    deleteIngredientSuccess: (state, action: PayloadAction<string>) => {
+      state.loading = false;
+      state.error = null;
+      // Remove o ingrediente da lista
+      state.items = state.items.filter((item) => item._id !== action.payload);
+      // Limpa o ingrediente selecionado se for o mesmo
+      if (state.selectedIngredient?._id === action.payload) {
+        state.selectedIngredient = null;
+      }
+    },
+    deleteIngredientFailure: (state, action: PayloadAction<string>) => {
+      state.loading = false;
+      state.error = action.payload;
+    },
   },
 });
 
-// Exporta actions
 export const {
   fetchIngredientsRequest,
   fetchIngredientsSuccess,
@@ -82,6 +144,15 @@ export const {
   createIngredientRequest,
   createIngredientSuccess,
   createIngredientFailure,
+  updateIngredientRequest,
+  updateIngredientSuccess,
+  updateIngredientFailure,
+  fetchIngredientByIdRequest,
+  fetchIngredientByIdSuccess,
+  fetchIngredientByIdFailure,
+  deleteIngredientRequest,
+  deleteIngredientSuccess,
+  deleteIngredientFailure,
   setCategoryFilter,
 } = ingredientsSlice.actions;
 

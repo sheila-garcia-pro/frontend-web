@@ -1,4 +1,4 @@
-import React, { ElementType } from 'react';
+import React from 'react';
 import {
   Card,
   CardMedia,
@@ -8,17 +8,28 @@ import {
   Box,
   Chip,
   Button,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
-import { Category, Visibility } from '@mui/icons-material';
+import { Category, Visibility, Delete, RestaurantMenu } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 import { Ingredient } from '../../../types/ingredients';
 
 interface IngredientCardProps {
   ingredient: Ingredient;
+  onViewDetails: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
-const IngredientCard: React.FC<IngredientCardProps> = ({ ingredient }) => {
-  const { _id, name, category, image } = ingredient;
+const IngredientCard: React.FC<IngredientCardProps> = ({ ingredient, onViewDetails, onDelete }) => {
+  const { _id, name, category, image, isEdit } = ingredient;
+
+  const handleDelete = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (onDelete) {
+      onDelete(_id);
+    }
+  };
 
   return (
     <Card
@@ -33,16 +44,39 @@ const IngredientCard: React.FC<IngredientCardProps> = ({ ingredient }) => {
           transform: 'translateY(-5px)',
           boxShadow: 6,
         },
+        position: 'relative',
       }}
     >
+      {isEdit && (
+        <Box sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}>
+          <Tooltip title="Deletar ingrediente">
+            <IconButton
+              size="small"
+              onClick={handleDelete}
+              sx={{
+                bgcolor: 'background.paper',
+                '&:hover': {
+                  bgcolor: 'error.main',
+                  color: 'white',
+                },
+              }}
+            >
+              <Delete />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      )}
+
       <CardMedia
         component="div"
         image={image}
         title={`Imagem do ingrediente ${name}`}
         sx={{
           height: 140,
-          backgroundSize: 'cover',
+          backgroundSize: 'contain',
           backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundColor: 'rgba(0, 0, 0, 0.04)', // Fundo neutro para melhor visualização
         }}
       />
       <CardContent sx={{ flexGrow: 1 }}>
@@ -52,7 +86,7 @@ const IngredientCard: React.FC<IngredientCardProps> = ({ ingredient }) => {
 
         <Box sx={{ mt: 1, display: 'flex', alignItems: 'center' }}>
           <Chip
-            icon={<Category fontSize="small" />}
+            icon={<RestaurantMenu fontSize="medium" />}
             label={category}
             size="small"
             color="primary"
@@ -60,12 +94,10 @@ const IngredientCard: React.FC<IngredientCardProps> = ({ ingredient }) => {
           />
         </Box>
       </CardContent>
-
       <CardActions>
         <Button
           size="small"
-          component={RouterLink}
-          to={`/ingredients/${_id}`}
+          onClick={() => onViewDetails(_id)}
           startIcon={<Visibility />}
           sx={{
             ml: 'auto',
