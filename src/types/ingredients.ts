@@ -4,6 +4,7 @@ export interface Ingredient {
   name: string;
   category: string;
   image: string;
+  isEdit?: boolean;
 }
 
 // Interface para criação de ingrediente

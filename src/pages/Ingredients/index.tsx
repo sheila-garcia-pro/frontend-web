@@ -14,7 +14,7 @@ import {
   SelectChangeEvent,
   Container,
   Button,
-  CircularProgress,
+  Chip,
 } from '@mui/material';
 import { Search, Add, Category } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
@@ -25,10 +25,14 @@ import {
   IngredientSkeleton,
   IngredientModal,
   CategoryModal,
+  IngredientDetailsModal,
 } from '../../components/ui';
 
 // Serviços e Redux
-import { fetchIngredientsRequest, setCategoryFilter } from '../../store/slices/ingredientsSlice';
+import {
+  fetchIngredientsRequest,
+  deleteIngredientRequest,
+} from '../../store/slices/ingredientsSlice';
 import { fetchCategoriesRequest } from '../../store/slices/categoriesSlice';
 import { RootState } from '../../store';
 
@@ -47,17 +51,19 @@ const IngredientsPage: React.FC = () => {
   const [sortOption, setSortOption] = useState('name_asc');
   const [modalOpen, setModalOpen] = useState(false);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedIngredientId, setSelectedIngredientId] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [currentTab, setCurrentTab] = useState<'used' | 'all'>('all');
   const ITEMS_PER_PAGE = 12;
 
   // Redux
   const dispatch = useDispatch();
-  const {
-    items: allIngredients,
-    loading: ingredientsLoading,
-    filter,
-  } = useSelector((state: RootState) => state.ingredients);
+  const { items: allIngredients, loading: ingredientsLoading } = useSelector(
+    (state: RootState) => state.ingredients,
+  );
 
   const { items: categories, loading: categoriesLoading } = useSelector(
     (state: RootState) => state.categories,
@@ -74,19 +80,17 @@ const IngredientsPage: React.FC = () => {
 
   // Carregar dados iniciais
   useEffect(() => {
-    // Carregar categorias
     dispatch(
       fetchCategoriesRequest({
         page: 1,
-        itemPerPage: 100, // Carrega todas as categorias
+        itemPerPage: 100,
       }),
     );
 
-    // Carregar ingredientes (apenas uma vez)
     dispatch(
       fetchIngredientsRequest({
         page: 1,
-        itemPerPage: 1000, // Carrega todos os ingredientes
+        itemPerPage: 1000,
       }),
     );
   }, [dispatch]);
@@ -100,13 +104,17 @@ const IngredientsPage: React.FC = () => {
       filtered = filtered.filter((ingredient) =>
         ingredient.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()),
       );
-    } // Aplicar filtro de categoria
-    if (filter.category) {
-      // Encontrar a categoria selecionada
-      const selectedCategory = categories.find((cat) => cat._id === filter.category);
-      if (selectedCategory) {
-        filtered = filtered.filter((ingredient) => ingredient.category === selectedCategory.name);
-      }
+    }
+
+    // Aplicar filtro de categorias selecionadas
+    if (selectedCategories.length > 0) {
+      filtered = filtered.filter((ingredient) => selectedCategories.includes(ingredient.category));
+    }
+
+    // Aplicar filtro de tab (utilizado/geral)
+    if (currentTab === 'used') {
+      // Futuramente implementar lógica de ingredientes utilizados
+      filtered = [];
     }
 
     // Aplicar ordenação
@@ -121,7 +129,7 @@ const IngredientsPage: React.FC = () => {
     });
 
     return filtered;
-  }, [allIngredients, debouncedSearchTerm, filter.category, sortOption, categories]);
+  }, [allIngredients, debouncedSearchTerm, selectedCategories, currentTab, sortOption]);
 
   // Paginação
   const totalFilteredItems = filteredAndSortedIngredients.length;
@@ -132,18 +140,27 @@ const IngredientsPage: React.FC = () => {
   );
 
   // Manipuladores de eventos
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+    setCurrentPage(value);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(event.target.value);
     setCurrentPage(1);
   };
 
-  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
-    setCurrentPage(value);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleCategoryToggle = (categoryName: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(categoryName)
+        ? prev.filter((cat) => cat !== categoryName)
+        : [...prev, categoryName],
+    );
+    setCurrentPage(1);
   };
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: string | null) => {
-    dispatch(setCategoryFilter(newValue));
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: 'used' | 'all') => {
+    setCurrentTab(newValue);
     setCurrentPage(1);
   };
 
@@ -155,6 +172,20 @@ const IngredientsPage: React.FC = () => {
   const handleCloseModal = () => setModalOpen(false);
   const handleOpenCategoryModal = () => setCategoryModalOpen(true);
   const handleCloseCategoryModal = () => setCategoryModalOpen(false);
+
+  const handleViewDetails = (id: string) => {
+    setSelectedIngredientId(id);
+    setDetailsModalOpen(true);
+  };
+
+  const handleCloseDetails = () => {
+    setDetailsModalOpen(false);
+    setSelectedIngredientId(null);
+  };
+
+  const handleDeleteIngredient = (id: string) => {
+    dispatch(deleteIngredientRequest(id));
+  };
 
   // Renderização do esqueleto de carregamento
   const renderSkeletons = () => {
@@ -234,76 +265,94 @@ const IngredientsPage: React.FC = () => {
           sx={{
             mb: 4,
             display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            alignItems: { md: 'center' },
+            flexDirection: 'column',
             gap: 2,
           }}
         >
-          <TextField
-            placeholder="Buscar ingredientes..."
-            variant="outlined"
-            fullWidth
-            value={searchInput}
-            onChange={handleSearchChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-            }}
+          {/* Linha superior com busca e ordenação */}
+          <Box
             sx={{
-              flexGrow: 1,
-              maxWidth: { md: '50%' },
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 3,
-              },
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              alignItems: { md: 'center' },
+              gap: 2,
             }}
-          />
+          >
+            <TextField
+              placeholder="Buscar ingredientes..."
+              variant="outlined"
+              fullWidth
+              value={searchInput}
+              onChange={handleSearchChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                flexGrow: 1,
+                maxWidth: { md: '50%' },
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 3,
+                },
+              }}
+            />
 
-          <FormControl sx={{ minWidth: 200 }}>
-            <Select
-              value={sortOption}
-              onChange={handleSortChange}
-              displayEmpty
-              size="small"
-              sx={{ borderRadius: 3 }}
+            <FormControl sx={{ minWidth: 200 }}>
+              <Select
+                value={sortOption}
+                onChange={handleSortChange}
+                displayEmpty
+                size="small"
+                sx={{ borderRadius: 3 }}
+              >
+                {sortOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+
+          {/* Chips de categorias */}
+          {!categoriesLoading && (
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 1,
+              }}
             >
-              {sortOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
+              {categories.map((category) => (
+                <Chip
+                  key={category._id}
+                  label={category.name}
+                  onClick={() => handleCategoryToggle(category.name)}
+                  color={selectedCategories.includes(category.name) ? 'primary' : 'default'}
+                  sx={{ borderRadius: 2 }}
+                />
               ))}
-            </Select>
-          </FormControl>
+            </Box>
+          )}
         </Box>
 
-        {/* Tabs de Categorias */}
-        <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider', position: 'relative' }}>
-          {categoriesLoading ? (
-            <Box sx={{ display: 'flex', p: 2, justifyContent: 'center' }}>
-              <CircularProgress size={24} />
-            </Box>
-          ) : (
-            <Tabs
-              value={filter.category}
-              onChange={handleTabChange}
-              variant="scrollable"
-              scrollButtons="auto"
-              aria-label="categorias de ingredientes"
-            >
-              <Tab label="Todos" value={null} />
-              {categories?.map((category) => (
-                <Tab key={category._id} label={category.name} value={category._id} />
-              ))}
-            </Tabs>
-          )}
+        {/* Tabs Utilizados/Geral */}
+        <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs value={currentTab} onChange={handleTabChange} aria-label="abas de ingredientes">
+            <Tab label="Utilizados" value="used" />
+            <Tab label="Geral" value="all" />
+          </Tabs>
         </Box>
 
         {/* Contagem de resultados */}
         {!ingredientsLoading && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Mostrando {paginatedIngredients.length} de {totalFilteredItems} ingredientes
+            {selectedCategories.length > 0 &&
+              ` (${selectedCategories.length} categorias selecionadas)`}
           </Typography>
         )}
 
@@ -322,7 +371,11 @@ const IngredientsPage: React.FC = () => {
                 lg={3}
                 component={'div' as ElementType}
               >
-                <IngredientCard ingredient={ingredient} />
+                <IngredientCard
+                  ingredient={ingredient}
+                  onViewDetails={handleViewDetails}
+                  onDelete={handleDeleteIngredient}
+                />
               </Grid>
             ))
           ) : (
@@ -359,6 +412,13 @@ const IngredientsPage: React.FC = () => {
 
       {/* Modal para adicionar categoria */}
       <CategoryModal open={categoryModalOpen} onClose={handleCloseCategoryModal} />
+
+      {/* Modal de detalhes do ingrediente */}
+      <IngredientDetailsModal
+        open={detailsModalOpen}
+        onClose={handleCloseDetails}
+        ingredientId={selectedIngredientId}
+      />
     </Container>
   );
 };

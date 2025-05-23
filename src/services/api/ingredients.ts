@@ -98,7 +98,7 @@ export const updateIngredient = async (
   id: string,
   params: Partial<CreateIngredientParams>,
 ): Promise<Ingredient> => {
-  const response = await api.put<Ingredient>(`/v1/users/me/ingredient/${id}`, params);
+  const response = await api.patch<Ingredient>(`/v1/users/me/ingredient/${id}`, params);
   // Limpa o cache de ingredientes e do ingrediente específico
   clearCache('/v1/users/me/ingredient');
   clearCache(`/v1/users/me/ingredient/${id}`);
