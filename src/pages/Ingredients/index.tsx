@@ -121,10 +121,10 @@ const IngredientsPage: React.FC = () => {
     filtered.sort((a, b) => {
       switch (sortOption) {
         case 'name_desc':
-          return b.name.localeCompare(a.name);
+          return b.name.localeCompare(a.name, undefined, { sensitivity: 'base' });
         case 'name_asc':
         default:
-          return a.name.localeCompare(b.name);
+          return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
       }
     });
 

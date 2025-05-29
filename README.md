@@ -15,9 +15,46 @@ Sheila Garcia Pro é uma aplicação web responsiva para visualização de recei
 - **React Router 7**: Navegação entre páginas
 - **Redux Saga**: Middleware para operações assíncronas
 - **Axios**: Cliente HTTP para requisições à API
+- **React-i18next**: Internacionalização (i18n) para suporte a múltiplos idiomas
 - **ESLint + Prettier**: Para padronização de código
 - **Husky + Lint-staged**: Para hooks de pré-commit
 - **Jest + React Testing Library**: Para testes unitários e de integração
+
+## Internacionalização (i18n)
+
+O projeto suporta múltiplos idiomas através do react-i18next. Atualmente, os idiomas suportados são:
+
+- Português (pt)
+- Inglês (en)
+
+### Adicionando novas traduções
+
+1. Navegue até a pasta `src/i18n/locales`
+2. Dentro das pastas `pt` e `en`, atualize os arquivos `translation.json`
+3. Adicione suas traduções seguindo a estrutura existente:
+
+```json
+{
+  "secao": {
+    "chave": "Texto traduzido"
+  }
+}
+```
+
+### Usando traduções nos componentes
+
+```tsx
+import { useTranslation } from 'react-i18next';
+
+const MeuComponente = () => {
+  const { t } = useTranslation();
+  
+  return (
+    <div>
+      <h1>{t('secao.chave')}</h1>
+    </div>
+  );
+};
 
 ## Estrutura de Pastas
 

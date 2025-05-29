@@ -1,0 +1,71 @@
+{
+  "welcome": "Bem-vindo ao sistema",
+  "language": "Idioma",
+  "theme": {
+    "toggle": "Mudar para tema {{theme}}",
+    "light": "claro",
+    "dark": "escuro"
+  },
+  "notifications": {
+    "title": "Notificações"
+  },
+  "menu": {
+    "dashboard": "Painel",
+    "home": "Início",
+    "recipes": "Receitas",
+    "ingredients": "Ingredientes",
+    "suppliers": "Fornecedores",
+    "profile": "Perfil",
+    "close": "Fechar menu"
+  },
+  "navbar": {
+    "home": "Início",
+    "recipes": "Receitas",
+    "ingredients": "Ingredientes",
+    "suppliers": "Fornecedores",
+    "profile": "Perfil",
+    "logout": "Sair"
+  },
+  "auth": {
+    "login": "Entrar",
+    "register": "Cadastrar",
+    "forgotPassword": "Esqueceu a senha?"
+  },
+  "ingredients": {
+    "title": "Ingredientes",
+    "newIngredient": "Novo Ingrediente",
+    "details": "Detalhes do Ingrediente",
+    "sortOptions": {
+      "nameAsc": "Nome (A-Z)",
+      "nameDesc": "Nome (Z-A)"
+    },
+    "actions": {
+      "edit": "Editar Ingrediente",
+      "delete": "Deletar Ingrediente",
+      "viewDetails": "Ver Detalhes",
+      "cancel": "Cancelar",
+      "save": "Salvar",
+      "close": "Fechar"
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar ingredientes...",
+      "categories": "Categorias",
+      "all": "Todos",
+      "used": "Utilizados"
+    },
+    "form": {
+      "name": "Nome",
+      "namePlaceholder": "Digite o nome do ingrediente",
+      "category": "Categoria",
+      "categoryPlaceholder": "Selecione uma categoria",
+      "image": "Imagem",
+      "imageUpload": "Upload de Imagem",
+      "required": "Campo obrigatório",
+      "uploadError": "Erro ao fazer upload da imagem"
+    },
+    "messages": {
+      "notFound": "Ingrediente não encontrado",
+      "loadError": "Erro ao carregar detalhes do ingrediente"
+    }
+  }
+}
