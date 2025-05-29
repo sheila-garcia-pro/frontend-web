@@ -27,20 +27,20 @@ export const setupInterceptors = (api: AxiosInstance): void => {
         config.headers = config.headers || {};
         config.headers.Authorization = `Bearer ${token}`;
       }
-      
+
       // Sanitizar dados em logs (em qualquer ambiente, não apenas em desenvolvimento)
       const methodsWithData = ['post', 'put', 'patch'];
       const method = config.method?.toLowerCase();
-      
+
       if (method && methodsWithData.includes(method) && config.data) {
         // Não modifique dados reais, apenas faça log sanitizado
         const sanitizedData = sanitizeData(config.data);
-        
+
         // Em desenvolvimento, loga os dados sanitizados usando o logger seguro
         if (process.env.NODE_ENV !== 'production') {
           log.request(method, config.url || '', sanitizedData);
         }
-        
+
         // Opcionalmente, podemos adicionar um cabeçalho personalizado para sinalizar
         // que esta requisição contém dados sensíveis
         if (JSON.stringify(sanitizedData) !== JSON.stringify(config.data)) {
@@ -69,44 +69,52 @@ export const setupInterceptors = (api: AxiosInstance): void => {
     (error: AxiosError): Promise<AxiosError> => {
       // Obter código de status e mensagem de erro
       const status = error.response?.status;
-      const errorMessage = extractErrorMessage(error);
-
-      // Tratar diferentes códigos de status
+      const errorMessage = extractErrorMessage(error); // Tratar diferentes códigos de status
       switch (status) {
-        case 401: // Não autorizado
-          // Limpa o token e redireciona para login
+        case 401: {
+          // Limpa o token
           localStorage.removeItem(TOKEN_KEY);
           log.warn('Sessão expirada ou inválida. Redirecionando para login...');
-          window.location.href = '/login';
+
+          // Limpar o estado do Redux também
+          const event = new CustomEvent('auth:sessionExpired');
+          window.dispatchEvent(event);
+
+          // Prevenir loops - só redireciona se não estiver em nenhuma rota de autenticação
+          const authRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+          if (!authRoutes.includes(window.location.pathname)) {
+            window.location.href = '/login';
+          }
           break;
-        
+        }
+
         case 403: // Proibido (sem permissão)
           log.error('Acesso negado:', errorMessage);
           // Pode redirecionar para uma página de "Acesso negado" ou mostrar um alerta
           break;
-        
+
         case 404: // Não encontrado
           log.error('Recurso não encontrado:', errorMessage);
           break;
-        
+
         case 422: // Erro de validação
           log.error('Erro de validação:', errorMessage);
           break;
-        
+
         case 500: // Erro de servidor
         case 502: // Bad Gateway
         case 503: // Serviço indisponível
           log.error('Erro do servidor:', errorMessage);
           // Pode mostrar uma página de "Serviço indisponível" ou uma mensagem global
           break;
-        
+
         default:
           log.error(`Erro ${status || 'desconhecido'}:`, errorMessage);
       }
 
       // Aqui você pode integrar com um sistema de notificações global
       // Por exemplo: toast.error(errorMessage);
-      
+
       return Promise.reject({
         ...error,
         message: errorMessage,

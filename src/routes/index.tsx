@@ -34,11 +34,17 @@ interface AuthRouteProps {
 // Componente para proteger rotas - redireciona para login quando não autenticado
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ element }) => {
   const { isAuthenticated, loading, checkAuth } = useAuth();
+  const tokenKey = process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token';
 
   // Verificar autenticação quando o componente montar
   useEffect(() => {
+    const token = localStorage.getItem(tokenKey);
+    if (!token) {
+      // Se não houver token, não precisa fazer a verificação
+      return;
+    }
     checkAuth();
-  }, [checkAuth]);
+  }, [checkAuth, tokenKey]);
 
   // Mostrar nada enquanto verifica autenticação
   if (loading) {
