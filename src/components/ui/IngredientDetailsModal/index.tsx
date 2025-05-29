@@ -20,6 +20,7 @@ import {
   deleteIngredientRequest,
 } from '../../../store/slices/ingredientsSlice';
 import IngredientEditModal from '../IngredientEditModal';
+import { useTranslation } from 'react-i18next';
 
 interface IngredientDetailsModalProps {
   open: boolean;
@@ -32,6 +33,7 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
   onClose,
   ingredientId,
 }) => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [ingredient, setIngredient] = useState<Ingredient | null>(null);
@@ -46,7 +48,7 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
       } catch (error) {
         dispatch(
           addNotification({
-            message: 'Erro ao carregar detalhes do ingrediente.',
+            message: t('ingredients.messages.loadError'),
             type: 'error',
             duration: 5000,
           }),
@@ -55,13 +57,13 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
         setLoading(false);
       }
     },
-    [dispatch],
+    [dispatch, t],
   );
+
   useEffect(() => {
     if (open && ingredientId) {
       loadIngredient(ingredientId);
     } else if (!open) {
-      // Limpa o estado quando o modal é fechado
       setIngredient(null);
       setEditModalOpen(false);
     }
@@ -79,7 +81,6 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
     handleCloseEdit();
     if (ingredientId) {
       await loadIngredient(ingredientId);
-      // Recarrega a lista completa
       dispatch(
         fetchIngredientsRequest({
           page: 1,
@@ -111,7 +112,7 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
       }}
     >
       <IconButton
-        aria-label="fechar"
+        aria-label={t('ingredients.actions.close')}
         onClick={onClose}
         sx={{
           position: 'absolute',
@@ -123,7 +124,7 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
         <Close />
       </IconButton>
 
-      <DialogTitle sx={{ pb: 1 }}>Detalhes do Ingrediente</DialogTitle>
+      <DialogTitle sx={{ pb: 1 }}>{t('ingredients.details')}</DialogTitle>
 
       <DialogContent>
         {loading ? (
@@ -132,27 +133,25 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
           </Box>
         ) : ingredient ? (
           <Box>
-            {' '}
             <Box
               sx={{
                 width: '100%',
-                height: 150, // Reduzindo a altura de 300 para 200
+                height: 150,
                 borderRadius: 2,
                 overflow: 'hidden',
                 mb: 3,
                 position: 'relative',
               }}
             >
-              {' '}
               <Box
                 component="img"
                 src={ingredient.image}
-                alt={`Imagem do ingrediente ${ingredient.name}`}
+                alt={ingredient.name}
                 sx={{
                   width: '100%',
                   height: '100%',
                   objectFit: 'contain',
-                  backgroundColor: 'rgba(0, 0, 0, 0.04)', // Fundo neutro para melhor visualização
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
                 }}
               />
             </Box>
@@ -178,7 +177,7 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                   fullWidth
                   sx={{ borderRadius: 3 }}
                 >
-                  Editar Ingrediente
+                  {t('ingredients.actions.edit')}
                 </Button>
                 <Button
                   startIcon={<Delete />}
@@ -188,19 +187,18 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                   fullWidth
                   sx={{ borderRadius: 3 }}
                 >
-                  Deletar Ingrediente
+                  {t('ingredients.actions.delete')}
                 </Button>
               </Box>
             )}
           </Box>
         ) : (
           <Typography color="text.secondary" align="center">
-            Ingrediente não encontrado
+            {t('ingredients.messages.notFound')}
           </Typography>
         )}
       </DialogContent>
 
-      {/* Modal de edição */}
       {ingredient && (
         <IngredientEditModal
           open={editModalOpen}

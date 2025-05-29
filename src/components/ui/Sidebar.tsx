@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Drawer,
@@ -47,6 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { t } = useTranslation();
 
   const handleNavigation = (path: string) => {
     navigate(path);
@@ -87,20 +89,18 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
             sx={{
               justifyContent: 'flex-start',
             }}
-          />
-          <IconButton onClick={handleDrawerToggle}>
+          />          <IconButton onClick={handleDrawerToggle} aria-label={t('menu.close')}>
             <ChevronLeftIcon />
           </IconButton>
         </Box>
       </DrawerHeader>
       <Divider />
-      <List>
-        <ListItem disablePadding>
+      <List>        <ListItem disablePadding>
           <ListItemButton onClick={() => handleNavigation('/')}>
             <ListItemIcon>
               <HomeIcon />
             </ListItemIcon>
-            <ListItemText primary="Home" />
+            <ListItemText primary={t('menu.home')} />
           </ListItemButton>
         </ListItem>
 
@@ -109,7 +109,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
             <ListItemIcon>
               <KitchenIcon />
             </ListItemIcon>
-            <ListItemText primary="Ingredientes" />
+            <ListItemText primary={t('menu.ingredients')} />
           </ListItemButton>
         </ListItem>
 
@@ -118,19 +118,18 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
             <ListItemIcon>
               <RestaurantIcon />
             </ListItemIcon>
-            <ListItemText primary="Receitas" />
+            <ListItemText primary={t('menu.recipes')} />
           </ListItemButton>
         </ListItem>
 
         {isAuthenticated && (
           <>
-            {' '}
             <ListItem disablePadding>
               <ListItemButton onClick={() => handleNavigation('/profile')}>
                 <ListItemIcon>
                   <PersonIcon />
                 </ListItemIcon>
-                <ListItemText primary="Perfil" />
+                <ListItemText primary={t('menu.profile')} />
               </ListItemButton>
             </ListItem>
             <ListItem disablePadding>
@@ -138,7 +137,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
                 <ListItemIcon>
                   <SuppliersIcon />
                 </ListItemIcon>
-                <ListItemText primary="Fornecedores" />
+                <ListItemText primary={t('menu.suppliers')} />
               </ListItemButton>
             </ListItem>
           </>

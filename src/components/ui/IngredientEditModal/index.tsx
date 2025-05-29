@@ -20,6 +20,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { updateIngredientRequest } from '../../../store/slices/ingredientsSlice';
 import { RootState } from '../../../store';
 import { CreateIngredientParams, Ingredient } from '../../../types/ingredients';
+import { useTranslation } from 'react-i18next';
 
 interface IngredientEditModalProps {
   open: boolean;
@@ -34,6 +35,7 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
   ingredient,
   onEditSuccess,
 }) => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { items: categories, loading: categoriesLoading } = useSelector(
     (state: RootState) => state.categories,
@@ -126,12 +128,12 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
           ? Array.isArray(data.message)
             ? data.message[0]
             : data.message
-          : 'Erro ao fazer upload da imagem';
+          : t('ingredients.form.uploadError');
         setErrors((prev) => ({ ...prev, image: errorMessage }));
       }
     } catch (error) {
       console.error('Erro no upload:', error);
-      setErrors((prev) => ({ ...prev, image: 'Erro ao fazer upload da imagem' }));
+      setErrors((prev) => ({ ...prev, image: t('ingredients.form.uploadError') }));
     } finally {
       setUploading(false);
     }
@@ -142,12 +144,12 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
     let isValid = true;
 
     if (formData.name !== undefined && !formData.name.trim()) {
-      newErrors.name = 'O nome é obrigatório';
+      newErrors.name = t('ingredients.form.required');
       isValid = false;
     }
 
     if (formData.category !== undefined && !formData.category) {
-      newErrors.category = 'A categoria é obrigatória';
+      newErrors.category = t('ingredients.form.required');
       isValid = false;
     }
 
@@ -160,7 +162,7 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
       setIsSubmitted(true);
       const changedFields = Object.entries(formData).reduce((acc, [key, value]) => {
         if (value !== undefined && value !== ingredient[key as keyof Ingredient]) {
-          acc[key as keyof CreateIngredientParams] = value as string;
+          (acc as any)[key] = value; // Adicione o casting para any
         }
         return acc;
       }, {} as Partial<CreateIngredientParams>);
@@ -180,96 +182,93 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Editar Ingrediente</DialogTitle>
+      <DialogTitle>{t('ingredients.actions.edit')}</DialogTitle>
       <DialogContent>
-        <Box sx={{ mt: 2 }}>
-          <Stack spacing={3}>
-            <TextField
-              label="Nome do ingrediente"
-              name="name"
-              value={formData.name || ''}
-              onChange={handleChange}
-              error={!!errors.name}
-              helperText={errors.name}
-              fullWidth
+        <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField
+            fullWidth
+            label={t('ingredients.form.name')}
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            error={!!errors.name}
+            helperText={errors.name}
+            placeholder={t('ingredients.form.namePlaceholder')}
+          />
+
+          <FormControl fullWidth error={!!errors.category}>
+            <InputLabel>{t('ingredients.form.category')}</InputLabel>
+            <Select
+              value={formData.category}
+              onChange={handleCategoryChange}
+              label={t('ingredients.form.category')}
+            >
+              {categories.map((category) => (
+                <MenuItem key={category.name} value={category.name}>
+                  {category.name}
+                </MenuItem>
+              ))}
+            </Select>
+            {errors.category && (
+              <Typography variant="caption" color="error">
+                {errors.category}
+              </Typography>
+            )}
+          </FormControl>
+
+          <Box>
+            <input
+              accept="image/*"
+              type="file"
+              id="ingredient-image"
+              onChange={handleFileSelect}
+              style={{ display: 'none' }}
             />
-
-            <FormControl fullWidth error={!!errors.category}>
-              <InputLabel>Categoria</InputLabel>
-              <Select
-                value={formData.category || ''}
-                label="Categoria"
-                onChange={handleCategoryChange}
-                disabled={categoriesLoading}
+            <label htmlFor="ingredient-image">
+              <Button
+                variant="outlined"
+                component="span"
+                fullWidth
+                disabled={uploading}
+                sx={{ mb: 1 }}
               >
-                {categories &&
-                  categories.map((category) => (
-                    <MenuItem key={category._id} value={category.name}>
-                      {category.name}
-                    </MenuItem>
-                  ))}
-              </Select>
-              {errors.category && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
-                  {errors.category}
-                </Typography>
-              )}
-            </FormControl>
-
-            <Box>
-              <input
-                accept="image/*"
-                type="file"
-                id="ingredient-image"
-                onChange={handleFileSelect}
-                style={{ display: 'none' }}
-              />
-              <label htmlFor="ingredient-image">
-                <Button
-                  variant="outlined"
-                  component="span"
-                  fullWidth
-                  disabled={uploading}
-                  sx={{ mb: 1 }}
-                >
-                  {uploading ? 'Fazendo upload...' : 'Escolher imagem'}
-                </Button>
-              </label>
-              {formData.image && (
-                <Box
-                  sx={{
+                {uploading ? 'Fazendo upload...' : 'Escolher imagem'}
+              </Button>
+            </label>
+            {formData.image && (
+              <Box
+                sx={{
+                  width: '100%',
+                  height: 100,
+                  borderRadius: 1,
+                  overflow: 'hidden',
+                  mt: 1,
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)', // Fundo neutro para melhor visualização
+                }}
+              >
+                <img
+                  src={formData.image}
+                  alt="Preview"
+                  style={{
                     width: '100%',
-                    height: 100,
-                    borderRadius: 1,
-                    overflow: 'hidden',
-                    mt: 1,
-                    backgroundColor: 'rgba(0, 0, 0, 0.04)', // Fundo neutro para melhor visualização
+                    height: '100%',
+                    objectFit: 'contain',
                   }}
-                >
-                  <img
-                    src={formData.image}
-                    alt="Preview"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                    }}
-                  />
-                </Box>
-              )}
-              {errors.image && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                  {errors.image}
-                </Typography>
-              )}
-            </Box>
-          </Stack>
+                />
+              </Box>
+            )}
+            {errors.image && (
+              <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                {errors.image}
+              </Typography>
+            )}
+          </Box>
         </Box>
       </DialogContent>
 
       <DialogActions>
         <Button onClick={onClose} disabled={ingredientLoading || uploading}>
-          Cancelar
+          {t('ingredients.actions.cancel')}
         </Button>
         <Button
           variant="contained"
@@ -277,7 +276,7 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
           disabled={ingredientLoading || uploading}
           startIcon={ingredientLoading ? <CircularProgress size={20} /> : undefined}
         >
-          Salvar Alterações
+          {t('ingredients.actions.save')}
         </Button>
       </DialogActions>
     </Dialog>

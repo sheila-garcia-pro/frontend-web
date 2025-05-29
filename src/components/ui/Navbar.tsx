@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import {
   AppBar,
   Box,
@@ -27,6 +28,7 @@ import { useAuth } from '@hooks/useAuth';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
 import Logo from '@components/common/Logo';
+import LanguageSelector from './LanguageSelector';
 
 // Interface de propriedades
 interface NavbarProps {
@@ -40,6 +42,7 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
   const dispatch = useDispatch();
   const { mode, toggleTheme } = useTheme();
   const muiTheme = useMuiTheme();
+  const { t } = useTranslation();
   const { user } = useSelector((state: RootState) => state.auth);
   const { logout } = useAuth();
 
@@ -81,17 +84,14 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
       }}
     >
       <Toolbar sx={{ height: '120px' }}>
-        {' '}
-        {/* Altura aumentada para melhor aparência */}
-        {/* Botão de menu */}
         <IconButton
           color="inherit"
-          aria-label="open drawer"
+          aria-label={t('menu.open')}
           edge="start"
           onClick={handleDrawerToggle}
           sx={{
             mr: 2,
-            borderRadius: '8px', // Borda mais arredondada
+            borderRadius: '8px',
             '&:hover': {
               backgroundColor:
                 mode === 'light' ? 'rgba(245, 243, 231, 0.2)' : 'rgba(232, 237, 170, 0.2)',
@@ -100,9 +100,8 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
         >
           <MenuIcon />
         </IconButton>
-        {/* Logo */}
+
         <Box sx={{ flexGrow: 1 }}>
-          {' '}
           <Logo
             variant="with-text"
             size="medium"
@@ -127,15 +126,18 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
             }}
           />
         </Box>
-        {/* Ações da direita */}
+
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          {/* Botão de tema */}
-          <Tooltip title={`Mudar para tema ${mode === 'light' ? 'escuro' : 'claro'}`}>
+          <Box sx={{ mr: 2 }}>
+            <LanguageSelector />
+          </Box>
+
+          <Tooltip title={t('theme.toggle', { theme: t(mode === 'light' ? 'theme.dark' : 'theme.light') })}>
             <IconButton
               color="inherit"
               onClick={toggleTheme}
               sx={{
-                borderRadius: '8px', // Borda mais arredondada
+                borderRadius: '8px',
                 '&:hover': {
                   backgroundColor:
                     mode === 'light' ? 'rgba(245, 243, 231, 0.2)' : 'rgba(232, 237, 170, 0.2)',
@@ -146,8 +148,7 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
             </IconButton>
           </Tooltip>
 
-          {/* Botão de notificações */}
-          <Tooltip title="Notificações">
+          <Tooltip title={t('notifications.title')}>
             <IconButton
               color="inherit"
               sx={{
@@ -173,9 +174,8 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
             </IconButton>
           </Tooltip>
 
-          {/* Menu de usuário */}
           <Box sx={{ ml: 1 }}>
-            <Tooltip title="Opções da conta">
+            <Tooltip title={t('profile.options')}>
               <IconButton
                 onClick={handleMenu}
                 color="inherit"
@@ -241,7 +241,6 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
                 },
               }}
             >
-              {' '}
               <MenuItem component={RouterLink} to="/profile" onClick={handleCloseMenu}>
                 <Avatar
                   sx={{
@@ -252,11 +251,11 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
                     color: mode === 'light' ? '#F5F3E7' : '#23291C',
                   }}
                 />
-                Perfil
+                {t('navbar.profile')}
               </MenuItem>
               <MenuItem onClick={handleLogout}>
                 <LogoutIcon fontSize="small" sx={{ mr: 1 }} />
-                Sair
+                {t('navbar.logout')}
               </MenuItem>
             </Menu>
           </Box>

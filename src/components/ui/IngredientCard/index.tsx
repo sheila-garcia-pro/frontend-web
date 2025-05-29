@@ -12,7 +12,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { Category, Visibility, Delete, RestaurantMenu } from '@mui/icons-material';
-import { Link as RouterLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Ingredient } from '../../../types/ingredients';
 
 interface IngredientCardProps {
@@ -22,6 +22,7 @@ interface IngredientCardProps {
 }
 
 const IngredientCard: React.FC<IngredientCardProps> = ({ ingredient, onViewDetails, onDelete }) => {
+  const { t } = useTranslation();
   const { _id, name, category, image, isEdit } = ingredient;
 
   const handleDelete = (event: React.MouseEvent) => {
@@ -49,7 +50,7 @@ const IngredientCard: React.FC<IngredientCardProps> = ({ ingredient, onViewDetai
     >
       {isEdit && (
         <Box sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}>
-          <Tooltip title="Deletar ingrediente">
+          <Tooltip title={t('ingredients.actions.delete')}>
             <IconButton
               size="small"
               onClick={handleDelete}
@@ -70,7 +71,7 @@ const IngredientCard: React.FC<IngredientCardProps> = ({ ingredient, onViewDetai
       <CardMedia
         component="div"
         image={image}
-        title={`Imagem do ingrediente ${name}`}
+        title={t('ingredients.form.image')}
         sx={{
           height: 140,
           backgroundSize: 'contain',
@@ -107,7 +108,7 @@ const IngredientCard: React.FC<IngredientCardProps> = ({ ingredient, onViewDetai
           }}
           variant="outlined"
         >
-          Ver Detalhes
+          {t('ingredients.actions.viewDetails')}
         </Button>
       </CardActions>
     </Card>

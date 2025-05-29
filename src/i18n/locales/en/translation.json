@@ -1,0 +1,71 @@
+{
+  "welcome": "Welcome to the system",
+  "language": "Language",
+  "theme": {
+    "toggle": "Switch to {{theme}} theme",
+    "light": "light",
+    "dark": "dark"
+  },
+  "notifications": {
+    "title": "Notifications"
+  },
+  "menu": {
+    "dashboard": "Dashboard",
+    "home": "Home",
+    "recipes": "Recipes",
+    "ingredients": "Ingredients",
+    "suppliers": "Suppliers",
+    "profile": "Profile",
+    "close": "Close menu"
+  },
+  "navbar": {
+    "home": "Home",
+    "recipes": "Recipes",
+    "ingredients": "Ingredients",
+    "suppliers": "Suppliers",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "forgotPassword": "Forgot Password?"
+  },
+  "ingredients": {
+    "title": "Ingredients",
+    "newIngredient": "New Ingredient",
+    "details": "Ingredient Details",
+    "sortOptions": {
+      "nameAsc": "Name (A-Z)",
+      "nameDesc": "Name (Z-A)"
+    },
+    "actions": {
+      "edit": "Edit Ingredient",
+      "delete": "Delete Ingredient",
+      "viewDetails": "View Details",
+      "cancel": "Cancel",
+      "save": "Save",
+      "close": "Close"
+    },
+    "filters": {
+      "searchPlaceholder": "Search ingredients...",
+      "categories": "Categories",
+      "all": "All",
+      "used": "Used"
+    },
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "Enter ingredient name",
+      "category": "Category",
+      "categoryPlaceholder": "Select a category",
+      "image": "Image",
+      "imageUpload": "Image Upload",
+      "required": "This field is required",
+      "uploadError": "Error uploading image"
+    },
+    "messages": {
+      "notFound": "Ingredient not found",
+      "loadError": "Error loading ingredient details"
+    }
+  }
+}
