@@ -5,7 +5,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  phone: string;
+  phone?: string;
 }
 
 export interface CreateUserParams {
@@ -17,6 +17,13 @@ export interface CreateUserParams {
 
 // Obter usuário logado (com cache)
 export const getCurrentUser = async (): Promise<User> => {
+  const tokenKey = process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token';
+  const token = localStorage.getItem(tokenKey);
+
+  if (!token) {
+    throw new Error('Token não encontrado');
+  }
+
   return await cachedGet<User>('/v1/users/me');
 };
 
@@ -31,4 +38,4 @@ export const createUser = async (params: CreateUserParams): Promise<User> => {
   // Limpa o cache de usuários após criar um novo
   clearCache('/v1/users');
   return response.data;
-}; 
+};

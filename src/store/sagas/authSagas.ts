@@ -48,12 +48,12 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
 
     // Chama o serviço de API para login
     const response = yield call(authService.login, credentials);
-    
+
     // Verifica se obteve um token válido
     if (!response || !response.token) {
       throw new Error('Não foi possível realizar o login. Por favor, tente novamente.');
     }
-    
+
     const { token } = response;
 
     // Salva o token no localStorage
@@ -62,7 +62,7 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
     try {
       // Busca os dados do usuário atual
       const user = yield call(usersService.getCurrentUser);
-      
+
       // Despacha a ação de sucesso (sem enviar a senha no payload)
       yield put(loginSuccess({ user, token }));
     } catch (userError) {
@@ -70,15 +70,21 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
       localStorage.removeItem(process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token');
       throw new Error('Falha ao obter dados do usuário');
     }
-    
+
     // Limpa as credenciais para garantir que não sejam acessíveis
     action.payload.password = '';
   } catch (error) {
     // Remover o token se houver falha no login
     localStorage.removeItem(process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token');
-    
+
     // Despacha a ação de falha
-    yield put(loginFailure(error instanceof Error ? error.message : 'Por favor, verifique seu email e senha. Tente novamente.'));
+    yield put(
+      loginFailure(
+        error instanceof Error
+          ? error.message
+          : 'Por favor, verifique seu email e senha. Tente novamente.',
+      ),
+    );
   } finally {
     yield put(setGlobalLoading(false));
   }
@@ -114,7 +120,7 @@ function* registerSaga(action: PayloadAction<RegisterPayload>): SagaIterator {
 
     // Despacha a ação de sucesso (sem enviar a senha no payload)
     yield put(registerSuccess({ user, token }));
-    
+
     // Limpa as credenciais para garantir que não sejam acessíveis
     action.payload.password = '';
   } catch (error) {
@@ -140,14 +146,24 @@ function* checkAuthSaga(): SagaIterator {
     // Chama o serviço de API para verificar o token obtendo o usuário atual
     const user = yield call(usersService.getCurrentUser);
 
-    // Despacha a ação de sucesso
-    yield put(checkAuthSuccess({ user, token }));
+    // Se a chamada foi bem sucedida, o token ainda é válido
+    if (user) {
+      // Despacha a ação de sucesso
+      yield put(checkAuthSuccess({ user, token }));
+      return;
+    }
+
+    // Se não obteve usuário, considera falha na autenticação
+    throw new Error('Falha ao obter dados do usuário');
   } catch (error) {
-    // Se o token for inválido, remove-o
+    // Se o token for inválido ou houver qualquer erro, remove o token
     localStorage.removeItem(process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token');
 
-    // Despacha a ação de falha
+    // Despacha a ação de falha e redireciona para login se não estiver lá
     yield put(checkAuthFailure());
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login';
+    }
   }
 }
 
@@ -187,21 +203,22 @@ function* forgotPasswordSaga(action: PayloadAction<ForgotPasswordPayload>): Saga
       addNotification({
         message: 'Enviamos por email o link de recuperaçao',
         type: 'success',
-      })
+      }),
     );
-
   } catch (error) {
     // Despacha a ação de falha
     yield put(
-      forgotPasswordFailure(error instanceof Error ? error.message : 'Erro ao solicitar recuperação de senha')
+      forgotPasswordFailure(
+        error instanceof Error ? error.message : 'Erro ao solicitar recuperação de senha',
+      ),
     );
-    
+
     // Notificação de erro
     yield put(
       addNotification({
         message: 'Não foi possível enviar as instruções. Tente novamente.',
         type: 'error',
-      })
+      }),
     );
   } finally {
     yield put(setGlobalLoading(false));
@@ -217,7 +234,7 @@ function* resetPasswordSaga(action: PayloadAction<ResetPasswordPayload>): SagaIt
     const result = yield call(
       authService.resetPassword,
       action.payload.token,
-      action.payload.newPassword
+      action.payload.newPassword,
     );
 
     // Despacha a ação de sucesso
@@ -228,26 +245,30 @@ function* resetPasswordSaga(action: PayloadAction<ResetPasswordPayload>): SagaIt
       addNotification({
         message: 'Senha redefinida com sucesso! Você já pode fazer login.',
         type: 'success',
-      })
+      }),
     );
-    
+
     // Redirecionar para a página de login após sucesso
     // Não removemos este redirecionamento pois neste caso faz sentido ir para login
     window.location.href = '/login';
   } catch (error) {
     // Despacha a ação de falha
     yield put(
-      resetPasswordFailure(error instanceof Error ? error.message : 'Erro de autenticação. Não foi possível redefinir a senha.')
+      resetPasswordFailure(
+        error instanceof Error
+          ? error.message
+          : 'Erro de autenticação. Não foi possível redefinir a senha.',
+      ),
     );
-    
+
     // Notificação de erro
     yield put(
       addNotification({
         message: 'Erro de autenticação. Por favor, tente novamente mais tarde.',
         type: 'error',
-      })
+      }),
     );
-    
+
     // Redirecionar para a página de login em caso de erro
     window.location.href = '/login';
   } finally {

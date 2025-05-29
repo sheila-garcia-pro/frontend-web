@@ -5,6 +5,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   role: string;
 }
 
@@ -96,7 +97,10 @@ const authSlice = createSlice({
     },
 
     // Redefinição de senha com token
-    resetPasswordRequest: (state, action: PayloadAction<{ token: string; newPassword: string }>) => {
+    resetPasswordRequest: (
+      state,
+      action: PayloadAction<{ token: string; newPassword: string }>,
+    ) => {
       state.loading = true;
       state.error = null;
     },

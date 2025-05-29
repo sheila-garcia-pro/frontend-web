@@ -47,11 +47,13 @@ const LoginPage: React.FC = () => {
 
   // Estado para mostrar/esconder a senha
   const [showPassword, setShowPassword] = useState(false);
-
   // Redirecionar se já estiver autenticado
   useEffect(() => {
-    // Só redireciona se estiver autenticado, sem erro e não estiver em carregamento
-    if (isAuthenticated && !error && !loading) {
+    const tokenKey = process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token';
+    const token = localStorage.getItem(tokenKey);
+
+    // Só redireciona se estiver autenticado, sem erro, não estiver em carregamento e tiver token
+    if (isAuthenticated && !error && !loading && token) {
       navigate('/');
     }
   }, [isAuthenticated, navigate, error, loading]);
@@ -59,7 +61,7 @@ const LoginPage: React.FC = () => {
   // Validar campo individual
   const validateField = (name: string, value: string) => {
     let error = '';
-    
+
     if (name === 'email') {
       if (!value.trim()) {
         error = 'Email é obrigatório';
@@ -79,16 +81,17 @@ const LoginPage: React.FC = () => {
         error = 'A senha deve ter pelo menos 6 caracteres';
       }
     }
-    
-    setFormErrors(prev => ({ ...prev, [name]: error }));
-    
+
+    setFormErrors((prev) => ({ ...prev, [name]: error }));
+
     // Atualizar estado de validação do formulário
     setTimeout(() => {
       const newErrors = { ...formErrors, [name]: error };
-      const isValid = !newErrors.email && 
-                      !newErrors.password && 
-                      formData.email.trim() !== '' && 
-                      formData.password.trim() !== '';
+      const isValid =
+        !newErrors.email &&
+        !newErrors.password &&
+        formData.email.trim() !== '' &&
+        formData.password.trim() !== '';
       setIsFormValid(isValid);
     }, 100);
   };
@@ -96,15 +99,15 @@ const LoginPage: React.FC = () => {
   // Manipulador de mudança nos campos com validação em tempo real
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
     // Validar campo em tempo real
     validateField(name, value);
   };
 
   // Toggles visibilidade da senha
   const handleTogglePasswordVisibility = () => {
-    setShowPassword(prev => !prev);
+    setShowPassword((prev) => !prev);
   };
 
   // Função que valida o formulário completo
@@ -112,24 +115,26 @@ const LoginPage: React.FC = () => {
     // Validar todos os campos
     validateField('email', formData.email);
     validateField('password', formData.password);
-    
+
     // Verificar se há erros
-    return !formErrors.email && 
-           !formErrors.password && 
-           formData.email.trim() !== '' && 
-           formData.password.trim() !== '';
+    return (
+      !formErrors.email &&
+      !formErrors.password &&
+      formData.email.trim() !== '' &&
+      formData.password.trim() !== ''
+    );
   };
 
   // Envio do formulário com validação completa
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validar formulário novamente antes de enviar
     if (!validateForm()) {
       notification.showError('Preencha todos os campos corretamente!');
       return;
     }
-    
+
     // Enviar credenciais para login usando o hook useAuth
     login({
       email: formData.email,
@@ -146,7 +151,8 @@ const LoginPage: React.FC = () => {
       {/* Mensagem de erro do Redux */}
       {error && (
         <Typography color="error" align="center" sx={{ mt: 2, mb: 2 }}>
-Por favor, verifique seu email ou senha e Tente novamente        </Typography>
+          Por favor, verifique seu email ou senha e Tente novamente{' '}
+        </Typography>
       )}
 
       {/* Campo de email/usuário */}
@@ -216,11 +222,11 @@ Por favor, verifique seu email ou senha e Tente novamente        </Typography>
       />
 
       {/* Botão de submit com validação */}
-      <Button 
-        type="submit" 
-        fullWidth 
-        variant="contained" 
-        disabled={loading || !isFormValid} 
+      <Button
+        type="submit"
+        fullWidth
+        variant="contained"
+        disabled={loading || !isFormValid}
         sx={{ mt: 3, mb: 2 }}
       >
         {loading ? <CircularProgress size={24} color="inherit" /> : 'Entrar'}
@@ -239,4 +245,4 @@ Por favor, verifique seu email ou senha e Tente novamente        </Typography>
   );
 };
 
-export default LoginPage; 
+export default LoginPage;

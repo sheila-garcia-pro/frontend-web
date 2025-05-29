@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import {
@@ -38,16 +38,26 @@ interface UseAuthReturn {
 
 export const useAuth = (): UseAuthReturn => {
   const dispatch = useDispatch();
-  const { user, isAuthenticated, loading, error } = useSelector(
-    (state: RootState) => state.auth
-  );
+  const { user, isAuthenticated, loading, error } = useSelector((state: RootState) => state.auth);
+
+  // Adicionando listener para evento de sessão expirada
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      dispatch(logoutAction());
+    };
+
+    window.addEventListener('auth:sessionExpired', handleSessionExpired);
+    return () => {
+      window.removeEventListener('auth:sessionExpired', handleSessionExpired);
+    };
+  }, [dispatch]);
 
   // Login usando o Redux
   const login = useCallback(
     (credentials: LoginCredentials) => {
       dispatch(loginRequest(credentials));
     },
-    [dispatch]
+    [dispatch],
   );
 
   // Registro usando o Redux
@@ -56,31 +66,38 @@ export const useAuth = (): UseAuthReturn => {
       // Enviar todas as credenciais, incluindo o phone
       dispatch(registerRequest(credentials));
     },
-    [dispatch]
+    [dispatch],
   );
 
   // Logout usando o Redux
   const logout = useCallback(() => {
     // Chamada direta ao serviço para limpar o localStorage
     authService.logout();
-    
+
     // Atualiza o estado do Redux
     dispatch(logoutAction());
-    
+
     // Notificação de sucesso
     dispatch(
       addNotification({
         message: 'Logout realizado com sucesso!',
         type: 'success',
-      })
+      }),
     );
-    
+
     // Redireciona para a página de login
     window.location.href = '/login';
   }, [dispatch]);
-
   // Verificação de autenticação
   const checkAuth = useCallback(() => {
+    const token = localStorage.getItem(
+      process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token',
+    );
+    if (!token) {
+      // Se não houver token, já marca como não autenticado
+      dispatch(logoutAction());
+      return;
+    }
     dispatch(checkAuthRequest());
   }, [dispatch]);
 
@@ -94,4 +111,4 @@ export const useAuth = (): UseAuthReturn => {
     logout,
     checkAuth,
   };
-}; 
+};

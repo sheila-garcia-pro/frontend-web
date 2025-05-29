@@ -39,6 +39,13 @@ export const register = async (credentials: RegisterCredentials): Promise<User> 
 
 // Verificação de token/Obter usuário logado
 export const verifyToken = async (): Promise<{ user: User }> => {
+  const tokenKey = process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token';
+  const token = localStorage.getItem(tokenKey);
+
+  if (!token) {
+    throw new Error('Token não encontrado');
+  }
+
   const response = await api.get<User>('/v1/users/me');
   return { user: response.data };
 };
@@ -61,10 +68,10 @@ export const updatePassword = async (
 // Logout (apenas local, não envolve API)
 export const logout = (): void => {
   const tokenKey = process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token';
-  
+
   // Remover o token do localStorage
   localStorage.removeItem(tokenKey);
-  
+
   // Limpar também qualquer outro dado de autenticação que possa existir
   sessionStorage.removeItem(tokenKey);
 };
@@ -76,10 +83,13 @@ export const forgotPassword = async (email: string): Promise<{ message: string }
 };
 
 // Redefinição de senha com token
-export const resetPassword = async (token: string, newPassword: string): Promise<{ message: string }> => {
-  const response = await api.post<{ message: string }>('/v1/auth/reset-password', { 
-    token, 
-    newPassword 
+export const resetPassword = async (
+  token: string,
+  newPassword: string,
+): Promise<{ message: string }> => {
+  const response = await api.post<{ message: string }>('/v1/auth/reset-password', {
+    token,
+    newPassword,
   });
   return response.data;
 };
