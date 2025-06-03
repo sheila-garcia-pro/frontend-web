@@ -32,8 +32,10 @@
     "forgotPassword": "Esqueceu a senha?"
   },
   "ingredients": {
-    "title": "Ingredientes",
+    "title": "Ingredientes disponíveis",
+    "subtitle": "Encontre todos os ingredientes para suas receitas favoritas",
     "newIngredient": "Novo Ingrediente",
+    "newCategory": "Nova Categoria",
     "details": "Detalhes do Ingrediente",
     "sortOptions": {
       "nameAsc": "Nome (A-Z)",
@@ -64,8 +66,31 @@
       "uploadError": "Erro ao fazer upload da imagem"
     },
     "messages": {
-      "notFound": "Ingrediente não encontrado",
+      "notFound": "Nenhum ingrediente encontrado",
+      "tryFilters": "Tente mudar os filtros ou adicionar novos ingredientes",
       "loadError": "Erro ao carregar detalhes do ingrediente"
+    },
+    "results": {
+      "showing": "Mostrando {{count}} de {{total}} ingredientes{{categories, plural, =0 {} other { ({{categories}} categorias selecionadas)}}"
+    }
+  },
+  "profile": {
+    "title": "Detalhes Pessoais",
+    "plan": "Plano: {{plan}}",
+    "planFree": "Grátis",
+    "fields": {
+      "fullName": "Nome Completo",
+      "email": "Email",
+      "phone": "Telefone"
+    },
+    "actions": {
+      "edit": "Editar Perfil",
+      "cancel": "Cancelar",
+      "save": "Salvar Alterações"
+    },
+    "messages": {
+      "updateSuccess": "Perfil atualizado com sucesso!",
+      "updateError": "Erro ao atualizar perfil. Tente novamente."
     }
   }
 }

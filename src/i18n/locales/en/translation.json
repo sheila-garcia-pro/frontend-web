@@ -32,8 +32,10 @@
     "forgotPassword": "Forgot Password?"
   },
   "ingredients": {
-    "title": "Ingredients",
+    "title": "Available Ingredients",
+    "subtitle": "Find all ingredients for your favorite recipes",
     "newIngredient": "New Ingredient",
+    "newCategory": "New Category",
     "details": "Ingredient Details",
     "sortOptions": {
       "nameAsc": "Name (A-Z)",
@@ -64,8 +66,31 @@
       "uploadError": "Error uploading image"
     },
     "messages": {
-      "notFound": "Ingredient not found",
+      "notFound": "No ingredients found",
+      "tryFilters": "Try changing filters or adding new ingredients",
       "loadError": "Error loading ingredient details"
+    },
+    "results": {
+      "showing": "Showing {{count}} of {{total}} ingredients{{categories, plural, =0 {} other { ({{categories}} categories selected)}}"
+    }
+  },
+  "profile": {
+    "title": "Personal Details",
+    "plan": "Plan: {{plan}}",
+    "planFree": "Free",
+    "fields": {
+      "fullName": "Full Name",
+      "email": "Email",
+      "phone": "Phone"
+    },
+    "actions": {
+      "edit": "Edit Profile",
+      "cancel": "Cancel",
+      "save": "Save Changes"
+    },
+    "messages": {
+      "updateSuccess": "Profile updated successfully!",
+      "updateError": "Error updating profile. Please try again."
     }
   }
 }
