@@ -1,4 +1,5 @@
 import React, { ElementType, useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -47,6 +48,8 @@ interface SortOption {
 
 // Componente da página de ingredientes
 const IngredientsPage: React.FC = () => {
+  const { t } = useTranslation();
+
   // Estados locais
   const [sortOption, setSortOption] = useState('name_asc');
   const [modalOpen, setModalOpen] = useState(false);
@@ -71,11 +74,10 @@ const IngredientsPage: React.FC = () => {
 
   // Aplicar debounce ao termo de busca
   const debouncedSearchTerm = useDebounce(searchInput, 300);
-
   // Opções de ordenação
   const sortOptions: SortOption[] = [
-    { value: 'name_asc', label: 'Nome (A-Z)' },
-    { value: 'name_desc', label: 'Nome (Z-A)' },
+    { value: 'name_asc', label: t('ingredients.sortOptions.nameAsc') },
+    { value: 'name_desc', label: t('ingredients.sortOptions.nameDesc') },
   ];
 
   // Carregar dados iniciais
@@ -223,11 +225,12 @@ const IngredientsPage: React.FC = () => {
           }}
         >
           <Box>
+            {' '}
             <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 500 }}>
-              Ingredientes disponíveis
+              {t('ingredients.title')}
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Encontre todos os ingredientes para suas receitas favoritas
+              {t('ingredients.subtitle')}
             </Typography>
           </Box>
 
@@ -242,7 +245,7 @@ const IngredientsPage: React.FC = () => {
                 px: 2,
               }}
             >
-              Nova Categoria
+              {t('ingredients.newCategory')}
             </Button>
 
             <Button
@@ -255,7 +258,7 @@ const IngredientsPage: React.FC = () => {
                 px: 3,
               }}
             >
-              Novo Ingrediente
+              {t('ingredients.newIngredient')}
             </Button>
           </Box>
         </Box>
@@ -279,7 +282,7 @@ const IngredientsPage: React.FC = () => {
             }}
           >
             <TextField
-              placeholder="Buscar ingredientes..."
+              placeholder={t('ingredients.filters.searchPlaceholder')}
               variant="outlined"
               fullWidth
               value={searchInput}
@@ -341,18 +344,25 @@ const IngredientsPage: React.FC = () => {
 
         {/* Tabs Utilizados/Geral */}
         <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={currentTab} onChange={handleTabChange} aria-label="abas de ingredientes">
-            <Tab label="Utilizados" value="used" />
-            <Tab label="Geral" value="all" />
+          {' '}
+          <Tabs
+            value={currentTab}
+            onChange={handleTabChange}
+            aria-label={t('ingredients.filters.tabsLabel')}
+          >
+            <Tab label={t('ingredients.filters.used')} value="used" />
+            <Tab label={t('ingredients.filters.all')} value="all" />
           </Tabs>
         </Box>
 
         {/* Contagem de resultados */}
         {!ingredientsLoading && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Mostrando {paginatedIngredients.length} de {totalFilteredItems} ingredientes
-            {selectedCategories.length > 0 &&
-              ` (${selectedCategories.length} categorias selecionadas)`}
+            {t('ingredients.results.showing', {
+              count: paginatedIngredients.length,
+              total: totalFilteredItems,
+              categories: selectedCategories.length,
+            })}
           </Typography>
         )}
 
@@ -380,12 +390,13 @@ const IngredientsPage: React.FC = () => {
             ))
           ) : (
             <Grid item xs={12} component={'div' as ElementType}>
+              {' '}
               <Box sx={{ p: 4, textAlign: 'center' }}>
                 <Typography variant="h6" color="text.secondary">
-                  Nenhum ingrediente encontrado
+                  {t('ingredients.messages.notFound')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  Tente mudar os filtros ou adicionar novos ingredientes
+                  {t('ingredients.messages.tryFilters')}
                 </Typography>
               </Box>
             </Grid>
