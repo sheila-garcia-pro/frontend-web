@@ -19,27 +19,17 @@ module.exports = function override(config) {
       '@config': path.resolve(__dirname, 'src/config')
     }
   };
-
-  config.plugins = config.plugins.filter(
-  plugin => !(plugin instanceof ForkTsCheckerWebpackPlugin)
-);
-
-  config.optimization = {
-    ...config.optimization,
-    splitChunks: {
+  
+    config.plugins = config.plugins.filter(
+      plugin => plugin.constructor.name !== 'ForkTsCheckerWebpackPlugin'
+    );
+    
+    // Otimizações extras
+    config.optimization.splitChunks = {
       chunks: 'all',
       maxSize: 244 * 1024,
-      cacheGroups: {
-        vendors: {
-          test: /[\\/]node_modules[\\/]/,
-          priority: -10
-        }
-      }
-    },
-    minimize: true,
-    minimizer: [
-    ]
-  };
+      minSize: 20 * 1024
+    };
 
   return config;
 }; 

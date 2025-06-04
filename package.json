@@ -36,7 +36,7 @@
   "scripts": {
     "start": "react-app-rewired start",
     "start:prod": "serve -s build -l 80",
-    "build": "FORK_TS_CHECKER_NO_TYPECHECK=1  react-app-rewired build",
+    "build": "GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true react-app-rewired build",
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
