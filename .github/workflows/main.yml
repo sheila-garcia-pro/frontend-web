@@ -9,10 +9,31 @@ env:
   CI: false
 
 jobs:
-  deploy:
-    needs: setup
-    uses: sheila-garcia-pro/pipeline-deploy/.github/workflows/deploy.yml@main
-    secrets:
-      SQUARE_API_KEY: ${{ secrets.SQUARE_CLOUD_TOKEN }}
-      API_ID_KEY: ${{ secrets.API_ID }}
-      TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.17.0'
+          cache: 'npm'
+
+      - name: Install npm 11.4.1
+        run: npm install -g npm@11.4.1
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Deploy to SquareCloud
+        uses: sheila-garcia-pro/pipeline-deploy/.github/workflows/deploy.yml@main
+        with:
+          secrets:
+            SQUARE_API_KEY: ${{ secrets.SQUARE_CLOUD_TOKEN }}
+            API_ID_KEY: ${{ secrets.API_ID }}
+            TOKEN: ${{ secrets.GITHUB_TOKEN }}
