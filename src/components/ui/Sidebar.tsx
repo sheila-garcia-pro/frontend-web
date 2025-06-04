@@ -126,19 +126,19 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
           <>
             {' '}
             <ListItem disablePadding>
-              <ListItemButton onClick={() => handleNavigation('/profile')}>
-                <ListItemIcon>
-                  <PersonIcon />
-                </ListItemIcon>
-                <ListItemText primary="Perfil" />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
               <ListItemButton onClick={() => handleNavigation('/suppliers')}>
                 <ListItemIcon>
                   <SuppliersIcon />
                 </ListItemIcon>
                 <ListItemText primary="Fornecedores" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => handleNavigation('/profile')}>
+                <ListItemIcon>
+                  <PersonIcon />
+                </ListItemIcon>
+                <ListItemText primary="Perfil" />
               </ListItemButton>
             </ListItem>
           </>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -13,11 +13,14 @@ import {
   SelectChangeEvent,
   CircularProgress,
   Typography,
-  Stack,
   Box,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateIngredientRequest } from '../../../store/slices/ingredientsSlice';
+import {
+  updateIngredientRequest,
+  updatePriceMeasureRequest,
+  fetchIngredientsRequest,
+} from '../../../store/slices/ingredientsSlice';
 import { RootState } from '../../../store';
 import { CreateIngredientParams, Ingredient } from '../../../types/ingredients';
 
@@ -35,39 +38,36 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
   onEditSuccess,
 }) => {
   const dispatch = useDispatch();
-  const { items: categories, loading: categoriesLoading } = useSelector(
-    (state: RootState) => state.categories,
-  );
+  const { items: categories } = useSelector((state: RootState) => state.categories);
   const { loading: ingredientLoading } = useSelector((state: RootState) => state.ingredients);
   const [formData, setFormData] = useState<Partial<CreateIngredientParams>>({
     name: ingredient.name,
     category: ingredient.category,
     image: ingredient.image,
+    price: ingredient.price || {
+      price: 0,
+      quantity: 0,
+      unitMeasure: 'Quilograma',
+    },
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [uploading, setUploading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Reset form when modal closes or ingredient changes
+  // Resetar formulário quando o modal fecha ou o ingrediente muda
   useEffect(() => {
     setFormData({
       name: ingredient.name,
       category: ingredient.category,
       image: ingredient.image,
+      price: ingredient.price || {
+        price: 0,
+        quantity: 0,
+        unitMeasure: 'Quilograma',
+      },
     });
     setErrors({});
-  }, [open, ingredient]);
-
-  // Reset form when modal closes or ingredient changes
-  useEffect(() => {
-    if (open) {
-      setFormData({
-        name: ingredient.name,
-        category: ingredient.category,
-        image: ingredient.image,
-      });
-      setErrors({});
-    }
   }, [open, ingredient]);
 
   useEffect(() => {
@@ -82,7 +82,21 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name.startsWith('price.')) {
+      const priceField = name.split('.')[1];
+      setFormData((prev) => {
+        const currentPrice = prev.price || { price: 0, quantity: 0, unitMeasure: 'Quilograma' };
+        return {
+          ...prev,
+          price: {
+            ...currentPrice,
+            [priceField]: priceField === 'unitMeasure' ? value : parseFloat(value) || 0,
+          },
+        };
+      });
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
     setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
@@ -150,17 +164,60 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
       newErrors.category = 'A categoria é obrigatória';
       isValid = false;
     }
+    if (formData.price) {
+      if (formData.price.price < 0) {
+        newErrors['price.price'] = 'ingredients.form.validation.priceNegative';
+        isValid = false;
+      }
+      if (!formData.price.price) {
+        newErrors['price.price'] = 'ingredients.form.validation.priceRequired';
+        isValid = false;
+      }
+      if (formData.price.quantity < 0) {
+        newErrors['price.quantity'] = 'ingredients.form.validation.quantityNegative';
+        isValid = false;
+      }
+      if (!formData.price.quantity) {
+        newErrors['price.quantity'] = 'ingredients.form.validation.quantityRequired';
+        isValid = false;
+      }
+      if (!formData.price.unitMeasure) {
+        newErrors['price.unitMeasure'] = 'ingredients.form.validation.unitRequired';
+        isValid = false;
+      }
+    }
 
     setErrors(newErrors);
     return isValid;
   };
-
   const handleSubmit = () => {
     if (validate()) {
       setIsSubmitted(true);
       const changedFields = Object.entries(formData).reduce((acc, [key, value]) => {
-        if (value !== undefined && value !== ingredient[key as keyof Ingredient]) {
-          acc[key as keyof CreateIngredientParams] = value as string;
+        if (value !== undefined) {
+          if (key === 'price') {
+            if (!ingredient.price || JSON.stringify(value) !== JSON.stringify(ingredient.price)) {
+              // Se o preço foi alterado, usa o endpoint específico de preço
+              dispatch(
+                updatePriceMeasureRequest({
+                  id: ingredient._id,
+                  params: value as { price: number; quantity: number; unitMeasure: string },
+                }),
+              );
+
+              // Recarrega a lista de ingredientes após a atualização do preço
+              dispatch(
+                fetchIngredientsRequest({
+                  page: 1,
+                  itemPerPage: 1000,
+                }),
+              );
+
+              return acc;
+            }
+          } else if (value !== ingredient[key as keyof Ingredient]) {
+            (acc as Record<string, unknown>)[key] = value;
+          }
         }
         return acc;
       }, {} as Partial<CreateIngredientParams>);
@@ -170,6 +227,14 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
           updateIngredientRequest({
             id: ingredient._id,
             params: changedFields,
+          }),
+        );
+
+        // Recarrega a lista de ingredientes após a atualização
+        dispatch(
+          fetchIngredientsRequest({
+            page: 1,
+            itemPerPage: 1000,
           }),
         );
       } else {
@@ -182,102 +247,155 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Editar Ingrediente</DialogTitle>
       <DialogContent>
-        <Box sx={{ mt: 2 }}>
-          <Stack spacing={3}>
-            <TextField
-              label="Nome do ingrediente"
-              name="name"
-              value={formData.name || ''}
-              onChange={handleChange}
-              error={!!errors.name}
-              helperText={errors.name}
-              fullWidth
-            />
+        <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField
+            fullWidth
+            label="Nome do ingrediente"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            error={!!errors.name}
+            helperText={errors.name}
+            required
+          />
 
-            <FormControl fullWidth error={!!errors.category}>
-              <InputLabel>Categoria</InputLabel>
-              <Select
-                value={formData.category || ''}
-                label="Categoria"
-                onChange={handleCategoryChange}
-                disabled={categoriesLoading}
-              >
-                {categories &&
-                  categories.map((category) => (
-                    <MenuItem key={category._id} value={category.name}>
-                      {category.name}
-                    </MenuItem>
-                  ))}
-              </Select>
-              {errors.category && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
-                  {errors.category}
-                </Typography>
-              )}
-            </FormControl>
+          <FormControl fullWidth required error={!!errors.category}>
+            <InputLabel id="category-label">Categoria</InputLabel>
+            <Select
+              labelId="category-label"
+              label="Category"
+              name="category"
+              value={formData.category}
+              onChange={handleCategoryChange}
+              disabled={categories.length === 0}
+            >
+              {categories.map((cat) => (
+                <MenuItem key={cat._id} value={cat.name}>
+                  {cat.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-            <Box>
-              <input
-                accept="image/*"
-                type="file"
-                id="ingredient-image"
-                onChange={handleFileSelect}
-                style={{ display: 'none' }}
+          <Box
+            sx={{
+              border: '1px solid',
+              borderColor: 'divider',
+              p: 2,
+              borderRadius: 1,
+              bgcolor: 'background.paper',
+            }}
+          >
+            {' '}
+            <Typography variant="subtitle1" gutterBottom>
+              ingredients.form.priceInfo
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+              <TextField
+                fullWidth
+                required
+                label="ingredients.form.price"
+                name="price.price"
+                type="number"
+                value={formData.price?.price || 0}
+                onChange={handleChange}
+                error={!!errors['price.price']}
+                helperText={errors['price.price']}
+                InputProps={{
+                  inputProps: { min: 0, step: 0.01 },
+                }}
               />
-              <label htmlFor="ingredient-image">
-                <Button
-                  variant="outlined"
-                  component="span"
-                  fullWidth
-                  disabled={uploading}
-                  sx={{ mb: 1 }}
-                >
-                  {uploading ? 'Fazendo upload...' : 'Escolher imagem'}
-                </Button>
-              </label>
-              {formData.image && (
-                <Box
-                  sx={{
-                    width: '100%',
-                    height: 100,
-                    borderRadius: 1,
-                    overflow: 'hidden',
-                    mt: 1,
-                    backgroundColor: 'rgba(0, 0, 0, 0.04)', // Fundo neutro para melhor visualização
-                  }}
-                >
-                  <img
-                    src={formData.image}
-                    alt="Preview"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                    }}
-                  />
-                </Box>
-              )}
-              {errors.image && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                  {errors.image}
-                </Typography>
-              )}
+              <TextField
+                fullWidth
+                required
+                label="ingredients.form.quantity"
+                name="price.quantity"
+                type="number"
+                value={formData.price?.quantity || 0}
+                onChange={handleChange}
+                error={!!errors['price.quantity']}
+                helperText={errors['price.quantity']}
+                InputProps={{
+                  inputProps: { min: 0, step: 0.01 },
+                }}
+              />{' '}
+              <TextField
+                fullWidth
+                label="ingredients.form.unitMeasure"
+                name="price.unitMeasure"
+                value={formData.price?.unitMeasure || ''}
+                onChange={handleChange}
+                error={!!errors['price.unitMeasure']}
+                helperText={errors['price.unitMeasure']}
+                select
+              >
+                <MenuItem value="Quilograma">ingredients.form.units.kilogram</MenuItem>
+                <MenuItem value="Grama">ingredients.form.units.gram</MenuItem>
+                <MenuItem value="Litro">ingredients.form.units.liter</MenuItem>
+                <MenuItem value="Mililitro">ingredients.form.units.milliliter</MenuItem>
+                <MenuItem value="Unidade">ingredients.form.units.unit</MenuItem>
+              </TextField>
             </Box>
-          </Stack>
+          </Box>
+
+          {/* Campo de upload de imagem */}
+          <input
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={handleFileSelect}
+            ref={fileInputRef}
+          />
+          <Box
+            sx={{
+              width: '100%',
+              height: 150,
+              border: '2px dashed',
+              borderColor: errors.image ? 'error.main' : 'divider',
+              borderRadius: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              cursor: 'pointer',
+              '&:hover': {
+                borderColor: 'primary.main',
+                backgroundColor: 'primary.lighter',
+              },
+            }}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {uploading ? (
+              <CircularProgress size={24} />
+            ) : formData.image ? (
+              <Box
+                component="img"
+                src={formData.image}
+                alt="Preview"
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                }}
+              />
+            ) : (
+              <Typography color="textSecondary">ingredients.form.uploadImage</Typography>
+            )}
+          </Box>
+          {errors.image && (
+            <Typography color="error" variant="caption">
+              {errors.image}
+            </Typography>
+          )}
         </Box>
       </DialogContent>
-
       <DialogActions>
-        <Button onClick={onClose} disabled={ingredientLoading || uploading}>
-          Cancelar
+        <Button onClick={onClose} color="inherit">
+          cancelar
         </Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={ingredientLoading || uploading}
-          startIcon={ingredientLoading ? <CircularProgress size={20} /> : undefined}
-        >
-          Salvar Alterações
+        <Button onClick={handleSubmit} variant="contained" disabled={ingredientLoading}>
+          Salvar
         </Button>
       </DialogActions>
     </Dialog>
