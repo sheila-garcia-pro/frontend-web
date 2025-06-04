@@ -63,7 +63,25 @@
       "image": "Imagem",
       "imageUpload": "Upload de Imagem",
       "required": "Campo obrigatório",
-      "uploadError": "Erro ao fazer upload da imagem"
+      "uploadError": "Erro ao fazer upload da imagem",
+      "priceInfo": "Informações de Preço",
+      "price": "Preço (R$)",
+      "quantity": "Quantidade",
+      "unitMeasure": "Unidade de Medida",
+      "units": {
+        "kilogram": "Quilograma (kg)",
+        "gram": "Grama (g)",
+        "liter": "Litro (L)",
+        "milliliter": "Mililitro (mL)",
+        "unit": "Unidade (un)"
+      },
+      "validation": {
+        "priceRequired": "O preço é obrigatório",
+        "quantityRequired": "A quantidade é obrigatória",
+        "unitRequired": "A unidade de medida é obrigatória",
+        "priceNegative": "O preço não pode ser negativo",
+        "quantityNegative": "A quantidade não pode ser negativa"
+      }
     },
     "messages": {
       "notFound": "Nenhum ingrediente encontrado",

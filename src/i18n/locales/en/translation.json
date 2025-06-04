@@ -1,6 +1,20 @@
 {
   "welcome": "Welcome to the system",
   "language": "Language",
+  "common": {
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "save": "Save",
+    "close": "Close",
+    "loading": "Loading...",
+    "search": "Search...",
+    "apply": "Apply",
+    "reset": "Reset"
+  },
   "theme": {
     "toggle": "Switch to {{theme}} theme",
     "light": "light",
@@ -63,7 +77,25 @@
       "image": "Image",
       "imageUpload": "Image Upload",
       "required": "This field is required",
-      "uploadError": "Error uploading image"
+      "uploadError": "Error uploading image",
+      "priceInfo": "Price Information",
+      "price": "Price ($)",
+      "quantity": "Quantity",
+      "unitMeasure": "Unit of Measure",
+      "units": {
+        "kilogram": "Kilogram (kg)",
+        "gram": "Gram (g)",
+        "liter": "Liter (L)",
+        "milliliter": "Milliliter (mL)",
+        "unit": "Unit (un)"
+      },
+      "validation": {
+        "priceRequired": "Price is required",
+        "quantityRequired": "Quantity is required",
+        "unitRequired": "Unit of measure is required",
+        "priceNegative": "Price cannot be negative",
+        "quantityNegative": "Quantity cannot be negative"
+      }
     },
     "messages": {
       "notFound": "No ingredients found",

@@ -5,6 +5,11 @@ export interface Ingredient {
   category: string;
   image: string;
   isEdit?: boolean;
+  price?: {
+    price: number;
+    quantity: number;
+    unitMeasure: string;
+  };
 }
 
 // Interface para criação de ingrediente
@@ -12,6 +17,11 @@ export interface CreateIngredientParams {
   name: string;
   category: string;
   image: string;
+  price?: {
+    price: number;
+    quantity: number;
+    unitMeasure: string;
+  };
 }
 
 // Interface para resposta da API de ingredientes

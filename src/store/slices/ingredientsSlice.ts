@@ -134,6 +134,34 @@ const ingredientsSlice = createSlice({
       state.loading = false;
       state.error = action.payload;
     },
+
+    // Atualizar preço e medida
+    updatePriceMeasureRequest: (
+      state,
+      _action: PayloadAction<{
+        id: string;
+        params: { price: number; quantity: number; unitMeasure: string };
+      }>,
+    ) => {
+      state.loading = true;
+      state.error = null;
+    },
+    updatePriceMeasureSuccess: (state, action: PayloadAction<Ingredient>) => {
+      state.loading = false;
+      state.error = null;
+      // Atualiza o ingrediente na lista
+      state.items = state.items.map((item) =>
+        item._id === action.payload._id ? action.payload : item,
+      );
+      // Atualiza o ingrediente selecionado se estiver aberto
+      if (state.selectedIngredient?._id === action.payload._id) {
+        state.selectedIngredient = action.payload;
+      }
+    },
+    updatePriceMeasureFailure: (state, action: PayloadAction<string>) => {
+      state.loading = false;
+      state.error = action.payload;
+    },
   },
 });
 
@@ -154,6 +182,9 @@ export const {
   deleteIngredientSuccess,
   deleteIngredientFailure,
   setCategoryFilter,
+  updatePriceMeasureRequest,
+  updatePriceMeasureSuccess,
+  updatePriceMeasureFailure,
 } = ingredientsSlice.actions;
 
 // Exporta reducer
