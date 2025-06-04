@@ -89,13 +89,16 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
             sx={{
               justifyContent: 'flex-start',
             }}
-          />          <IconButton onClick={handleDrawerToggle} aria-label={t('menu.close')}>
+          />{' '}
+          <IconButton onClick={handleDrawerToggle} aria-label={t('menu.close')}>
             <ChevronLeftIcon />
           </IconButton>
         </Box>
       </DrawerHeader>
       <Divider />
-      <List>        <ListItem disablePadding>
+      <List>
+        {' '}
+        <ListItem disablePadding>
           <ListItemButton onClick={() => handleNavigation('/')}>
             <ListItemIcon>
               <HomeIcon />
@@ -103,7 +106,6 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
             <ListItemText primary={t('menu.home')} />
           </ListItemButton>
         </ListItem>
-
         <ListItem disablePadding>
           <ListItemButton onClick={() => handleNavigation('/ingredients')}>
             <ListItemIcon>
@@ -112,7 +114,6 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
             <ListItemText primary={t('menu.ingredients')} />
           </ListItemButton>
         </ListItem>
-
         <ListItem disablePadding>
           <ListItemButton onClick={() => handleNavigation('/recipes')}>
             <ListItemIcon>
@@ -121,23 +122,22 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
             <ListItemText primary={t('menu.recipes')} />
           </ListItemButton>
         </ListItem>
-
         {isAuthenticated && (
           <>
-            <ListItem disablePadding>
-              <ListItemButton onClick={() => handleNavigation('/profile')}>
-                <ListItemIcon>
-                  <PersonIcon />
-                </ListItemIcon>
-                <ListItemText primary={t('menu.profile')} />
-              </ListItemButton>
-            </ListItem>
             <ListItem disablePadding>
               <ListItemButton onClick={() => handleNavigation('/suppliers')}>
                 <ListItemIcon>
                   <SuppliersIcon />
                 </ListItemIcon>
                 <ListItemText primary={t('menu.suppliers')} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => handleNavigation('/profile')}>
+                <ListItemIcon>
+                  <PersonIcon />
+                </ListItemIcon>
+                <ListItemText primary={t('menu.profile')} />
               </ListItemButton>
             </ListItem>
           </>

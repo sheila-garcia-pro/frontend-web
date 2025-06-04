@@ -14,6 +14,9 @@ import {
   deleteIngredientRequest,
   deleteIngredientSuccess,
   deleteIngredientFailure,
+  updatePriceMeasureRequest,
+  updatePriceMeasureSuccess,
+  updatePriceMeasureFailure,
 } from '../slices/ingredientsSlice';
 import { setGlobalLoading, addNotification } from '../slices/uiSlice';
 import * as ingredientsService from '../../services/api/ingredients';
@@ -170,12 +173,58 @@ export function* deleteIngredientSaga(action: PayloadAction<string>): SagaIterat
   }
 }
 
+// Saga para atualizar preço e medida
+export function* updatePriceMeasureSaga(
+  action: PayloadAction<{
+    id: string;
+    params: { price: number; quantity: number; unitMeasure: string };
+  }>,
+): SagaIterator {
+  try {
+    yield put(setGlobalLoading(true));
+
+    const response = yield call(
+      ingredientsService.updateIngredientPriceMeasure,
+      action.payload.id,
+      action.payload.params,
+    );
+
+    yield put(updatePriceMeasureSuccess(response));
+
+    yield put(
+      addNotification({
+        message: 'Preço do ingrediente atualizado com sucesso!',
+        type: 'success',
+        duration: 4000,
+      }),
+    );
+  } catch (error) {
+    console.error('updatePriceMeasureSaga - erro:', error);
+    yield put(
+      updatePriceMeasureFailure(
+        error instanceof Error ? error.message : 'Erro ao atualizar preço do ingrediente',
+      ),
+    );
+
+    yield put(
+      addNotification({
+        message: 'Erro ao atualizar preço do ingrediente.',
+        type: 'error',
+        duration: 5000,
+      }),
+    );
+  } finally {
+    yield put(setGlobalLoading(false));
+  }
+}
+
 // Sagas de ingredientes
 const ingredientsSagas = [
   takeLatest(fetchIngredientsRequest.type, fetchIngredientsSaga),
   takeLatest(createIngredientRequest.type, createIngredientSaga),
   takeLatest(updateIngredientRequest.type, updateIngredientSaga),
   takeLatest(deleteIngredientRequest.type, deleteIngredientSaga),
+  takeLatest(updatePriceMeasureRequest.type, updatePriceMeasureSaga),
 ];
 
 export default ingredientsSagas;

@@ -112,3 +112,28 @@ export const deleteIngredient = async (id: string): Promise<void> => {
   clearCache('/v1/users/me/ingredient');
   clearCache(`/v1/users/me/ingredient/${id}`);
 };
+
+// Atualizar preço e medida de um ingrediente
+export const updateIngredientPriceMeasure = async (
+  id: string,
+  params: {
+    price: number;
+    quantity: number;
+    unitMeasure: string;
+  },
+): Promise<Ingredient> => {
+  const response = await api.post<Ingredient>(
+    `/v1/users/me/ingredient/${id}/price-measure`,
+    params,
+  );
+  // Limpa o cache de ingredientes e do ingrediente específico
+  clearCache('/v1/users/me/ingredient');
+  clearCache(`/v1/users/me/ingredient/${id}`);
+  return response.data;
+};
+
+// Obter preço e medida de um ingrediente
+export const getIngredientPriceMeasure = async (id: string): Promise<Ingredient> => {
+  const response = await api.get<Ingredient>(`/v1/users/me/ingredient/${id}/price-measure`);
+  return response.data;
+};

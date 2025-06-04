@@ -9,8 +9,10 @@ import {
   Chip,
   Button,
   CircularProgress,
+  Divider,
+  Tooltip,
 } from '@mui/material';
-import { Close, Edit, Category, Delete } from '@mui/icons-material';
+import { Close, Edit, Category, Delete, ShoppingCart } from '@mui/icons-material';
 import { Ingredient } from '../../../types/ingredients';
 import { useDispatch } from 'react-redux';
 import * as ingredientsService from '../../../services/api/ingredients';
@@ -124,7 +126,29 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
         <Close />
       </IconButton>
 
-      <DialogTitle sx={{ pb: 1 }}>{t('ingredients.details')}</DialogTitle>
+      <DialogTitle sx={{ pb: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
+        {t('ingredients.details')}
+        {ingredient?.isEdit && (
+          <Tooltip title={t('ingredients.actions.editTooltip') || 'Editar ingrediente'}>
+            <IconButton
+              color="primary"
+              onClick={handleEditClick}
+              size="small"
+              sx={{
+                bgcolor: 'primary.light',
+                '&:hover': {
+                  bgcolor: 'primary.main',
+                  '& .MuiSvgIcon-root': {
+                    color: 'white',
+                  },
+                },
+              }}
+            >
+              <Edit fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
+      </DialogTitle>
 
       <DialogContent>
         {loading ? (
@@ -143,6 +167,27 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                 position: 'relative',
               }}
             >
+              {ingredient.isEdit && (
+                <Tooltip title={t('ingredients.actions.editTooltip') || 'Editar ingrediente'}>
+                  <IconButton
+                    onClick={handleEditClick}
+                    sx={{
+                      position: 'absolute',
+                      right: 8,
+                      top: 8,
+                      bgcolor: 'background.paper',
+                      '&:hover': {
+                        bgcolor: 'primary.main',
+                        '& .MuiSvgIcon-root': {
+                          color: 'white',
+                        },
+                      },
+                    }}
+                  >
+                    <Edit />
+                  </IconButton>
+                </Tooltip>
+              )}
               <Box
                 component="img"
                 src={ingredient.image}
@@ -152,7 +197,9 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                   height: '100%',
                   objectFit: 'contain',
                   backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                  cursor: ingredient.isEdit ? 'pointer' : 'default',
                 }}
+                onClick={ingredient.isEdit ? handleEditClick : undefined}
               />
             </Box>
             <Box sx={{ mb: 3 }}>
@@ -160,14 +207,57 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                 {ingredient.name}
               </Typography>
 
-              <Chip
-                icon={<Category />}
-                label={ingredient.category}
-                color="primary"
-                variant="outlined"
-                sx={{ borderRadius: 2 }}
-              />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                <Chip
+                  icon={<Category />}
+                  label={ingredient.category}
+                  color="primary"
+                  variant="outlined"
+                  sx={{ borderRadius: 2 }}
+                />
+              </Box>
+
+              {ingredient.price && (
+                <Box
+                  sx={{
+                    mt: 3,
+                    p: 2,
+                    bgcolor: 'background.paper',
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    cursor: ingredient.isEdit ? 'pointer' : 'default',
+                    transition: 'all 0.2s',
+                    '&:hover': ingredient.isEdit
+                      ? {
+                          borderColor: 'primary.main',
+                          bgcolor: 'primary.lighter',
+                        }
+                      : {},
+                  }}
+                  onClick={ingredient.isEdit ? handleEditClick : undefined}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <ShoppingCart color="primary" />
+                    <Typography variant="subtitle1">Informações de Preço</Typography>
+                  </Box>
+                  <Divider sx={{ mb: 2 }} />
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Typography variant="body2">
+                      Preço: R$ {ingredient.price.price.toFixed(2)}
+                    </Typography>
+                    <Typography variant="body2">
+                      Quantidade: {ingredient.price.quantity} {ingredient.price.unitMeasure}
+                    </Typography>
+                    <Typography variant="body2" color="primary.main" sx={{ fontWeight: 500 }}>
+                      Preço por {ingredient.price.unitMeasure}: R${' '}
+                      {(ingredient.price.price / ingredient.price.quantity).toFixed(2)}
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
             </Box>
+
             {ingredient.isEdit && (
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <Button
@@ -175,7 +265,10 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                   variant="contained"
                   onClick={handleEditClick}
                   fullWidth
-                  sx={{ borderRadius: 3 }}
+                  sx={{
+                    borderRadius: 3,
+                    boxShadow: (theme) => `0 0 20px ${theme.palette.primary.main}20`,
+                  }}
                 >
                   {t('ingredients.actions.edit')}
                 </Button>
