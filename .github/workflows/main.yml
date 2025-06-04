@@ -5,7 +5,7 @@ on:
     branches:
       - main
 env:
-  NODE_OPTIONS: --max-old-space-size=8192
+  NODE_OPTIONS: --max-old-space-size=16384
   CI: false
 
 jobs:
@@ -15,3 +15,6 @@ jobs:
       SQUARE_API_KEY: ${{ secrets.SQUARE_CLOUD_TOKEN }}
       API_ID_KEY: ${{ secrets.API_ID }}
       TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Upgrade npm
+        run: npm install -g npm@11.4.1
