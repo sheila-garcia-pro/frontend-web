@@ -8,7 +8,8 @@ env:
   NODE_OPTIONS: --max-old-space-size=16384
   CI: false
 
-jobs:  setup:
+jobs:
+  setup:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
