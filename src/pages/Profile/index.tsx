@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -20,7 +19,6 @@ import useNotification from '@hooks/useNotification';
 import { useTheme } from '../../contexts/ThemeContext';
 
 const ProfilePage: React.FC = () => {
-  const { t } = useTranslation();
   const user = useSelector((state: RootState) => state.auth.user);
   const notification = useNotification();
   const { mode } = useTheme();
@@ -46,11 +44,11 @@ const ProfilePage: React.FC = () => {
           id: user.id,
           ...formData,
         });
-        notification.showSuccess(t('profile.messages.updateSuccess'));
+        notification.showSuccess('Perfil atualizado com sucesso!');
         setIsEditing(false);
       }
     } catch (error) {
-      notification.showError(t('profile.messages.updateError'));
+      notification.showError('Erro ao atualizar perfil. Tente novamente.');
     }
   };
   function getInitials(name: string) {
@@ -63,10 +61,10 @@ const ProfilePage: React.FC = () => {
   return (
     <Container maxWidth="md">
       <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
-        {' '}
         <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4 }}>
-          {t('profile.title')}
+          Detalhes Pessoais
         </Typography>
+
         <Box
           sx={{
             display: 'grid',
@@ -86,49 +84,52 @@ const ProfilePage: React.FC = () => {
                 fontWeight: 'bold',
               }}
             >
-              {user?.name ? getInitials(user.name) : '?'}{' '}
+              {user?.name ? getInitials(user.name) : '?'}
             </Avatar>
             <Typography variant="subtitle1" gutterBottom>
-              {t('profile.plan', { plan: t('profile.planFree') })}
+              Plano: Grátis
             </Typography>
           </Box>
 
           <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <TextField
               fullWidth
-              label={t('profile.fields.fullName')}
+              label="Nome Completo"
               name="name"
               value={formData.name}
               onChange={handleInputChange}
               disabled={!isEditing}
             />
+
             <TextField
               fullWidth
-              label={t('profile.fields.email')}
+              label="Email"
               name="email"
               value={formData.email}
               onChange={handleInputChange}
               disabled={!isEditing}
             />
+
             <TextField
               fullWidth
-              label={t('profile.fields.phone')}
+              label="Telefone"
               name="phone"
               value={formData.phone}
               onChange={handleInputChange}
               disabled={!isEditing}
-            />{' '}
+            />
+
             {!isEditing ? (
               <Button variant="contained" onClick={() => setIsEditing(true)} sx={{ mt: 2 }}>
-                {t('profile.actions.edit')}
+                Editar Perfil
               </Button>
             ) : (
               <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
                 <Button variant="outlined" onClick={() => setIsEditing(false)} sx={{ flex: 1 }}>
-                  {t('profile.actions.cancel')}
+                  Cancelar
                 </Button>
                 <Button variant="contained" onClick={handleSave} sx={{ flex: 1 }}>
-                  {t('profile.actions.save')}
+                  Salvar Alterações
                 </Button>
               </Box>
             )}

@@ -23,7 +23,6 @@ import {
 } from '../../../store/slices/ingredientsSlice';
 import { RootState } from '../../../store';
 import { CreateIngredientParams, Ingredient } from '../../../types/ingredients';
-import { useTranslation } from 'react-i18next';
 
 interface IngredientEditModalProps {
   open: boolean;
@@ -38,7 +37,6 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
   ingredient,
   onEditSuccess,
 }) => {
-  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { items: categories } = useSelector((state: RootState) => state.categories);
   const { loading: ingredientLoading } = useSelector((state: RootState) => state.ingredients);
@@ -142,12 +140,12 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
           ? Array.isArray(data.message)
             ? data.message[0]
             : data.message
-          : t('ingredients.form.uploadError');
+          : 'Erro ao fazer upload da imagem';
         setErrors((prev) => ({ ...prev, image: errorMessage }));
       }
     } catch (error) {
       console.error('Erro no upload:', error);
-      setErrors((prev) => ({ ...prev, image: t('ingredients.form.uploadError') }));
+      setErrors((prev) => ({ ...prev, image: 'Erro ao fazer upload da imagem' }));
     } finally {
       setUploading(false);
     }
@@ -158,33 +156,33 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
     let isValid = true;
 
     if (formData.name !== undefined && !formData.name.trim()) {
-      newErrors.name = t('ingredients.form.required');
+      newErrors.name = 'O nome é obrigatório';
       isValid = false;
     }
 
     if (formData.category !== undefined && !formData.category) {
-      newErrors.category = t('ingredients.form.required');
+      newErrors.category = 'A categoria é obrigatória';
       isValid = false;
     }
     if (formData.price) {
       if (formData.price.price < 0) {
-        newErrors['price.price'] = t('ingredients.form.validation.priceNegative');
+        newErrors['price.price'] = 'ingredients.form.validation.priceNegative';
         isValid = false;
       }
       if (!formData.price.price) {
-        newErrors['price.price'] = t('ingredients.form.validation.priceRequired');
+        newErrors['price.price'] = 'ingredients.form.validation.priceRequired';
         isValid = false;
       }
       if (formData.price.quantity < 0) {
-        newErrors['price.quantity'] = t('ingredients.form.validation.quantityNegative');
+        newErrors['price.quantity'] = 'ingredients.form.validation.quantityNegative';
         isValid = false;
       }
       if (!formData.price.quantity) {
-        newErrors['price.quantity'] = t('ingredients.form.validation.quantityRequired');
+        newErrors['price.quantity'] = 'ingredients.form.validation.quantityRequired';
         isValid = false;
       }
       if (!formData.price.unitMeasure) {
-        newErrors['price.unitMeasure'] = t('ingredients.form.validation.unitRequired');
+        newErrors['price.unitMeasure'] = 'ingredients.form.validation.unitRequired';
         isValid = false;
       }
     }
@@ -247,12 +245,12 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{t('ingredients.actions.edit')}</DialogTitle>
+      <DialogTitle>Editar Ingrediente</DialogTitle>
       <DialogContent>
         <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <TextField
             fullWidth
-            label={t('ingredients.form.name')}
+            label="Nome do ingrediente"
             name="name"
             value={formData.name}
             onChange={handleChange}
@@ -262,10 +260,10 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
           />
 
           <FormControl fullWidth required error={!!errors.category}>
-            <InputLabel id="category-label">{t('ingredients.form.category')}</InputLabel>
+            <InputLabel id="category-label">Categoria</InputLabel>
             <Select
               labelId="category-label"
-              label={t('ingredients.form.category')}
+              label="Category"
               name="category"
               value={formData.category}
               onChange={handleCategoryChange}
@@ -290,13 +288,13 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
           >
             {' '}
             <Typography variant="subtitle1" gutterBottom>
-              {t('ingredients.form.priceInfo')}
+              ingredients.form.priceInfo
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
               <TextField
                 fullWidth
                 required
-                label={t('ingredients.form.price')}
+                label="ingredients.form.price"
                 name="price.price"
                 type="number"
                 value={formData.price?.price || 0}
@@ -310,7 +308,7 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
               <TextField
                 fullWidth
                 required
-                label={t('ingredients.form.quantity')}
+                label="ingredients.form.quantity"
                 name="price.quantity"
                 type="number"
                 value={formData.price?.quantity || 0}
@@ -323,7 +321,7 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
               />{' '}
               <TextField
                 fullWidth
-                label={t('ingredients.form.unitMeasure')}
+                label="ingredients.form.unitMeasure"
                 name="price.unitMeasure"
                 value={formData.price?.unitMeasure || ''}
                 onChange={handleChange}
@@ -331,11 +329,11 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
                 helperText={errors['price.unitMeasure']}
                 select
               >
-                <MenuItem value="Quilograma">{t('ingredients.form.units.kilogram')}</MenuItem>
-                <MenuItem value="Grama">{t('ingredients.form.units.gram')}</MenuItem>
-                <MenuItem value="Litro">{t('ingredients.form.units.liter')}</MenuItem>
-                <MenuItem value="Mililitro">{t('ingredients.form.units.milliliter')}</MenuItem>
-                <MenuItem value="Unidade">{t('ingredients.form.units.unit')}</MenuItem>
+                <MenuItem value="Quilograma">ingredients.form.units.kilogram</MenuItem>
+                <MenuItem value="Grama">ingredients.form.units.gram</MenuItem>
+                <MenuItem value="Litro">ingredients.form.units.liter</MenuItem>
+                <MenuItem value="Mililitro">ingredients.form.units.milliliter</MenuItem>
+                <MenuItem value="Unidade">ingredients.form.units.unit</MenuItem>
               </TextField>
             </Box>
           </Box>
@@ -382,7 +380,7 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
                 }}
               />
             ) : (
-              <Typography color="textSecondary">{t('ingredients.form.uploadImage')}</Typography>
+              <Typography color="textSecondary">ingredients.form.uploadImage</Typography>
             )}
           </Box>
           {errors.image && (
@@ -394,10 +392,10 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="inherit">
-          {t('common.cancel')}
+          cancelar
         </Button>
         <Button onClick={handleSubmit} variant="contained" disabled={ingredientLoading}>
-          {t('common.save')}
+          Salvar
         </Button>
       </DialogActions>
     </Dialog>
