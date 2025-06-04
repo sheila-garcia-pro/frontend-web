@@ -8,19 +8,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [20.17.0]
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          node-version: '20.17.0'
 
       - name: Show system info
         run: |
@@ -28,33 +24,40 @@ jobs:
           npm -v
           free -h
 
-      - name: Clear npm cache and node_modules
+      - name: Clean installation
         run: |
-          npm cache clean --force
           rm -rf node_modules package-lock.json
+          npm cache clean --force
+          npm install -g npm@11.4.1
 
       - name: Install dependencies
         run: |
-          npm install --production=false --legacy-peer-deps
-          npm list --prod --depth=0
+          npm install --no-audit --no-fund
+          npm ls --depth=0
+
+      - name: Analyze package versions
+        run: |
+          echo "Checking React version:"
+          npm list react react-dom
+          echo "Checking TypeScript version:"
+          npm list typescript @types/react @types/react-dom
 
       - name: Build application
         env:
           CI: false
           NODE_ENV: production
-          NODE_OPTIONS: --max-old-space-size=8192 --max-semi-space-size=512 --optimize-for-size
-          GENERATE_SOURCEMAP: false
-          INLINE_RUNTIME_CHUNK: false
-          IMAGE_INLINE_SIZE_LIMIT: 0
-          DISABLE_ESLINT_PLUGIN: true
-          TSC_COMPILE_ON_ERROR: true
-          FAST_REFRESH: false
-          SKIP_PREFLIGHT_CHECK: true
         run: |
-          npm run build --verbose
+          echo "Starting build process..."
+          npm run build
+          echo "Build completed"
 
-      - name: Analyze build output
-        run: ls -lh build/static/js/
+      - name: Check build output
+        if: success()
+        run: |
+          echo "Checking build output size:"
+          du -sh build/
+          echo "Listing JS bundles:"
+          ls -lh build/static/js/
 
   deploy:
     needs: build
