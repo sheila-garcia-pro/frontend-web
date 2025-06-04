@@ -4,64 +4,11 @@ on:
   push:
     branches:
       - main
-
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20.17.0'
-
-      - name: Show system info
-        run: |
-          node -v
-          npm -v
-          free -h
-
-      - name: Clean installation
-        run: |
-          rm -rf node_modules package-lock.json
-          npm cache clean --force
-          npm install -g npm@11.4.1
-
-      - name: Install dependencies
-        run: |
-          npm install --no-audit --no-fund
-          npm ls --depth=0
-
-      - name: Analyze package versions
-        run: |
-          echo "Checking React version:"
-          npm list react react-dom
-          echo "Checking TypeScript version:"
-          npm list typescript @types/react @types/react-dom
-
-      - name: Build application
-        env:
-          CI: false
-          NODE_ENV: production
-        run: |
-          echo "Starting build process..."
-          npm run build
-          echo "Build completed"
-
-      - name: Check build output
-        if: success()
-        run: |
-          echo "Checking build output size:"
-          du -sh build/
-          echo "Listing JS bundles:"
-          ls -lh build/static/js/
-
   deploy:
-    needs: build
     uses: sheila-garcia-pro/pipeline-deploy/.github/workflows/deploy.yml@main
+
+
     secrets:
       SQUARE_API_KEY: ${{ secrets.SQUARE_CLOUD_TOKEN }}
       API_ID_KEY: ${{ secrets.API_ID }}
