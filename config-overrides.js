@@ -20,27 +20,15 @@ module.exports = function override(config) {
     }
   };
 
-    // ======================================================
-  // 2. Otimizações CRÍTICAS para evitar "heap out of memory"
-  // ======================================================
-  config.plugins = config.plugins.map(plugin => {
-    if (plugin instanceof ForkTsCheckerWebpackPlugin) {
-      // Limita a memória do TypeScript Checker para 2GB
-      return new ForkTsCheckerWebpackPlugin({
-        ...plugin.options,
-        memoryLimit: 2048,
-        async: false // Executa em série (reduz pressão na memória)
-      });
-    }
-    return plugin;
-  });
+  config.plugins = config.plugins.filter(
+  plugin => !(plugin instanceof ForkTsCheckerWebpackPlugin)
+);
 
-  // Configuração de otimização do Webpack
   config.optimization = {
     ...config.optimization,
     splitChunks: {
       chunks: 'all',
-      maxSize: 244 * 1024, // Quebra chunks maiores que 244KB
+      maxSize: 244 * 1024,
       cacheGroups: {
         vendors: {
           test: /[\\/]node_modules[\\/]/,
@@ -50,7 +38,6 @@ module.exports = function override(config) {
     },
     minimize: true,
     minimizer: [
-      // Adicione otimizadores customizados se necessário
     ]
   };
 
