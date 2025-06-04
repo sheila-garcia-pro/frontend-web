@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  NODE_OPTIONS: --max-old-space-size=32768
+  NODE_OPTIONS: --max-old-space-size=4096
   CI: false
 
 jobs:
@@ -32,7 +32,7 @@ jobs:
         run: npm install
 
       - name: Build project
-        run: npm run build -- --production
+        run: node --max-old-space-size=4096 node_modules/.bin/npm run build -- --production
 
   deploy:
     needs: build
