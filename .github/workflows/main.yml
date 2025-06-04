@@ -8,46 +8,53 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.17.0]
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
-          node-version: '20.17.0'
+          node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
-      - name: Update npm
-        run: npm install -g npm@11.4.1
-
-      - name: Clear npm cache
-        run: npm cache clean --force
-
-      - name: Install Dependencies
+      - name: Show system info
         run: |
-          npm ci --prefer-offline --no-audit
-          npm dedupe
+          node -v
+          npm -v
+          free -h
 
-      - name: Analyze bundle
-        run: npm install -g webpack-bundle-analyzer
+      - name: Clear npm cache and node_modules
+        run: |
+          npm cache clean --force
+          rm -rf node_modules package-lock.json
 
-      - name: Build application (part 1 - vendor)
+      - name: Install dependencies
+        run: |
+          npm install --production=false --legacy-peer-deps
+          npm list --prod --depth=0
+
+      - name: Build application
         env:
-          NODE_OPTIONS: --max-old-space-size=4096
           CI: false
+          NODE_ENV: production
+          NODE_OPTIONS: --max-old-space-size=8192 --max-semi-space-size=512 --optimize-for-size
           GENERATE_SOURCEMAP: false
-          REACT_APP_BUILD_PART: vendor
-        run: npm run build
+          INLINE_RUNTIME_CHUNK: false
+          IMAGE_INLINE_SIZE_LIMIT: 0
+          DISABLE_ESLINT_PLUGIN: true
+          TSC_COMPILE_ON_ERROR: true
+          FAST_REFRESH: false
+          SKIP_PREFLIGHT_CHECK: true
+        run: |
+          npm run build --verbose
 
-      - name: Build application (part 2 - app)
-        env:
-          NODE_OPTIONS: --max-old-space-size=4096
-          CI: false
-          GENERATE_SOURCEMAP: false
-          REACT_APP_BUILD_PART: app
-        run: npm run build
+      - name: Analyze build output
+        run: ls -lh build/static/js/
 
   deploy:
     needs: build
