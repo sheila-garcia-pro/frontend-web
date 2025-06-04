@@ -1,4 +1,4 @@
-name: Build and Upload to SquareCloud - Front-end.
+name: Build and Upload to SquareCloud - Front-end
 
 on:
   push:
