@@ -9,10 +9,8 @@ import {
   Chip,
   Button,
   CircularProgress,
-  Divider,
-  Tooltip,
 } from '@mui/material';
-import { Close, Edit, Category, Delete, ShoppingCart } from '@mui/icons-material';
+import { Close, Edit, Category, Delete } from '@mui/icons-material';
 import { Ingredient } from '../../../types/ingredients';
 import { useDispatch } from 'react-redux';
 import * as ingredientsService from '../../../services/api/ingredients';
@@ -22,7 +20,6 @@ import {
   deleteIngredientRequest,
 } from '../../../store/slices/ingredientsSlice';
 import IngredientEditModal from '../IngredientEditModal';
-import { useTranslation } from 'react-i18next';
 
 interface IngredientDetailsModalProps {
   open: boolean;
@@ -35,7 +32,6 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
   onClose,
   ingredientId,
 }) => {
-  const { t } = useTranslation();
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [ingredient, setIngredient] = useState<Ingredient | null>(null);
@@ -50,7 +46,7 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
       } catch (error) {
         dispatch(
           addNotification({
-            message: t('ingredients.messages.loadError'),
+            message: 'Erro ao carregar detalhes do ingrediente.',
             type: 'error',
             duration: 5000,
           }),
@@ -59,13 +55,13 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
         setLoading(false);
       }
     },
-    [dispatch, t],
+    [dispatch],
   );
-
   useEffect(() => {
     if (open && ingredientId) {
       loadIngredient(ingredientId);
     } else if (!open) {
+      // Limpa o estado quando o modal é fechado
       setIngredient(null);
       setEditModalOpen(false);
     }
@@ -83,6 +79,7 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
     handleCloseEdit();
     if (ingredientId) {
       await loadIngredient(ingredientId);
+      // Recarrega a lista completa
       dispatch(
         fetchIngredientsRequest({
           page: 1,
@@ -114,7 +111,7 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
       }}
     >
       <IconButton
-        aria-label={t('ingredients.actions.close')}
+        aria-label="fechar"
         onClick={onClose}
         sx={{
           position: 'absolute',
@@ -126,29 +123,7 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
         <Close />
       </IconButton>
 
-      <DialogTitle sx={{ pb: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
-        {t('ingredients.details')}
-        {ingredient?.isEdit && (
-          <Tooltip title={t('ingredients.actions.editTooltip') || 'Editar ingrediente'}>
-            <IconButton
-              color="primary"
-              onClick={handleEditClick}
-              size="small"
-              sx={{
-                bgcolor: 'primary.light',
-                '&:hover': {
-                  bgcolor: 'primary.main',
-                  '& .MuiSvgIcon-root': {
-                    color: 'white',
-                  },
-                },
-              }}
-            >
-              <Edit fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        )}
-      </DialogTitle>
+      <DialogTitle sx={{ pb: 1 }}>Detalhes do Ingrediente</DialogTitle>
 
       <DialogContent>
         {loading ? (
@@ -157,49 +132,28 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
           </Box>
         ) : ingredient ? (
           <Box>
+            {' '}
             <Box
               sx={{
                 width: '100%',
-                height: 150,
+                height: 150, // Reduzindo a altura de 300 para 200
                 borderRadius: 2,
                 overflow: 'hidden',
                 mb: 3,
                 position: 'relative',
               }}
             >
-              {ingredient.isEdit && (
-                <Tooltip title={t('ingredients.actions.editTooltip') || 'Editar ingrediente'}>
-                  <IconButton
-                    onClick={handleEditClick}
-                    sx={{
-                      position: 'absolute',
-                      right: 8,
-                      top: 8,
-                      bgcolor: 'background.paper',
-                      '&:hover': {
-                        bgcolor: 'primary.main',
-                        '& .MuiSvgIcon-root': {
-                          color: 'white',
-                        },
-                      },
-                    }}
-                  >
-                    <Edit />
-                  </IconButton>
-                </Tooltip>
-              )}
+              {' '}
               <Box
                 component="img"
                 src={ingredient.image}
-                alt={ingredient.name}
+                alt={`Imagem do ingrediente ${ingredient.name}`}
                 sx={{
                   width: '100%',
                   height: '100%',
                   objectFit: 'contain',
-                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                  cursor: ingredient.isEdit ? 'pointer' : 'default',
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)', // Fundo neutro para melhor visualização
                 }}
-                onClick={ingredient.isEdit ? handleEditClick : undefined}
               />
             </Box>
             <Box sx={{ mb: 3 }}>
@@ -207,57 +161,14 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                 {ingredient.name}
               </Typography>
 
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <Chip
-                  icon={<Category />}
-                  label={ingredient.category}
-                  color="primary"
-                  variant="outlined"
-                  sx={{ borderRadius: 2 }}
-                />
-              </Box>
-
-              {ingredient.price && (
-                <Box
-                  sx={{
-                    mt: 3,
-                    p: 2,
-                    bgcolor: 'background.paper',
-                    borderRadius: 2,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    cursor: ingredient.isEdit ? 'pointer' : 'default',
-                    transition: 'all 0.2s',
-                    '&:hover': ingredient.isEdit
-                      ? {
-                          borderColor: 'primary.main',
-                          bgcolor: 'primary.lighter',
-                        }
-                      : {},
-                  }}
-                  onClick={ingredient.isEdit ? handleEditClick : undefined}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                    <ShoppingCart color="primary" />
-                    <Typography variant="subtitle1">Informações de Preço</Typography>
-                  </Box>
-                  <Divider sx={{ mb: 2 }} />
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <Typography variant="body2">
-                      Preço: R$ {ingredient.price.price.toFixed(2)}
-                    </Typography>
-                    <Typography variant="body2">
-                      Quantidade: {ingredient.price.quantity} {ingredient.price.unitMeasure}
-                    </Typography>
-                    <Typography variant="body2" color="primary.main" sx={{ fontWeight: 500 }}>
-                      Preço por {ingredient.price.unitMeasure}: R${' '}
-                      {(ingredient.price.price / ingredient.price.quantity).toFixed(2)}
-                    </Typography>
-                  </Box>
-                </Box>
-              )}
+              <Chip
+                icon={<Category />}
+                label={ingredient.category}
+                color="primary"
+                variant="outlined"
+                sx={{ borderRadius: 2 }}
+              />
             </Box>
-
             {ingredient.isEdit && (
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <Button
@@ -265,12 +176,9 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                   variant="contained"
                   onClick={handleEditClick}
                   fullWidth
-                  sx={{
-                    borderRadius: 3,
-                    boxShadow: (theme) => `0 0 20px ${theme.palette.primary.main}20`,
-                  }}
+                  sx={{ borderRadius: 3 }}
                 >
-                  {t('ingredients.actions.edit')}
+                  Editar Ingrediente
                 </Button>
                 <Button
                   startIcon={<Delete />}
@@ -280,18 +188,19 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                   fullWidth
                   sx={{ borderRadius: 3 }}
                 >
-                  {t('ingredients.actions.delete')}
+                  Deletar Ingrediente
                 </Button>
               </Box>
             )}
           </Box>
         ) : (
           <Typography color="text.secondary" align="center">
-            {t('ingredients.messages.notFound')}
+            Ingrediente não encontrado
           </Typography>
         )}
       </DialogContent>
 
+      {/* Modal de edição */}
       {ingredient && (
         <IngredientEditModal
           open={editModalOpen}
