@@ -4,11 +4,12 @@ on:
   push:
     branches:
       - main
+env:
+  NODE_OPTIONS: --max-old-space-size=4096
+
 jobs:
   deploy:
     uses: sheila-garcia-pro/pipeline-deploy/.github/workflows/deploy.yml@main
-    env:
-      NODE_OPTIONS: --max-old-space-size=4096
     secrets:
       SQUARE_API_KEY: ${{ secrets.SQUARE_CLOUD_TOKEN }}
       API_ID_KEY: ${{ secrets.API_ID }}
