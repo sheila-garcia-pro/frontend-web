@@ -4,8 +4,9 @@ on:
   push:
     branches:
       - main
+
 env:
-  NODE_OPTIONS: --max-old-space-size=16384
+  NODE_OPTIONS: --max-old-space-size=32768
   CI: false
 
 jobs:
@@ -24,11 +25,14 @@ jobs:
       - name: Install npm 11.4.1
         run: npm install -g npm@11.4.1
 
+      - name: Verificar versão do npm
+        run: npm --version
+
       - name: Install dependencies
         run: npm install
 
       - name: Build project
-        run: npm run build
+        run: npm run build -- --production
 
   deploy:
     needs: build
