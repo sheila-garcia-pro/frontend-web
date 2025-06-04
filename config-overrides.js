@@ -20,23 +20,39 @@ module.exports = function override(config) {
     },
   };
 
-  // Otimizações para reduzir uso de memória
+  // Otimizações agressivas
   config.optimization = {
     ...config.optimization,
-    moduleIds: 'deterministic',
-    runtimeChunk: true,
+    minimize: true,
     splitChunks: {
       chunks: 'all',
-      maxInitialRequests: 20,
-      maxAsyncRequests: 20,
-      minSize: 40000,
+      minSize: 20000,
+      minRemainingSize: 0,
+      minChunks: 1,
+      maxAsyncRequests: 30,
+      maxInitialRequests: 30,
+      enforceSizeThreshold: 50000,
+      cacheGroups: {
+        defaultVendors: {
+          test: /[\\/]node_modules[\\/]/,
+          priority: -10,
+          reuseExistingChunk: true,
+          name: 'vendor',
+        },
+        default: {
+          minChunks: 2,
+          priority: -20,
+          reuseExistingChunk: true,
+          name: 'common',
+        },
+      },
     },
   };
 
-  // Reduzir paralelismo do webpack para diminuir uso de memória
+  // Reduzir paralelismo do webpack
   config.parallelism = 1;
 
-  // Habilitar cache do webpack
+  // Cache do webpack
   config.cache = {
     type: 'filesystem',
     compression: 'gzip',

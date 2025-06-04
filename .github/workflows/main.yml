@@ -22,22 +22,31 @@ jobs:
       - name: Update npm
         run: npm install -g npm@11.4.1
 
-      - name: Cache node modules
-        uses: actions/cache@v3
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+      - name: Clear npm cache
+        run: npm cache clean --force
 
       - name: Install Dependencies
-        run: npm ci
+        run: |
+          npm ci --prefer-offline --no-audit
+          npm dedupe
 
-      - name: Build application
+      - name: Analyze bundle
+        run: npm install -g webpack-bundle-analyzer
+
+      - name: Build application (part 1 - vendor)
         env:
           NODE_OPTIONS: --max-old-space-size=4096
           CI: false
           GENERATE_SOURCEMAP: false
+          REACT_APP_BUILD_PART: vendor
+        run: npm run build
+
+      - name: Build application (part 2 - app)
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+          CI: false
+          GENERATE_SOURCEMAP: false
+          REACT_APP_BUILD_PART: app
         run: npm run build
 
   deploy:

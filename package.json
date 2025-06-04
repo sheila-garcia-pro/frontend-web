@@ -80,10 +80,12 @@
     ]
   },
   "devDependencies": {
+    "compression-webpack-plugin": "^11.1.0",
     "eslint-config-prettier": "^10.1.2",
     "eslint-plugin-prettier": "^5.2.6",
     "lint-staged": "^15.5.1",
     "prettier": "^3.5.3",
-    "react-app-rewired": "^2.2.1"
+    "react-app-rewired": "^2.2.1",
+    "webpack-bundle-analyzer": "^4.10.2"
   }
 }
