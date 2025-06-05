@@ -18,8 +18,8 @@
     "@types/node": "^16.7.13",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "fork-ts-checker-webpack-plugin": "^9.1.0",
     "axios": "^1.8.4",
+    "fork-ts-checker-webpack-plugin": "^9.1.0",
     "i18next": "^23.7.16",
     "notistack": "^3.0.2",
     "react": "^19.1.0",
@@ -36,7 +36,7 @@
   "scripts": {
     "start": "react-app-rewired start",
     "start:prod": "serve -s build -l 80",
-    "build": "GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true react-app-rewired build",
+    "build": "react-app-rewired build  --no-cache --max-old-space-size=12288",
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
@@ -80,13 +80,14 @@
   },
   "devDependencies": {
     "compression-webpack-plugin": "^11.1.0",
+    "cross-env": "7.0.3",
     "eslint-config-prettier": "^10.1.2",
     "eslint-plugin-prettier": "^5.2.6",
     "fork-ts-checker-webpack-plugin": "^9.1.0",
     "lint-staged": "^15.5.1",
     "prettier": "^3.5.3",
     "react-app-rewired": "^2.2.1",
-    "terser-webpack-plugin": "^5.3.14",
+    "terser-webpack-plugin": "5.3.14",
     "webpack-bundle-analyzer": "^4.10.2"
   }
 }
