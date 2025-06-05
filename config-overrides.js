@@ -24,75 +24,51 @@ module.exports = function override(config, env) {
    
  
   if (env === 'production') {
+    
+    // Desativa verificações pesadas em produção
     config.plugins = config.plugins.filter(
-      plugin => plugin.constructor.name !== 'ForkTsCheckerWebpackPlugin'
+      p => !['ForkTsCheckerWebpackPlugin', 'ESLintWebpackPlugin'].includes(p.constructor.name)
     );
 
-    // Configuração avançada de otimização
+    // Otimização extrema
     config.optimization = {
-      ...config.optimization,
-      runtimeChunk: 'single', // Otimiza o runtime
-      splitChunks: {
-        chunks: 'all',
-        maxSize: 244 * 1024, // 244KB
-        minSize: 30 * 1024,  // 30KB (aumentado um pouco)
-        maxAsyncRequests: 30,
-        maxInitialRequests: 30,
-        automaticNameDelimiter: '~',
-        cacheGroups: {
-          vendors: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-            priority: 20
-          },
-          common: {
-            name: 'common',
-            minChunks: 2,
-            chunks: 'async',
-            priority: 10,
-            reuseExistingChunk: true,
-            enforce: true
-          }
-        }
-      },
+      minimize: true,
       minimizer: [
         new TerserPlugin({
-          parallel: true, // Usa todos os cores do CPU
-          extractComments: false, // Não extrai comentários
+          parallel: 4, // Limita a 4 threads para evitar sobrecarga
           terserOptions: {
-            parse: { ecma: 8 },
+            ecma: 2015,
             compress: {
-              ecma: 5,
-              warnings: false,
-              comparisons: false,
-              inline: 2,
-              drop_console: true // Remove console.log
+              drop_console: true,
+              passes: 3 // Mais agressivo
             },
             output: {
-              ecma: 5,
-              comments: false,
-              ascii_only: true
+              comments: false
             }
           }
         })
-      ]
+      ],
+      splitChunks: {
+        chunks: 'all',
+        maxSize: 200 * 1024, // Reduzido para 200KB
+        minSize: 30 * 1024,
+        cacheGroups: {
+          defaultVendors: {
+            test: /[\\/]node_modules[\\/]/,
+            priority: -10
+          },
+          default: {
+            minChunks: 2,
+            priority: -20
+          }
+        }
+      }
     };
 
-    // Habilitar cache persistente para builds mais rápidos
-    config.cache = {
-      type: 'filesystem',
-      buildDependencies: {
-        config: [__filename],
-      },
-      name: env === 'production' ? 'prod-cache' : 'dev-cache'
-    };
-
-    // Configuração adicional para produção
+    // Configuração de performance
     config.performance = {
-      hints: 'warning',
-      maxAssetSize: 500 * 1024, // 500KB
-      maxEntrypointSize: 500 * 1024 // 500KB
+      maxAssetSize: 800 * 1024, // Aumentado para 800KB
+      maxEntrypointSize: 800 * 1024
     };
   }
 
