@@ -2,10 +2,6 @@
   "name": "sheila-garcia-pro",
   "version": "0.1.0",
   "private": true,
-  "engines": {
-    "node": "^20.17.0",
-    "npm": ">=11.4.1"
-  },
   "dependencies": {
     "20": "^3.1.9",
     "@emotion/react": "^11.14.0",

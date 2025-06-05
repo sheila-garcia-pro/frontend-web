@@ -19,17 +19,6 @@ module.exports = function override(config, env) {
       '@config': path.resolve(__dirname, 'src/config'),
     },
   };
-
-  config.plugins = config.plugins.filter(
-    (plugin) => plugin.constructor.name !== 'ForkTsCheckerWebpackPlugin',
-  );
-
-  // Otimizações extras
-  config.optimization.splitChunks = {
-    chunks: 'all',
-    maxSize: 244 * 1024,
-    minSize: 20 * 1024,
-  };
   
   if (env === 'production') {
     config.plugins = config.plugins.filter(
