@@ -3,6 +3,7 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 
 module.exports = function override(config, env) {
+  console.log(env);
   config.resolve = {
     ...config.resolve,
     alias: {
