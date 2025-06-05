@@ -34,9 +34,9 @@
     "web-vitals": "^2.1.0"
   },
   "scripts": {
-    "start": "react-app-rewired start",
+    "start": "vite start",
     "start:prod": "serve -s build -l 80",
-    "build": "react-app-rewired build",
+    "build": "vite build",
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
@@ -88,6 +88,7 @@
     "prettier": "^3.5.3",
     "react-app-rewired": "^2.2.1",
     "terser-webpack-plugin": "5.3.14",
+    "vite": "4.5.2",
     "webpack-bundle-analyzer": "^4.10.2"
   }
 }
