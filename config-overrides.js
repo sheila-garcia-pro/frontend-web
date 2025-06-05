@@ -20,16 +20,56 @@ module.exports = function override(config, env) {
       '@config': path.resolve(__dirname, 'src/config'),
     },
   };
-  
+   
+  // Remover ForkTsChecker apenas em produção (economiza memória)
+  if (env === 'production') {
     config.plugins = config.plugins.filter(
       plugin => plugin.constructor.name !== 'ForkTsCheckerWebpackPlugin'
     );
-    
-    // Otimizações extras
-    config.optimization.splitChunks = {
+
+    // Configurações mais agressivas de otimização
+  config.optimization = {
+    ...config.optimization,
+    splitChunks: {
       chunks: 'all',
       maxSize: 244 * 1024,
-      minSize: 20 * 1024
-    };
+      minSize: 20 * 1024,
+      cacheGroups: {
+        vendors: {
+          test: /[\\/]node_modules[\\/]/,
+          priority: -10
+        },
+        default: {
+          minChunks: 2,
+          priority: -20,
+          reuseExistingChunk: true
+        }
+      }
+    },
+    minimize: true,
+    minimizer: config.optimization.minimizer.map(plugin => {
+      if (plugin.constructor.name === 'TerserPlugin') {
+        plugin.options.parallel = true;
+        plugin.options.extractComments = false;
+        plugin.options.terserOptions = {
+          ...plugin.options.terserOptions,
+          compress: {
+            drop_console: true,
+          },
+        };
+      }
+      return plugin;
+    }),
+  };
+
+  config.cache = {
+    type: 'filesystem',
+    buildDependencies: {
+      config: [__filename],
+    },
+  };
+  }
+
   return config;
+
 };
