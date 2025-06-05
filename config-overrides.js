@@ -25,50 +25,30 @@ module.exports = function override(config, env) {
  
   if (env === 'production') {
     
-    // Desativa verificações pesadas em produção
-    config.plugins = config.plugins.filter(
-      p => !['ForkTsCheckerWebpackPlugin', 'ESLintWebpackPlugin'].includes(p.constructor.name)
+    // Desativa todos os plugins pesados
+    config.plugins = config.plugins.filter(plugin => 
+      !['ForkTsCheckerWebpackPlugin', 'ESLintWebpackPlugin', 'WebpackBundleAnalyzer'].includes(plugin.constructor.name)
     );
-
-    // Otimização extrema
+    
+    // Configuração extrema de otimização
     config.optimization = {
+      ...config.optimization,
       minimize: true,
       minimizer: [
         new TerserPlugin({
-          parallel: 4, // Limita a 4 threads para evitar sobrecarga
+          parallel: 2, // Reduzido para 2 threads
           terserOptions: {
-            ecma: 2015,
             compress: {
               drop_console: true,
-              passes: 3 // Mais agressivo
+              passes: 2
             },
+            mangle: true,
             output: {
               comments: false
             }
           }
         })
-      ],
-      splitChunks: {
-        chunks: 'all',
-        maxSize: 200 * 1024, // Reduzido para 200KB
-        minSize: 30 * 1024,
-        cacheGroups: {
-          defaultVendors: {
-            test: /[\\/]node_modules[\\/]/,
-            priority: -10
-          },
-          default: {
-            minChunks: 2,
-            priority: -20
-          }
-        }
-      }
-    };
-
-    // Configuração de performance
-    config.performance = {
-      maxAssetSize: 800 * 1024, // Aumentado para 800KB
-      maxEntrypointSize: 800 * 1024
+      ]
     };
   }
 
