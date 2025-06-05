@@ -1,5 +1,4 @@
 import React, { ElementType, useState, useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -48,8 +47,6 @@ interface SortOption {
 
 // Componente da página de ingredientes
 const IngredientsPage: React.FC = () => {
-  const { t } = useTranslation();
-
   // Estados locais
   const [sortOption, setSortOption] = useState('name_asc');
   const [modalOpen, setModalOpen] = useState(false);
@@ -74,10 +71,11 @@ const IngredientsPage: React.FC = () => {
 
   // Aplicar debounce ao termo de busca
   const debouncedSearchTerm = useDebounce(searchInput, 300);
+
   // Opções de ordenação
   const sortOptions: SortOption[] = [
-    { value: 'name_asc', label: t('ingredients.sortOptions.nameAsc') },
-    { value: 'name_desc', label: t('ingredients.sortOptions.nameDesc') },
+    { value: 'name_asc', label: 'Nome (A-Z)' },
+    { value: 'name_desc', label: 'Nome (Z-A)' },
   ];
 
   // Carregar dados iniciais
@@ -123,10 +121,10 @@ const IngredientsPage: React.FC = () => {
     filtered.sort((a, b) => {
       switch (sortOption) {
         case 'name_desc':
-          return b.name.localeCompare(a.name, undefined, { sensitivity: 'base' });
+          return b.name.localeCompare(a.name);
         case 'name_asc':
         default:
-          return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+          return a.name.localeCompare(b.name);
       }
     });
 
@@ -225,12 +223,11 @@ const IngredientsPage: React.FC = () => {
           }}
         >
           <Box>
-            {' '}
             <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 500 }}>
-              {t('ingredients.title')}
+              Ingredientes disponíveis
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              {t('ingredients.subtitle')}
+              Encontre todos os ingredientes para suas receitas favoritas
             </Typography>
           </Box>
 
@@ -245,7 +242,7 @@ const IngredientsPage: React.FC = () => {
                 px: 2,
               }}
             >
-              {t('ingredients.newCategory')}
+              Nova Categoria
             </Button>
 
             <Button
@@ -258,7 +255,7 @@ const IngredientsPage: React.FC = () => {
                 px: 3,
               }}
             >
-              {t('ingredients.newIngredient')}
+              Novo Ingrediente
             </Button>
           </Box>
         </Box>
@@ -282,7 +279,7 @@ const IngredientsPage: React.FC = () => {
             }}
           >
             <TextField
-              placeholder={t('ingredients.filters.searchPlaceholder')}
+              placeholder="Buscar ingredientes..."
               variant="outlined"
               fullWidth
               value={searchInput}
@@ -344,25 +341,18 @@ const IngredientsPage: React.FC = () => {
 
         {/* Tabs Utilizados/Geral */}
         <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
-          {' '}
-          <Tabs
-            value={currentTab}
-            onChange={handleTabChange}
-            aria-label={t('ingredients.filters.tabsLabel')}
-          >
-            <Tab label={t('ingredients.filters.used')} value="used" />
-            <Tab label={t('ingredients.filters.all')} value="all" />
+          <Tabs value={currentTab} onChange={handleTabChange} aria-label="abas de ingredientes">
+            <Tab label="Utilizados" value="used" />
+            <Tab label="Geral" value="all" />
           </Tabs>
         </Box>
 
         {/* Contagem de resultados */}
         {!ingredientsLoading && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {t('ingredients.results.showing', {
-              count: paginatedIngredients.length,
-              total: totalFilteredItems,
-              categories: selectedCategories.length,
-            })}
+            Mostrando {paginatedIngredients.length} de {totalFilteredItems} ingredientes
+            {selectedCategories.length > 0 &&
+              ` (${selectedCategories.length} categorias selecionadas)`}
           </Typography>
         )}
 
@@ -390,13 +380,12 @@ const IngredientsPage: React.FC = () => {
             ))
           ) : (
             <Grid item xs={12} component={'div' as ElementType}>
-              {' '}
               <Box sx={{ p: 4, textAlign: 'center' }}>
                 <Typography variant="h6" color="text.secondary">
-                  {t('ingredients.messages.notFound')}
+                  Nenhum ingrediente encontrado
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  {t('ingredients.messages.tryFilters')}
+                  Tente mudar os filtros ou adicionar novos ingredientes
                 </Typography>
               </Box>
             </Grid>

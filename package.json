@@ -2,6 +2,10 @@
   "name": "sheila-garcia-pro",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "^20.17.0",
+    "npm": ">=11.4.1"
+  },
   "dependencies": {
     "20": "^3.1.9",
     "@emotion/react": "^11.14.0",
@@ -79,13 +83,14 @@
     ]
   },
   "devDependencies": {
-    "@types/i18next": "^13.0.0",
-    "@types/react-i18next": "^8.1.0",
+    "compression-webpack-plugin": "^11.1.0",
     "eslint-config-prettier": "^10.1.2",
     "eslint-plugin-prettier": "^5.2.6",
     "fork-ts-checker-webpack-plugin": "^9.1.0",
     "lint-staged": "^15.5.1",
     "prettier": "^3.5.3",
-    "react-app-rewired": "^2.2.1"
+    "react-app-rewired": "^2.2.1",
+    "terser-webpack-plugin": "^5.3.14",
+    "webpack-bundle-analyzer": "^4.10.2"
   }
 }

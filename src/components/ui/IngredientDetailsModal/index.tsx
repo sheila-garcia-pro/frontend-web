@@ -22,7 +22,6 @@ import {
   deleteIngredientRequest,
 } from '../../../store/slices/ingredientsSlice';
 import IngredientEditModal from '../IngredientEditModal';
-import { useTranslation } from 'react-i18next';
 
 interface IngredientDetailsModalProps {
   open: boolean;
@@ -35,7 +34,6 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
   onClose,
   ingredientId,
 }) => {
-  const { t } = useTranslation();
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [ingredient, setIngredient] = useState<Ingredient | null>(null);
@@ -50,7 +48,7 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
       } catch (error) {
         dispatch(
           addNotification({
-            message: t('ingredients.messages.loadError'),
+            message: 'Erro ao carregar detalhes do ingrediente.',
             type: 'error',
             duration: 5000,
           }),
@@ -59,7 +57,7 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
         setLoading(false);
       }
     },
-    [dispatch, t],
+    [dispatch],
   );
 
   useEffect(() => {
@@ -114,7 +112,7 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
       }}
     >
       <IconButton
-        aria-label={t('ingredients.actions.close')}
+        aria-label="fechar"
         onClick={onClose}
         sx={{
           position: 'absolute',
@@ -127,9 +125,9 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
       </IconButton>
 
       <DialogTitle sx={{ pb: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
-        {t('ingredients.details')}
+        Detalhes do Ingrediente
         {ingredient?.isEdit && (
-          <Tooltip title={t('ingredients.actions.editTooltip') || 'Editar ingrediente'}>
+          <Tooltip title="Editar ingrediente">
             <IconButton
               color="primary"
               onClick={handleEditClick}
@@ -168,7 +166,7 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
               }}
             >
               {ingredient.isEdit && (
-                <Tooltip title={t('ingredients.actions.editTooltip') || 'Editar ingrediente'}>
+                <Tooltip title="Editar ingrediente">
                   <IconButton
                     onClick={handleEditClick}
                     sx={{
@@ -270,7 +268,7 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                     boxShadow: (theme) => `0 0 20px ${theme.palette.primary.main}20`,
                   }}
                 >
-                  {t('ingredients.actions.edit')}
+                  Editar Ingrediente
                 </Button>
                 <Button
                   startIcon={<Delete />}
@@ -280,14 +278,14 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                   fullWidth
                   sx={{ borderRadius: 3 }}
                 >
-                  {t('ingredients.actions.delete')}
+                  Deletar Ingrediente
                 </Button>
               </Box>
             )}
           </Box>
         ) : (
           <Typography color="text.secondary" align="center">
-            {t('ingredients.messages.notFound')}
+            Ingrediente não encontrado
           </Typography>
         )}
       </DialogContent>

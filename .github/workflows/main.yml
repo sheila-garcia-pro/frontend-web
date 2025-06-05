@@ -1,4 +1,4 @@
-name: Build and Upload to SquareCloud - Front-end
+name: Build and Upload to SquareCloud - Front-end.
 
 on:
   push:
@@ -7,6 +7,8 @@ on:
 jobs:
   deploy:
     uses: sheila-garcia-pro/pipeline-deploy/.github/workflows/deploy.yml@main
+
+
     secrets:
       SQUARE_API_KEY: ${{ secrets.SQUARE_CLOUD_TOKEN }}
       API_ID_KEY: ${{ secrets.API_ID }}
