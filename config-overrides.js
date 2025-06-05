@@ -3,6 +3,7 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 
 module.exports = function override(config, env) {
+  console.log(env);
   config.resolve = {
     ...config.resolve,
     alias: {
@@ -20,7 +21,6 @@ module.exports = function override(config, env) {
     },
   };
   
-  if (env === 'production') {
     config.plugins = config.plugins.filter(
       plugin => plugin.constructor.name !== 'ForkTsCheckerWebpackPlugin'
     );
@@ -31,8 +31,5 @@ module.exports = function override(config, env) {
       maxSize: 244 * 1024,
       minSize: 20 * 1024
     };
-
-    
-  }
   return config;
 };
