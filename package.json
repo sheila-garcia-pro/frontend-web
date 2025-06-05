@@ -36,7 +36,7 @@
   "scripts": {
     "start": "react-app-rewired start",
     "start:prod": "serve -s build -l 80",
-    "build": "react-app-rewired build  --no-cache --max-old-space-size=12288",
+    "build": "react-app-rewired build",
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
