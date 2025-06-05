@@ -24,32 +24,58 @@ module.exports = function override(config, env) {
    
  
   if (env === 'production') {
-    
-    // Desativa todos os plugins pesados
-    config.plugins = config.plugins.filter(plugin => 
-      !['ForkTsCheckerWebpackPlugin', 'ESLintWebpackPlugin', 'WebpackBundleAnalyzer'].includes(plugin.constructor.name)
-    );
-    
-    // Configuração extrema de otimização
+      // Desativa plugins pesados
+  config.plugins = config.plugins.filter(
+    plugin => !['ForkTsCheckerWebpackPlugin', 'ESLintWebpackPlugin'].includes(plugin.constructor.name)
+  );
+    // Configuração agressiva de otimização
     config.optimization = {
       ...config.optimization,
       minimize: true,
       minimizer: [
         new TerserPlugin({
-          parallel: 2, // Reduzido para 2 threads
+          parallel: 2, // Reduz threads para economizar memória
           terserOptions: {
             compress: {
               drop_console: true,
-              passes: 2
+              passes: 2,
+              keep_fargs: false,
+              pure_getters: true
             },
-            mangle: true,
+            mangle: {
+              properties: {
+                regex: /^_/ // Mangle apenas propriedades que começam com _
+              }
+            },
             output: {
-              comments: false
+              comments: false,
+              ascii_only: true
             }
           }
         })
-      ]
+      ],
+      splitChunks: {
+        chunks: 'all',
+        maxSize: 150 * 1024, // 150KB por chunk
+        cacheGroups: {
+          defaultVendors: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all'
+          }
+        }
+      }
     };
+
+    // Desativa source maps
+    config.devtool = false;
+    
+    // Otimizações adicionais
+    config.performance = {
+      maxAssetSize: 500 * 1024, // 500KB
+      maxEntrypointSize: 500 * 1024
+    };
+
   }
 
   return config;
