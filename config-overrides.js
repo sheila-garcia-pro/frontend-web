@@ -1,5 +1,6 @@
 const path = require('path');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 
 
 module.exports = function override(config, env) {
@@ -21,53 +22,78 @@ module.exports = function override(config, env) {
     },
   };
    
-  // Remover ForkTsChecker apenas em produção (economiza memória)
+ 
   if (env === 'production') {
     config.plugins = config.plugins.filter(
       plugin => plugin.constructor.name !== 'ForkTsCheckerWebpackPlugin'
     );
 
-    // Configurações mais agressivas de otimização
-  config.optimization = {
-    ...config.optimization,
-    splitChunks: {
-      chunks: 'all',
-      maxSize: 244 * 1024,
-      minSize: 20 * 1024,
-      cacheGroups: {
-        vendors: {
-          test: /[\\/]node_modules[\\/]/,
-          priority: -10
-        },
-        default: {
-          minChunks: 2,
-          priority: -20,
-          reuseExistingChunk: true
-        }
-      }
-    },
-    minimize: true,
-    minimizer: config.optimization.minimizer.map(plugin => {
-      if (plugin.constructor.name === 'TerserPlugin') {
-        plugin.options.parallel = true;
-        plugin.options.extractComments = false;
-        plugin.options.terserOptions = {
-          ...plugin.options.terserOptions,
-          compress: {
-            drop_console: true,
+    // Configuração avançada de otimização
+    config.optimization = {
+      ...config.optimization,
+      runtimeChunk: 'single', // Otimiza o runtime
+      splitChunks: {
+        chunks: 'all',
+        maxSize: 244 * 1024, // 244KB
+        minSize: 30 * 1024,  // 30KB (aumentado um pouco)
+        maxAsyncRequests: 30,
+        maxInitialRequests: 30,
+        automaticNameDelimiter: '~',
+        cacheGroups: {
+          vendors: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+            priority: 20
           },
-        };
-      }
-      return plugin;
-    }),
-  };
+          common: {
+            name: 'common',
+            minChunks: 2,
+            chunks: 'async',
+            priority: 10,
+            reuseExistingChunk: true,
+            enforce: true
+          }
+        }
+      },
+      minimizer: [
+        new TerserPlugin({
+          parallel: true, // Usa todos os cores do CPU
+          extractComments: false, // Não extrai comentários
+          terserOptions: {
+            parse: { ecma: 8 },
+            compress: {
+              ecma: 5,
+              warnings: false,
+              comparisons: false,
+              inline: 2,
+              drop_console: true // Remove console.log
+            },
+            output: {
+              ecma: 5,
+              comments: false,
+              ascii_only: true
+            }
+          }
+        })
+      ]
+    };
 
-  config.cache = {
-    type: 'filesystem',
-    buildDependencies: {
-      config: [__filename],
-    },
-  };
+    // Habilitar cache persistente para builds mais rápidos
+    config.cache = {
+      type: 'filesystem',
+      buildDependencies: {
+        config: [__filename],
+      },
+      name: env === 'production' ? 'prod-cache' : 'dev-cache'
+    };
+
+    // Configuração adicional para produção
+    config.performance = {
+      hints: 'warning',
+      maxAssetSize: 500 * 1024, // 500KB
+      maxEntrypointSize: 500 * 1024 // 500KB
+    };
   }
 
   return config;
