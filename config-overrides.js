@@ -1,11 +1,8 @@
 const path = require('path');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
-module.exports = function override(config) {
-  // Apply optimization settings
-  config = optimizationConfig.webpack.configure(config);
 
-  // Alias configuration
+module.exports = function override(config, env) {
   config.resolve = {
     ...config.resolve,
     alias: {
@@ -33,6 +30,20 @@ module.exports = function override(config) {
     maxSize: 244 * 1024,
     minSize: 20 * 1024,
   };
+  
+  if (env === 'production') {
+    config.plugins = config.plugins.filter(
+      plugin => plugin.constructor.name !== 'ForkTsCheckerWebpackPlugin'
+    );
+    
+    // Otimizações extras
+    config.optimization.splitChunks = {
+      chunks: 'all',
+      maxSize: 244 * 1024,
+      minSize: 20 * 1024
+    };
 
+    
+  }
   return config;
 };
