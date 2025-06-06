@@ -25,42 +25,45 @@ module.exports = function override(config, env) {
    
  
   if (env === 'production') {
-   // 1. Remove plugins pesados
+  console.log("entrou");
+    // A. Remove TODOS os plugins não essenciais
     config.plugins = config.plugins.filter(
-      plugin => !['ForkTsCheckerWebpackPlugin', 'ESLintWebpackPlugin'].includes(plugin.constructor?.name)
+      plugin => !['ForkTsCheckerWebpackPlugin', 'ESLintWebpackPlugin', 'WebpackBundleAnalyzer']
+        .includes(plugin.constructor?.name)
     );
 
-    // 2. Configuração segura do TerserPlugin
+    // B. Configuração agressiva do Terser
     config.optimization.minimizer = [
       new TerserPlugin({
-        parallel: 2, // Reduz para 2 threads
+        parallel: 1, // Apenas 1 thread para economizar memória
         terserOptions: {
           compress: {
-            drop_console: true, // Remove console.log
-            passes: 2 // Mais otimizações
+            drop_console: true,
+            passes: 1 // Reduz o número de otimizações
           },
-          format: {
-            comments: false // Remove comentários
+          output: {
+            comments: false
           }
-        },
-        extractComments: false
+        }
       })
     ];
 
-    // 3. Otimização de chunks
+    // C. SplitChunks mais conservador
     config.optimization.splitChunks = {
       chunks: 'all',
-      maxSize: 244 * 1024, // 244KB por chunk
+      maxSize: 150 * 1024, // Chunks de no máximo 150KB
       cacheGroups: {
-        vendors: {
+        defaultVendors: {
           test: /[\\/]node_modules[\\/]/,
-          name: 'vendors',
-          chunks: 'all'
+          priority: -10
         }
       }
     };
 
-    // 4. Desativa source maps
+    // D. Desativa features pesadas
+    config.performance = {
+      hints: false
+    };
     config.devtool = false;
   }
 
