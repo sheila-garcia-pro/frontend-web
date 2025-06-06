@@ -40,7 +40,7 @@ export const store = configureStore({
         ignoredPaths: ['some.path'],
       },
     }).concat(sagaMiddleware),
-  devTools: process.env.NODE_ENV !== 'production',
+  devTools: import.meta.env.MODE !== 'production',
 });
 
 // Função raiz do Saga que combina todas as sagas

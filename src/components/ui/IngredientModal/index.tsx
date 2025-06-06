@@ -93,7 +93,7 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
         formData.append('type', 'ingredients');
 
         const token = localStorage.getItem(
-          process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token',
+          import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token',
         );
 
         const response = await fetch('https://sgpro-api.squareweb.app/v1/update/image', {

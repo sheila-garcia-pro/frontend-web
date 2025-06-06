@@ -2,7 +2,7 @@ import { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } 
 import { sanitizeData } from '@utils/security';
 import { log } from '../../utils/logger';
 
-const TOKEN_KEY = process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token';
+const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token';
 
 /**
  * Função para sanitizar o payload da requisição, removendo dados sensíveis dos logs
@@ -37,7 +37,7 @@ export const setupInterceptors = (api: AxiosInstance): void => {
         const sanitizedData = sanitizeData(config.data);
 
         // Em desenvolvimento, loga os dados sanitizados usando o logger seguro
-        if (process.env.NODE_ENV !== 'production') {
+        if (import.meta.env.MODE !== 'production') {
           log.request(method, config.url || '', sanitizedData);
         }
 
@@ -60,7 +60,7 @@ export const setupInterceptors = (api: AxiosInstance): void => {
   api.interceptors.response.use(
     (response: AxiosResponse): AxiosResponse => {
       // Sanitizar dados sensíveis nas respostas bem-sucedidas para logs
-      if (process.env.NODE_ENV !== 'production' && response.data) {
+      if (import.meta.env.MODE !== 'production' && response.data) {
         // Somente para logging, não modifica os dados reais usando logger seguro
         log.response(response.status, response.config.url || '', response.data);
       }

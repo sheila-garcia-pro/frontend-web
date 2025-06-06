@@ -17,7 +17,7 @@ export interface CreateUserParams {
 
 // Obter usuário logado (com cache)
 export const getCurrentUser = async (): Promise<User> => {
-  const tokenKey = process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token';
+  const tokenKey = import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token';
   const token = localStorage.getItem(tokenKey);
 
   if (!token) {

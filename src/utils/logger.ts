@@ -4,15 +4,15 @@ import { sanitizeData } from './security';
  * Logger seguro que mascara informações sensíveis automaticamente
  */
 export class SafeLogger {
-  static isProduction = process.env.NODE_ENV === 'production';
-  static isTestEnv = process.env.NODE_ENV === 'test';
+  static isProduction = import.meta.env.MODE === 'production';
+  static isTestEnv = import.meta.env.MODE === 'test';
 
   /**
    * Determina se o logger deve exibir mensagens no ambiente atual
    */
   static shouldLog(): boolean {
     // Não exibir logs em produção a menos que explicitamente habilitado
-    if (this.isProduction && !process.env.REACT_APP_ENABLE_PROD_LOGS) {
+    if (this.isProduction && !import.meta.env.VITE_ENABLE_PROD_LOGS) {
       return false;
     }
 

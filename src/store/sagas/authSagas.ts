@@ -57,7 +57,7 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
     const { token } = response;
 
     // Salva o token no localStorage
-    localStorage.setItem(process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token', token);
+    localStorage.setItem(import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token', token);
 
     try {
       // Busca os dados do usuário atual
@@ -67,7 +67,7 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
       yield put(loginSuccess({ user, token }));
     } catch (userError) {
       // Se falhar ao buscar dados do usuário, considera o login falho
-      localStorage.removeItem(process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token');
+      localStorage.removeItem(import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token');
       throw new Error('Falha ao obter dados do usuário');
     }
 
@@ -75,7 +75,7 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
     action.payload.password = '';
   } catch (error) {
     // Remover o token se houver falha no login
-    localStorage.removeItem(process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token');
+    localStorage.removeItem(import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token');
 
     // Despacha a ação de falha
     yield put(
@@ -116,7 +116,7 @@ function* registerSaga(action: PayloadAction<RegisterPayload>): SagaIterator {
     const { token } = yield call(authService.login, loginCredentials);
 
     // Salva o token no localStorage
-    localStorage.setItem(process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token', token);
+    localStorage.setItem(import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token', token);
 
     // Despacha a ação de sucesso (sem enviar a senha no payload)
     yield put(registerSuccess({ user, token }));
@@ -135,7 +135,7 @@ function* registerSaga(action: PayloadAction<RegisterPayload>): SagaIterator {
 
 // Saga Verificação de Token
 function* checkAuthSaga(): SagaIterator {
-  const token = localStorage.getItem(process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token');
+  const token = localStorage.getItem(import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token');
 
   if (!token) {
     yield put(checkAuthFailure());
@@ -157,7 +157,7 @@ function* checkAuthSaga(): SagaIterator {
     throw new Error('Falha ao obter dados do usuário');
   } catch (error) {
     // Se o token for inválido ou houver qualquer erro, remove o token
-    localStorage.removeItem(process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token');
+    localStorage.removeItem(import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token');
 
     // Despacha a ação de falha e redireciona para login se não estiver lá
     yield put(checkAuthFailure());

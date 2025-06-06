@@ -49,7 +49,7 @@ const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   // Redirecionar se já estiver autenticado
   useEffect(() => {
-    const tokenKey = process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token';
+    const tokenKey = import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token';
     const token = localStorage.getItem(tokenKey);
 
     // Só redireciona se estiver autenticado, sem erro, não estiver em carregamento e tiver token

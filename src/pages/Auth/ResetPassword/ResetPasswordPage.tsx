@@ -81,7 +81,7 @@ const ResetPasswordPage: React.FC = () => {
   // Limpar token e fazer logout quando acessar esta página
   useEffect(() => {
     // Limpar o token do localStorage para evitar login automático
-    const tokenKey = process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token';
+    const tokenKey = import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token';
     localStorage.removeItem(tokenKey);
     
     // Despachar ação de logout para garantir que o estado de autenticação seja limpo

@@ -39,7 +39,7 @@ export const register = async (credentials: RegisterCredentials): Promise<User> 
 
 // Verificação de token/Obter usuário logado
 export const verifyToken = async (): Promise<{ user: User }> => {
-  const tokenKey = process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token';
+  const tokenKey = import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token';
   const token = localStorage.getItem(tokenKey);
 
   if (!token) {
@@ -67,7 +67,7 @@ export const updatePassword = async (
 
 // Logout (apenas local, não envolve API)
 export const logout = (): void => {
-  const tokenKey = process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token';
+  const tokenKey = import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token';
 
   // Remover o token do localStorage
   localStorage.removeItem(tokenKey);
