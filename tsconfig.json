@@ -16,6 +16,7 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "baseUrl": "src",
+    "types": ["vite/client"],
     "paths": {
       "@/*": ["*"],
       "@components/*": ["components/*"],
@@ -30,5 +31,5 @@
       "@config/*": ["config/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src/env.d.ts","src"]
 }

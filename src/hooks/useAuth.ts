@@ -91,7 +91,7 @@ export const useAuth = (): UseAuthReturn => {
   // Verificação de autenticação
   const checkAuth = useCallback(() => {
     const token = localStorage.getItem(
-      process.env.REACT_APP_TOKEN_KEY || '@sheila-garcia-pro-token',
+      import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token',
     );
     if (!token) {
       // Se não houver token, já marca como não autenticado
