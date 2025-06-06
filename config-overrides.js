@@ -25,32 +25,33 @@ module.exports = function override(config, env) {
    
  
   if (env === 'production') {
-  config.plugins = config.plugins.filter(
-    plugin => plugin.constructor.name !== 'ForkTsCheckerWebpackPlugin'
-  );
-     // 2. Otimizações de bundle
-  config.optimization = {
-    ...config.optimization,
-    splitChunks: {
-      chunks: 'all',
-      maxSize: 244 * 1024, // 244KB por chunk
-      cacheGroups: {
-        vendors: {
-          test: /[\\/]node_modules[\\/]/,
-          name: 'vendors',
-          chunks: 'all',
-        },
-      },
-    },
-  };
+    config.plugins = config.plugins.filter(
+      plugin => !['ForkTsCheckerWebpackPlugin', 'ESLintWebpackPlugin'].includes(plugin.constructor.name)
+    );
 
-  // 3. Análise do bundle (opcional)
-  if (env.ANALYZE_BUNDLE) {
-    config.plugins.push(new BundleAnalyzerPlugin());
+    // 2. Configuração extrema de otimização
+    config.optimization = {
+      ...config.optimization,
+      minimize: true,
+      minimizer: config.optimization.minimizer.map(plugin => {
+        if (plugin.constructor.name === 'TerserPlugin') {
+          plugin.options.parallel = 2; // Reduz threads para economizar memória
+          plugin.options.terserOptions.compress.drop_console = true;
+        }
+        return plugin;
+      }),
+      splitChunks: {
+        chunks: 'all',
+        maxSize: 200 * 1024, // Chunks de no máximo 200KB
+      }
+    };
+
+    // 3. Desativa source maps
+    config.devtool = false;
   }
 
-  }
 
-  return config;
+return config;
+
 
 };
