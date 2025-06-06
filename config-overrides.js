@@ -1,6 +1,7 @@
 const path = require('path');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 
 
 module.exports = function override(config, env) {
@@ -28,53 +29,26 @@ module.exports = function override(config, env) {
   config.plugins = config.plugins.filter(
     plugin => !['ForkTsCheckerWebpackPlugin', 'ESLintWebpackPlugin'].includes(plugin.constructor.name)
   );
-    // Configuração agressiva de otimização
-    config.optimization = {
-      ...config.optimization,
-      minimize: true,
-      minimizer: [
-        new TerserPlugin({
-          parallel: 2, // Reduz threads para economizar memória
-          terserOptions: {
-            compress: {
-              drop_console: true,
-              passes: 2,
-              keep_fargs: false,
-              pure_getters: true
-            },
-            mangle: {
-              properties: {
-                regex: /^_/ // Mangle apenas propriedades que começam com _
-              }
-            },
-            output: {
-              comments: false,
-              ascii_only: true
-            }
-          }
-        })
-      ],
-      splitChunks: {
-        chunks: 'all',
-        maxSize: 150 * 1024, // 150KB por chunk
-        cacheGroups: {
-          defaultVendors: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all'
-          }
-        }
-      }
-    };
+     // 2. Otimizações de bundle
+  config.optimization = {
+    ...config.optimization,
+    splitChunks: {
+      chunks: 'all',
+      maxSize: 244 * 1024, // 244KB por chunk
+      cacheGroups: {
+        vendors: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all',
+        },
+      },
+    },
+  };
 
-    // Desativa source maps
-    config.devtool = false;
-    
-    // Otimizações adicionais
-    config.performance = {
-      maxAssetSize: 500 * 1024, // 500KB
-      maxEntrypointSize: 500 * 1024
-    };
+  // 3. Análise do bundle (opcional)
+  if (env.ANALYZE_BUNDLE) {
+    config.plugins.push(new BundleAnalyzerPlugin());
+  }
 
   }
 

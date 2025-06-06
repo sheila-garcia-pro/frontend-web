@@ -34,9 +34,9 @@
     "web-vitals": "^2.1.0"
   },
   "scripts": {
-    "start": "vite start",
+    "start": "react-app-rewired start",
     "start:prod": "serve -s build -l 80",
-    "build": "vite build",
+    "build": "ANALYZE_BUNDLE=true  react-app-rewired build",
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
@@ -79,8 +79,7 @@
     ]
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "4.5.1",
-    "compression-webpack-plugin": "^11.1.0",
+    "compression-webpack-plugin": "11.1.0",
     "cross-env": "7.0.3",
     "eslint-config-prettier": "^10.1.2",
     "eslint-plugin-prettier": "^5.2.6",
@@ -90,6 +89,6 @@
     "react-app-rewired": "^2.2.1",
     "terser-webpack-plugin": "5.3.14",
     "vite": "4.5.2",
-    "webpack-bundle-analyzer": "^4.10.2"
+    "webpack-bundle-analyzer": "4.10.2"
   }
 }
