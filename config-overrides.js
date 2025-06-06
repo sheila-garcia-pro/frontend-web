@@ -25,9 +25,8 @@ module.exports = function override(config, env) {
    
  
   if (env === 'production') {
-      // Desativa plugins pesados
   config.plugins = config.plugins.filter(
-    plugin => !['ForkTsCheckerWebpackPlugin', 'ESLintWebpackPlugin'].includes(plugin.constructor.name)
+    plugin => plugin.constructor.name !== 'ForkTsCheckerWebpackPlugin'
   );
      // 2. Otimizações de bundle
   config.optimization = {
