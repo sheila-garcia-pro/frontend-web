@@ -198,17 +198,22 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
                   },
                 }}
               >
-                {user?.name ? (
+                {' '}
+                {user ? (
                   <Avatar
                     alt={user.name}
-                    src="/static/images/avatar/1.jpg"
+                    src={user.image}
                     sx={{
                       bgcolor: mode === 'light' ? '#3A4534' : '#E8EDAA',
                       color: mode === 'light' ? '#F5F3E7' : '#23291C',
                       fontWeight: 'bold',
+                      border:
+                        mode === 'light'
+                          ? '2px solid rgba(245, 243, 231, 0.6)'
+                          : '2px solid rgba(232, 237, 170, 0.4)',
                     }}
                   >
-                    {user.name.charAt(0)}
+                    {!user.image && user.name ? user.name.charAt(0) : null}
                   </Avatar>
                 ) : (
                   <AccountCircle />

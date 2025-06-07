@@ -18,8 +18,8 @@ export interface CreateIngredientParams {
   category: string;
   image: string;
   price?: {
-    price: number;
-    quantity: number;
+    price: string | number;
+    quantity: string | number;
     unitMeasure: string;
   };
 }

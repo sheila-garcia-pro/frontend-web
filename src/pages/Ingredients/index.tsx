@@ -233,19 +233,6 @@ const IngredientsPage: React.FC = () => {
 
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Button
-              variant="outlined"
-              color="primary"
-              startIcon={<Category />}
-              onClick={handleOpenCategoryModal}
-              sx={{
-                borderRadius: 3,
-                px: 2,
-              }}
-            >
-              Nova Categoria
-            </Button>
-
-            <Button
               variant="contained"
               color="primary"
               startIcon={<Add />}

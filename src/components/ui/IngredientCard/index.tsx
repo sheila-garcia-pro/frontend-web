@@ -30,21 +30,25 @@ const IngredientCard: React.FC<IngredientCardProps> = ({ ingredient, onViewDetai
       onDelete(_id);
     }
   };
-
   return (
     <Card
       sx={{
         height: '100%',
+        minHeight: { xs: 260, sm: 280 }, // Altura responsiva
+        maxWidth: { xs: '100%', sm: 300 }, // Largura máxima responsiva
+        width: '100%',
         display: 'flex',
         flexDirection: 'column',
-        transition: 'transform 0.3s, box-shadow 0.3s',
+        transition: 'all 0.3s ease-in-out',
         borderRadius: 2,
         overflow: 'hidden',
         '&:hover': {
-          transform: 'translateY(-5px)',
-          boxShadow: 6,
+          transform: 'translateY(-4px)',
+          boxShadow: (theme) => theme.shadows[8],
         },
         position: 'relative',
+        mx: 'auto',
+        backgroundColor: (theme) => theme.palette.background.paper,
       }}
     >
       {isEdit && (
@@ -66,35 +70,51 @@ const IngredientCard: React.FC<IngredientCardProps> = ({ ingredient, onViewDetai
           </Tooltip>
         </Box>
       )}
-
       <CardMedia
         component="div"
         image={image}
         title={`Imagem do ingrediente ${name}`}
         sx={{
-          height: 140,
+          height: 180, // Aumentado para 180px
           backgroundSize: 'contain',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
           backgroundColor: 'rgba(0, 0, 0, 0.04)', // Fundo neutro para melhor visualização
         }}
-      />
-      <CardContent sx={{ flexGrow: 1 }}>
-        <Typography gutterBottom variant="h6" component="div" noWrap>
+      />{' '}
+      <CardContent sx={{ flexGrow: 1, p: 2 }}>
+        <Typography
+          gutterBottom
+          variant="h6"
+          component="div"
+          noWrap
+          sx={{
+            fontSize: '1.1rem',
+            fontWeight: 500,
+            mb: 2,
+          }}
+        >
           {name}
         </Typography>
 
         <Box sx={{ mt: 1, display: 'flex', alignItems: 'center' }}>
           <Chip
-            icon={<RestaurantMenu fontSize="medium" />}
+            icon={<RestaurantMenu fontSize="small" />}
             label={category}
             size="small"
             color="primary"
             variant="outlined"
+            sx={{
+              height: 28,
+              '& .MuiChip-label': {
+                px: 1,
+                fontSize: '0.875rem',
+              },
+            }}
           />
         </Box>
-      </CardContent>
-      <CardActions>
+      </CardContent>{' '}
+      <CardActions sx={{ p: 2, pt: 0 }}>
         <Button
           size="small"
           onClick={() => onViewDetails(_id)}
@@ -102,8 +122,12 @@ const IngredientCard: React.FC<IngredientCardProps> = ({ ingredient, onViewDetai
           sx={{
             ml: 'auto',
             mr: 'auto',
-            mb: 0.5,
-            borderRadius: 4,
+            borderRadius: 3,
+            px: 2,
+            fontSize: '0.875rem',
+            height: 36,
+            minWidth: 140,
+            whiteSpace: 'nowrap',
           }}
           variant="outlined"
         >

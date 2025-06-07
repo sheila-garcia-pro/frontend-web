@@ -123,7 +123,7 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
         import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token',
       );
 
-      const response = await fetch('https://sgpro-api.squareweb.app/v1/update/image', {
+      const response = await fetch('https://sgpro-api.squareweb.app/v1/upload/image', {
         method: 'POST',
         body: formData,
         headers: {
@@ -165,24 +165,24 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
       isValid = false;
     }
     if (formData.price) {
-      if (formData.price.price < 0) {
-        newErrors['price.price'] = 'ingredients.form.validation.priceNegative';
+      if (Number(formData.price.price) < 0) {
+        newErrors['price.price'] = 'O preço não pode ser negativo';
         isValid = false;
       }
       if (!formData.price.price) {
-        newErrors['price.price'] = 'ingredients.form.validation.priceRequired';
+        newErrors['price.price'] = 'O preço é obrigatório';
         isValid = false;
       }
-      if (formData.price.quantity < 0) {
-        newErrors['price.quantity'] = 'ingredients.form.validation.quantityNegative';
+      if (Number(formData.price.quantity) < 0) {
+        newErrors['price.quantity'] = 'A quantidade não pode ser negativa';
         isValid = false;
       }
       if (!formData.price.quantity) {
-        newErrors['price.quantity'] = 'ingredients.form.validation.quantityRequired';
+        newErrors['price.quantity'] = 'A quantidade é obrigatória';
         isValid = false;
       }
       if (!formData.price.unitMeasure) {
-        newErrors['price.unitMeasure'] = 'ingredients.form.validation.unitRequired';
+        newErrors['price.unitMeasure'] = 'A unidade de medida é obrigatória';
         isValid = false;
       }
     }
@@ -288,13 +288,13 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
           >
             {' '}
             <Typography variant="subtitle1" gutterBottom>
-              ingredients.form.priceInfo
+              Informações de Preço
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
               <TextField
                 fullWidth
                 required
-                label="ingredients.form.price"
+                label="Preço"
                 name="price.price"
                 type="number"
                 value={formData.price?.price || 0}
@@ -308,7 +308,7 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
               <TextField
                 fullWidth
                 required
-                label="ingredients.form.quantity"
+                label="Quantidade"
                 name="price.quantity"
                 type="number"
                 value={formData.price?.quantity || 0}
@@ -321,7 +321,7 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
               />{' '}
               <TextField
                 fullWidth
-                label="ingredients.form.unitMeasure"
+                label="Unidade de Medida"
                 name="price.unitMeasure"
                 value={formData.price?.unitMeasure || ''}
                 onChange={handleChange}
@@ -329,11 +329,11 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
                 helperText={errors['price.unitMeasure']}
                 select
               >
-                <MenuItem value="Quilograma">ingredients.form.units.kilogram</MenuItem>
-                <MenuItem value="Grama">ingredients.form.units.gram</MenuItem>
-                <MenuItem value="Litro">ingredients.form.units.liter</MenuItem>
-                <MenuItem value="Mililitro">ingredients.form.units.milliliter</MenuItem>
-                <MenuItem value="Unidade">ingredients.form.units.unit</MenuItem>
+                <MenuItem value="Quilograma">Quilograma</MenuItem>
+                <MenuItem value="Grama">Grama</MenuItem>
+                <MenuItem value="Litro">Litro</MenuItem>
+                <MenuItem value="Mililitro">Mililitro</MenuItem>
+                <MenuItem value="Unidade">Unidade</MenuItem>
               </TextField>
             </Box>
           </Box>
@@ -380,7 +380,7 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
                 }}
               />
             ) : (
-              <Typography color="textSecondary">ingredients.form.uploadImage</Typography>
+              <Typography color="textSecondary">Clique para fazer upload da imagem</Typography>
             )}
           </Box>
           {errors.image && (
