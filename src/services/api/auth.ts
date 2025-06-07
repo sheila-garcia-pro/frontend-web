@@ -20,9 +20,13 @@ interface AuthResponse {
   message?: string;
 }
 
-interface UserUpdateParams {
-  id: string;
-  [key: string]: any;
+interface UserUpdateInput {
+  name?: string;
+  email?: string;
+  phone?: string;
+  image?: string;
+  password?: string;
+  newPassword?: string;
 }
 
 // Login
@@ -51,29 +55,23 @@ export const verifyToken = async (): Promise<{ user: User }> => {
 };
 
 // Atualização de usuário
-export const updateUser = async (params: UserUpdateParams): Promise<User> => {
-  const response = await api.put<User>(`/v1/users/${params.id}`, params);
+export const updateUser = async (params: UserUpdateInput): Promise<User> => {
+  const response = await api.patch<User>('/v1/users/me', params);
   return response.data;
 };
 
-// Atualização de senha
-export const updatePassword = async (
-  userId: string,
-  passwords: { currentPassword: string; newPassword: string },
-): Promise<{ message: string }> => {
-  const response = await api.put<{ message: string }>(`/users/${userId}/password`, passwords);
+// Upload de imagem do usuário
+export const uploadUserImage = async (file: File): Promise<{ url: string }> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('type', 'users');
+
+  const response = await api.post<{ url: string }>('/v1/upload/image', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
   return response.data;
-};
-
-// Logout (apenas local, não envolve API)
-export const logout = (): void => {
-  const tokenKey = import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token';
-
-  // Remover o token do localStorage
-  localStorage.removeItem(tokenKey);
-
-  // Limpar também qualquer outro dado de autenticação que possa existir
-  sessionStorage.removeItem(tokenKey);
 };
 
 // Recuperação de senha (solicitação de email)
@@ -92,4 +90,15 @@ export const resetPassword = async (
     newPassword,
   });
   return response.data;
+};
+
+// Logout (apenas local, não envolve API)
+export const logout = (): void => {
+  const tokenKey = import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token';
+
+  // Remover o token do localStorage
+  localStorage.removeItem(tokenKey);
+
+  // Limpar também qualquer outro dado de autenticação que possa existir
+  sessionStorage.removeItem(tokenKey);
 };

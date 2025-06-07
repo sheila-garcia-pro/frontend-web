@@ -15,6 +15,7 @@ import {
   Typography,
   Stack,
   Box,
+  InputAdornment,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { createIngredientRequest } from '../../../store/slices/ingredientsSlice';
@@ -28,33 +29,44 @@ interface IngredientModalProps {
 }
 
 const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
-  // Redux
   const dispatch = useDispatch();
   const { items: categories, loading: categoriesLoading } = useSelector(
     (state: RootState) => state.categories,
   );
-  const { loading: ingredientLoading } = useSelector((state: RootState) => state.ingredients); // Estado local do formulário
+  const { loading: ingredientLoading } = useSelector((state: RootState) => state.ingredients);
   const [formData, setFormData] = useState<CreateIngredientParams>({
     name: '',
     category: '',
     image: '',
+    price: {
+      price: '',
+      quantity: '',
+      unitMeasure: 'Quilograma',
+    },
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  // Apenas fecha o modal quando o loading terminar após um submit
   useEffect(() => {
     if (isSubmitted && !ingredientLoading) {
-      setFormData({ name: '', category: '', image: '' });
+      setFormData({
+        name: '',
+        category: '',
+        image: '',
+        price: {
+          price: '',
+          quantity: '',
+          unitMeasure: 'Quilograma',
+        },
+      });
       setSelectedFile(null);
       setIsSubmitted(false);
       onClose();
     }
   }, [ingredientLoading, isSubmitted, onClose]);
 
-  // Carregar categorias quando o modal for aberto
   useEffect(() => {
     if (open) {
       dispatch(
@@ -67,15 +79,24 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
     }
   }, [open, dispatch]);
 
-  // Manipuladores de eventos
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }> | SelectChangeEvent,
   ) => {
     const { name, value } = e.target;
     if (name) {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      if (name.startsWith('price.')) {
+        const priceField = name.split('.')[1];
+        setFormData((prev) => ({
+          ...prev,
+          price: {
+            ...(prev.price || { price: '', quantity: '', unitMeasure: 'Quilograma' }),
+            [priceField]: value,
+          },
+        }));
+      } else {
+        setFormData((prev) => ({ ...prev, [name]: value }));
+      }
 
-      // Limpar erro quando o usuário começa a digitar
       if (errors[name]) {
         setErrors((prev) => ({ ...prev, [name]: '' }));
       }
@@ -96,7 +117,7 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
           import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token',
         );
 
-        const response = await fetch('https://sgpro-api.squareweb.app/v1/update/image', {
+        const response = await fetch('https://sgpro-api.squareweb.app/v1/upload/image', {
           method: 'POST',
           body: formData,
           headers: {
@@ -105,7 +126,6 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
         });
 
         const data = await response.json();
-        console.log('Resposta da API:', { status: response.status, data });
         if (data.url) {
           setFormData((prev) => ({ ...prev, image: data.url }));
           setErrors((prev) => ({ ...prev, image: '' }));
@@ -141,13 +161,46 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
       newErrors.image = 'A imagem é obrigatória';
     }
 
+    if (formData.price) {
+      const price = parseFloat(formData.price.price as string);
+      const quantity = parseFloat(formData.price.quantity as string);
+
+      if (isNaN(price) || price < 0) {
+        newErrors['price.price'] = 'O preço deve ser um número positivo';
+      }
+
+      if (isNaN(quantity) || quantity <= 0) {
+        newErrors['price.quantity'] = 'A quantidade deve ser maior que zero';
+      }
+
+      if (!formData.price.unitMeasure) {
+        newErrors['price.unitMeasure'] = 'A unidade de medida é obrigatória';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
   const handleSubmit = () => {
     if (validate()) {
-      setIsSubmitted(true);
-      dispatch(createIngredientRequest(formData));
+      if (formData.price) {
+        const price = parseFloat(formData.price.price as string);
+        const quantity = parseFloat(formData.price.quantity as string);
+
+        const submissionData = {
+          ...formData,
+          price: {
+            ...formData.price,
+            price: price,
+            quantity: quantity,
+          },
+        };
+        setIsSubmitted(true);
+        dispatch(createIngredientRequest(submissionData));
+      } else {
+        setIsSubmitted(true);
+        dispatch(createIngredientRequest(formData));
+      }
     }
   };
 
@@ -215,6 +268,57 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
                 </Typography>
               )}
             </FormControl>
+
+            <Box sx={{ border: '1px solid', borderColor: 'divider', p: 2, borderRadius: 1 }}>
+              <Typography variant="subtitle1" gutterBottom>
+                Informações de Preço
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+                <TextField
+                  fullWidth
+                  label="Preço"
+                  name="price.price"
+                  type="number"
+                  value={formData.price?.price || ''}
+                  onChange={handleChange}
+                  error={!!errors['price.price']}
+                  helperText={errors['price.price']}
+                  InputProps={{
+                    inputProps: { min: 0, step: 0.01 },
+                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                  }}
+                />
+                <TextField
+                  fullWidth
+                  label="Quantidade"
+                  name="price.quantity"
+                  type="number"
+                  value={formData.price?.quantity || ''}
+                  onChange={handleChange}
+                  error={!!errors['price.quantity']}
+                  helperText={errors['price.quantity']}
+                  InputProps={{
+                    inputProps: { min: 0, step: 0.01 },
+                  }}
+                />
+                <TextField
+                  fullWidth
+                  label="Unidade de Medida"
+                  name="price.unitMeasure"
+                  select
+                  value={formData.price?.unitMeasure || 'Quilograma'}
+                  onChange={handleChange}
+                  error={!!errors['price.unitMeasure']}
+                  helperText={errors['price.unitMeasure']}
+                >
+                  <MenuItem value="Quilograma">Quilograma</MenuItem>
+                  <MenuItem value="Grama">Grama</MenuItem>
+                  <MenuItem value="Litro">Litro</MenuItem>
+                  <MenuItem value="Mililitro">Mililitro</MenuItem>
+                  <MenuItem value="Unidade">Unidade</MenuItem>
+                </TextField>
+              </Box>
+            </Box>
 
             <FormControl fullWidth error={!!errors.image}>
               <Button

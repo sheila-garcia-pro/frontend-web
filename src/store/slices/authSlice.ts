@@ -7,6 +7,7 @@ export interface User {
   email: string;
   phone?: string;
   role: string;
+  image?: string;
 }
 
 export interface AuthState {
@@ -133,6 +134,7 @@ const authSlice = createSlice({
     // Atualização do usuário
     updateUserRequest: (state, action: PayloadAction<Partial<User>>) => {
       state.loading = true;
+      state.error = null;
     },
     updateUserSuccess: (state, action: PayloadAction<User>) => {
       state.loading = false;

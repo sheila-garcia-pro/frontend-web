@@ -1,5 +1,5 @@
 import React, { ElementType, useEffect, useState } from 'react';
-import { Box, Typography, Button, Divider, Container, Grid, Paper } from '@mui/material';
+import { Box, Typography, Button, Divider, Container, Paper, Grid } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
@@ -60,14 +60,12 @@ const HomePage: React.FC = () => {
       }
     };
 
-    loadData();
-
-    // Carregar ingredientes apenas se ainda não existirem no estado
+    loadData(); // Carregar ingredientes apenas se ainda não existirem no estado
     if (ingredients.length === 0) {
       dispatch(
         fetchIngredientsRequest({
           page: 1,
-          itemPerPage: 6,
+          itemPerPage: 12, // Aumentando a quantidade de itens para ter mais para navegar
           category: undefined,
           search: undefined,
         }),
@@ -112,13 +110,61 @@ const HomePage: React.FC = () => {
           >
             DO FOGO AO AÇUCAR
           </Typography>
-        </Box>
-
+        </Box>{' '}
         {/* Seção de Ingredientes */}
-        <Box sx={{ my: 6 }}>
-          <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 3, fontWeight: 500 }}>
-            🥦 Ingredientes
-          </Typography>
+        <Box
+          sx={{
+            my: 6,
+            bgcolor: (theme) => theme.palette.background.paper,
+            borderRadius: 4,
+            p: { xs: 2, md: 4 },
+            boxShadow: (theme) => `0 2px 12px ${theme.palette.primary.main}10`,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 4,
+              flexWrap: 'wrap',
+              gap: 2,
+            }}
+          >
+            <Typography
+              variant="h4"
+              component="h2"
+              sx={{
+                fontWeight: 500,
+                color: 'text.primary',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              <span role="img" aria-label="ingredients">
+                🥦
+              </span>
+              Ingredientes
+            </Typography>
+
+            <Button
+              variant="outlined"
+              color="primary"
+              component={RouterLink}
+              to="/ingredients"
+              sx={{
+                borderRadius: 6,
+                px: 3,
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  transition: 'transform 0.2s ease-in-out',
+                },
+              }}
+            >
+              Ver todos os ingredientes
+            </Button>
+          </Box>
 
           {loading ? (
             <CarouselSkeleton
@@ -130,44 +176,100 @@ const HomePage: React.FC = () => {
             <>
               {' '}
               {ingredients.length > 0 ? (
-                <Carousel itemsPerPage={{ xs: 1, sm: 2, md: 3, lg: 4, xl: 6 }}>
-                  {ingredients.map((ingredient) => (
-                    <IngredientCard
-                      key={ingredient._id}
-                      ingredient={ingredient}
-                      onViewDetails={handleViewDetails}
-                    />
-                  ))}
-                </Carousel>
+                <Grid container spacing={3}>
+                  <Carousel
+                    itemsPerPage={{
+                      xs: 1,
+                      sm: 2,
+                      md: 3,
+                      lg: 4,
+                      xl: 5,
+                    }}
+                  >
+                    {ingredients.map((ingredient) => (
+                      <Box
+                        key={ingredient._id}
+                        sx={{
+                          height: '100%',
+                          px: 1.5,
+                        }}
+                      >
+                        <IngredientCard ingredient={ingredient} onViewDetails={handleViewDetails} />
+                      </Box>
+                    ))}
+                  </Carousel>
+                </Grid>
               ) : (
-                <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Box
+                  sx={{
+                    p: 4,
+                    textAlign: 'center',
+                    bgcolor: (theme) => theme.palette.background.default,
+                    borderRadius: 2,
+                  }}
+                >
                   <Typography variant="body1" color="text.secondary">
                     Nenhum ingrediente encontrado. Tente novamente mais tarde.
                   </Typography>
                 </Box>
               )}
-              <Box sx={{ textAlign: 'center', mt: 2 }}>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  component={RouterLink}
-                  to="/ingredients"
-                  sx={{ borderRadius: 6, px: 3 }}
-                >
-                  Ver todos os ingredientes
-                </Button>
-              </Box>
             </>
           )}
         </Box>
+        <Divider sx={{ my: 5 }} /> {/* Seção de Receitas */}
+        <Box
+          sx={{
+            my: 6,
+            bgcolor: (theme) => theme.palette.background.paper,
+            borderRadius: 4,
+            p: { xs: 2, md: 4 },
+            boxShadow: (theme) => `0 2px 12px ${theme.palette.primary.main}10`,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 4,
+              flexWrap: 'wrap',
+              gap: 2,
+            }}
+          >
+            <Typography
+              variant="h4"
+              component="h2"
+              sx={{
+                fontWeight: 500,
+                color: 'text.primary',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              <span role="img" aria-label="recipes">
+                🍽️
+              </span>
+              Receitas
+            </Typography>
 
-        <Divider sx={{ my: 5 }} />
-
-        {/* Seção de Receitas */}
-        <Box sx={{ my: 6 }}>
-          <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 3, fontWeight: 500 }}>
-            🍽️ Receitas
-          </Typography>
+            <Button
+              variant="outlined"
+              color="primary"
+              component={RouterLink}
+              to="/recipes"
+              sx={{
+                borderRadius: 6,
+                px: 3,
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  transition: 'transform 0.2s ease-in-out',
+                },
+              }}
+            >
+              Ver todas as receitas
+            </Button>
+          </Box>
 
           {loading ? (
             <CarouselSkeleton
@@ -177,38 +279,43 @@ const HomePage: React.FC = () => {
             />
           ) : (
             <>
+              {' '}
               {receitas.length > 0 ? (
-                <Carousel itemsPerPage={{ xs: 1, sm: 2, md: 2, lg: 3, xl: 4 }}>
-                  {receitas.map((recipe) => (
-                    <RecipeCard
-                      key={recipe.id}
-                      id={recipe.id}
-                      name={recipe.name}
-                      image={recipe.image}
-                      dishType={recipe.dishType}
-                      servings={recipe.servings}
-                    />
-                  ))}
-                </Carousel>
+                <Grid container spacing={3}>
+                  <Carousel itemsPerPage={{ xs: 1, sm: 2, md: 2, lg: 3, xl: 4 }}>
+                    {receitas.map((recipe) => (
+                      <Box
+                        key={recipe.id}
+                        sx={{
+                          height: '100%',
+                          p: 1,
+                        }}
+                      >
+                        <RecipeCard
+                          id={recipe.id}
+                          name={recipe.name}
+                          image={recipe.image}
+                          dishType={recipe.dishType}
+                          servings={recipe.servings}
+                        />
+                      </Box>
+                    ))}
+                  </Carousel>
+                </Grid>
               ) : (
-                <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Box
+                  sx={{
+                    p: 4,
+                    textAlign: 'center',
+                    bgcolor: (theme) => theme.palette.background.default,
+                    borderRadius: 2,
+                  }}
+                >
                   <Typography variant="body1" color="text.secondary">
                     Nenhuma receita encontrada. Tente novamente mais tarde.
                   </Typography>
                 </Box>
               )}
-
-              <Box sx={{ textAlign: 'center', mt: 2 }}>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  component={RouterLink}
-                  to="/recipes"
-                  sx={{ borderRadius: 6, px: 3 }}
-                >
-                  Ver todas as receitas
-                </Button>
-              </Box>
             </>
           )}
         </Box>

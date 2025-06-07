@@ -26,12 +26,11 @@ import { setGlobalLoading } from '@store/slices/uiSlice';
 import * as authService from '@services/api/auth';
 import * as usersService from '@services/api/users';
 import { addNotification } from '@store/slices/uiSlice';
-import { delay } from 'redux-saga/effects';
 
 // Tipos
 type LoginPayload = { email: string; password: string };
 type RegisterPayload = { name: string; email: string; password: string; phone: string };
-type UpdateUserPayload = { id: string; [key: string]: any };
+type UpdateUserPayload = Partial<User>;
 type ForgotPasswordPayload = { email: string };
 type ResetPasswordPayload = { token: string; newPassword: string };
 
@@ -42,7 +41,7 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
 
     // Adaptar credenciais para o formato da API
     const credentials = {
-      login: action.payload.email, // Usar email como login
+      login: action.payload.email,
       password: action.payload.password,
     };
 
@@ -63,20 +62,22 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
       // Busca os dados do usuário atual
       const user = yield call(usersService.getCurrentUser);
 
-      // Despacha a ação de sucesso (sem enviar a senha no payload)
+      // Despacha a ação de sucesso
       yield put(loginSuccess({ user, token }));
+
+      // Notificação de sucesso
+      yield put(
+        addNotification({
+          message: 'Login realizado com sucesso!',
+          type: 'success',
+        }),
+      );
     } catch (userError) {
       // Se falhar ao buscar dados do usuário, considera o login falho
       localStorage.removeItem(import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token');
       throw new Error('Falha ao obter dados do usuário');
     }
-
-    // Limpa as credenciais para garantir que não sejam acessíveis
-    action.payload.password = '';
   } catch (error) {
-    // Remover o token se houver falha no login
-    localStorage.removeItem(import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token');
-
     // Despacha a ação de falha
     yield put(
       loginFailure(
@@ -84,6 +85,14 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
           ? error.message
           : 'Por favor, verifique seu email e senha. Tente novamente.',
       ),
+    );
+
+    // Notificação de erro
+    yield put(
+      addNotification({
+        message: 'Erro ao fazer login. Por favor, tente novamente.',
+        type: 'error',
+      }),
     );
   } finally {
     yield put(setGlobalLoading(false));
@@ -95,16 +104,8 @@ function* registerSaga(action: PayloadAction<RegisterPayload>): SagaIterator {
   try {
     yield put(setGlobalLoading(true));
 
-    // Preparar credenciais para o formato da API usando todos os campos do payload
-    const credentials = {
-      name: action.payload.name,
-      email: action.payload.email,
-      password: action.payload.password,
-      phone: action.payload.phone, // Usar o valor fornecido pelo usuário
-    };
-
     // Chama o serviço de API para registro
-    const user = yield call(authService.register, credentials);
+    const user = yield call(authService.register, action.payload);
 
     // Após registro, fazer login automaticamente
     const loginCredentials = {
@@ -118,15 +119,28 @@ function* registerSaga(action: PayloadAction<RegisterPayload>): SagaIterator {
     // Salva o token no localStorage
     localStorage.setItem(import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token', token);
 
-    // Despacha a ação de sucesso (sem enviar a senha no payload)
+    // Despacha a ação de sucesso
     yield put(registerSuccess({ user, token }));
 
-    // Limpa as credenciais para garantir que não sejam acessíveis
-    action.payload.password = '';
+    // Notificação de sucesso
+    yield put(
+      addNotification({
+        message: 'Registro realizado com sucesso!',
+        type: 'success',
+      }),
+    );
   } catch (error) {
     // Despacha a ação de falha
     yield put(
       registerFailure(error instanceof Error ? error.message : 'Erro ao realizar cadastro'),
+    );
+
+    // Notificação de erro
+    yield put(
+      addNotification({
+        message: 'Erro ao realizar cadastro. Por favor, tente novamente.',
+        type: 'error',
+      }),
     );
   } finally {
     yield put(setGlobalLoading(false));
@@ -159,8 +173,10 @@ function* checkAuthSaga(): SagaIterator {
     // Se o token for inválido ou houver qualquer erro, remove o token
     localStorage.removeItem(import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token');
 
-    // Despacha a ação de falha e redireciona para login se não estiver lá
+    // Despacha a ação de falha
     yield put(checkAuthFailure());
+
+    // Redireciona para login se não estiver lá
     if (window.location.pathname !== '/login') {
       window.location.href = '/login';
     }
@@ -172,15 +188,31 @@ function* updateUserSaga(action: PayloadAction<UpdateUserPayload>): SagaIterator
   try {
     yield put(setGlobalLoading(true));
 
-    // Chama o serviço de API
+    // Chama o serviço de API para atualizar o usuário
     const user = yield call(authService.updateUser, action.payload);
 
     // Despacha a ação de sucesso
     yield put(updateUserSuccess(user));
+
+    // Notificação de sucesso
+    yield put(
+      addNotification({
+        message: 'Perfil atualizado com sucesso!',
+        type: 'success',
+      }),
+    );
   } catch (error) {
     // Despacha a ação de falha
     yield put(
       updateUserFailure(error instanceof Error ? error.message : 'Erro ao atualizar usuário'),
+    );
+
+    // Notificação de erro
+    yield put(
+      addNotification({
+        message: 'Erro ao atualizar perfil. Por favor, tente novamente.',
+        type: 'error',
+      }),
     );
   } finally {
     yield put(setGlobalLoading(false));
@@ -193,7 +225,7 @@ function* forgotPasswordSaga(action: PayloadAction<ForgotPasswordPayload>): Saga
     yield put(setGlobalLoading(true));
 
     // Chama o serviço de API para enviar email de recuperação
-    const result = yield call(authService.forgotPassword, action.payload.email);
+    yield call(authService.forgotPassword, action.payload.email);
 
     // Despacha a ação de sucesso
     yield put(forgotPasswordSuccess());
@@ -201,7 +233,7 @@ function* forgotPasswordSaga(action: PayloadAction<ForgotPasswordPayload>): Saga
     // Notificação de sucesso
     yield put(
       addNotification({
-        message: 'Enviamos por email o link de recuperaçao',
+        message: 'Enviamos por email o link de recuperação',
         type: 'success',
       }),
     );
@@ -231,11 +263,7 @@ function* resetPasswordSaga(action: PayloadAction<ResetPasswordPayload>): SagaIt
     yield put(setGlobalLoading(true));
 
     // Chama o serviço de API para redefinir a senha
-    const result = yield call(
-      authService.resetPassword,
-      action.payload.token,
-      action.payload.newPassword,
-    );
+    yield call(authService.resetPassword, action.payload.token, action.payload.newPassword);
 
     // Despacha a ação de sucesso
     yield put(resetPasswordSuccess());
@@ -249,7 +277,6 @@ function* resetPasswordSaga(action: PayloadAction<ResetPasswordPayload>): SagaIt
     );
 
     // Redirecionar para a página de login após sucesso
-    // Não removemos este redirecionamento pois neste caso faz sentido ir para login
     window.location.href = '/login';
   } catch (error) {
     // Despacha a ação de falha
