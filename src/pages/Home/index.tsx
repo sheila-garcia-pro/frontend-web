@@ -19,6 +19,7 @@ import { addNotification } from '@store/slices/uiSlice';
 import { RootState } from '@store/index';
 import useNotification from '@hooks/useNotification';
 import { fetchIngredientsRequest } from '@store/slices/ingredientsSlice';
+import { useTranslation } from 'react-i18next';
 
 // Componente da página inicial
 const HomePage: React.FC = () => {
@@ -27,6 +28,7 @@ const HomePage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const { items: ingredients } = useSelector((state: RootState) => state.ingredients);
   const notification = useNotification();
+  const { t } = useTranslation();
 
   // Estados
   const [loading, setLoading] = useState(true);
@@ -108,9 +110,10 @@ const HomePage: React.FC = () => {
             color="text.secondary"
             sx={{ maxWidth: '800px', mx: 'auto', mb: 2 }}
           >
-            DO FOGO AO AÇUCAR
+            {' '}
+            {t('welcome')}
           </Typography>
-        </Box>{' '}
+        </Box>
         {/* Seção de Ingredientes */}
         <Box
           sx={{
@@ -144,8 +147,8 @@ const HomePage: React.FC = () => {
             >
               <span role="img" aria-label="ingredients">
                 🥦
-              </span>
-              Ingredientes
+              </span>{' '}
+              {t('ingredients.title')}
             </Typography>
 
             <Button
@@ -162,7 +165,8 @@ const HomePage: React.FC = () => {
                 },
               }}
             >
-              Ver todos os ingredientes
+              {' '}
+              {t('ingredients.viewAll')}
             </Button>
           </Box>
 
@@ -209,7 +213,8 @@ const HomePage: React.FC = () => {
                   }}
                 >
                   <Typography variant="body1" color="text.secondary">
-                    Nenhum ingrediente encontrado. Tente novamente mais tarde.
+                    {' '}
+                    {t('ingredients.messages.notFound')}
                   </Typography>
                 </Box>
               )}
@@ -249,8 +254,8 @@ const HomePage: React.FC = () => {
             >
               <span role="img" aria-label="recipes">
                 🍽️
-              </span>
-              Receitas
+              </span>{' '}
+              {t('menu.recipes')}
             </Typography>
 
             <Button

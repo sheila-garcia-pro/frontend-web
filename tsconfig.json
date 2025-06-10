@@ -28,8 +28,9 @@
       "@hooks/*": ["hooks/*"],
       "@utils/*": ["utils/*"],
       "@themes/*": ["themes/*"],
-      "@config/*": ["config/*"]
+      "@config/*": ["config/*"],
+      "@i18n/*": ["i18n/*"]
     }
   },
-  "include": ["src/env.d.ts","src"]
+  "include": ["src/env.d.ts", "src"]
 }

@@ -24,6 +24,7 @@ import { createIngredientRequest } from '../../../store/slices/ingredientsSlice'
 import { fetchCategoriesRequest } from '../../../store/slices/categoriesSlice';
 import { RootState } from '../../../store';
 import { CreateIngredientParams } from '../../../types/ingredients';
+import { useTranslation } from 'react-i18next';
 
 interface IngredientModalProps {
   open: boolean;
@@ -31,6 +32,7 @@ interface IngredientModalProps {
 }
 
 const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { items: categories, loading: categoriesLoading } = useSelector(
     (state: RootState) => state.categories,
@@ -237,12 +239,7 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
         sx: { borderRadius: 2 },
       }}
     >
-      {' '}
-      <DialogTitle>
-        <Typography variant="h4" component="div" sx={{ fontWeight: 500 }}>
-          Cadastro de Ingrediente
-        </Typography>
-      </DialogTitle>
+      <DialogTitle>{t('ingredients.newIngredient')}</DialogTitle>
       <DialogContent dividers>
         <Box sx={{ py: 2 }}>
           <Stack spacing={2}>
@@ -387,17 +384,15 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
         </Box>
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} color="inherit" disabled={ingredientLoading || uploading}>
-          Cancelar
+        <Button onClick={onClose} color="inherit">
+          {t('ingredients.actions.cancel')}
         </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
-          color="primary"
-          disabled={ingredientLoading || uploading}
-          startIcon={ingredientLoading ? <CircularProgress size={20} /> : null}
+          disabled={uploading || ingredientLoading}
         >
-          {ingredientLoading ? 'Salvando...' : 'Salvar'}
+          {t('ingredients.actions.save')}
         </Button>
       </DialogActions>
     </Dialog>

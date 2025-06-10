@@ -27,6 +27,7 @@ export default defineConfig({
       { find: '@utils', replacement: path.resolve(__dirname, 'src/utils') },
       { find: '@themes', replacement: path.resolve(__dirname, 'src/themes') },
       { find: '@config', replacement: path.resolve(__dirname, 'src/config') },
+      { find: '@i18n', replacement: path.resolve(__dirname, 'src/i18n') },
       // Adicione todos os seus aliases aqui
     ],
   },

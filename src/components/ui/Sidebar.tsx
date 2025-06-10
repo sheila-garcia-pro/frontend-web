@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Drawer,
@@ -45,8 +46,8 @@ const DrawerHeader = styled('div')(({ theme }: { theme: Theme }) => ({
 const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle, isMobile }) => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { t } = useTranslation();
 
   const handleNavigation = (path: string) => {
     navigate(path);
@@ -97,10 +98,11 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
       <List>
         <ListItem disablePadding>
           <ListItemButton onClick={() => handleNavigation('/')}>
+            {' '}
             <ListItemIcon>
               <HomeIcon />
             </ListItemIcon>
-            <ListItemText primary="Home" />
+            <ListItemText primary={t('menu.home')} />
           </ListItemButton>
         </ListItem>
 
@@ -109,7 +111,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
             <ListItemIcon>
               <KitchenIcon />
             </ListItemIcon>
-            <ListItemText primary="Ingredientes" />
+            <ListItemText primary={t('menu.ingredients')} />
           </ListItemButton>
         </ListItem>
 
@@ -118,19 +120,18 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
             <ListItemIcon>
               <RestaurantIcon />
             </ListItemIcon>
-            <ListItemText primary="Receitas" />
+            <ListItemText primary={t('menu.recipes')} />
           </ListItemButton>
         </ListItem>
 
         {isAuthenticated && (
           <>
-            {' '}
             <ListItem disablePadding>
               <ListItemButton onClick={() => handleNavigation('/suppliers')}>
                 <ListItemIcon>
                   <SuppliersIcon />
                 </ListItemIcon>
-                <ListItemText primary="Fornecedores" />
+                <ListItemText primary={t('menu.suppliers')} />
               </ListItemButton>
             </ListItem>
             <ListItem disablePadding>
@@ -138,7 +139,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
                 <ListItemIcon>
                   <PersonIcon />
                 </ListItemIcon>
-                <ListItemText primary="Perfil" />
+                <ListItemText primary={t('menu.profile')} />
               </ListItemButton>
             </ListItem>
           </>
