@@ -122,7 +122,7 @@ export const updateIngredientPriceMeasure = async (
     unitMeasure: string;
   },
 ): Promise<Ingredient> => {
-  const response = await api.post<Ingredient>(
+  const response = await api.patch<Ingredient>(
     `/v1/users/me/ingredient/${id}/price-measure`,
     params,
   );

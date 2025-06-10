@@ -22,7 +22,7 @@ interface IngredientCardProps {
 }
 
 const IngredientCard: React.FC<IngredientCardProps> = ({ ingredient, onViewDetails, onDelete }) => {
-  const { _id, name, category, image, isEdit } = ingredient;
+  const { _id, name, image, isEdit } = ingredient;
 
   const handleDelete = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -98,9 +98,9 @@ const IngredientCard: React.FC<IngredientCardProps> = ({ ingredient, onViewDetai
         </Typography>
 
         <Box sx={{ mt: 1, display: 'flex', alignItems: 'center' }}>
+          {' '}
           <Chip
-            icon={<RestaurantMenu fontSize="small" />}
-            label={category}
+            label={`R$ ${ingredient.price?.price.toFixed(2) || '0.00'}`}
             size="small"
             color="primary"
             variant="outlined"

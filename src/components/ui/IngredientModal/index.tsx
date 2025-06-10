@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -17,6 +17,8 @@ import {
   Box,
   InputAdornment,
 } from '@mui/material';
+import { getUnitMeasures } from '../../../services/api/unitMeasure';
+import { UnitMeasure } from '../../../types/unitMeasure';
 import { useDispatch, useSelector } from 'react-redux';
 import { createIngredientRequest } from '../../../store/slices/ingredientsSlice';
 import { fetchCategoriesRequest } from '../../../store/slices/categoriesSlice';
@@ -48,6 +50,26 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [unitMeasures, setUnitMeasures] = useState<UnitMeasure[]>([]);
+  const [loadingUnitMeasures, setLoadingUnitMeasures] = useState(false);
+
+  const loadUnitMeasures = useCallback(async () => {
+    try {
+      setLoadingUnitMeasures(true);
+      const data = await getUnitMeasures();
+      setUnitMeasures(data);
+    } catch (error) {
+      console.error('Erro ao carregar unidades de medida:', error);
+    } finally {
+      setLoadingUnitMeasures(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      loadUnitMeasures();
+    }
+  }, [open, loadUnitMeasures]);
 
   useEffect(() => {
     if (isSubmitted && !ingredientLoading) {
@@ -215,15 +237,15 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
         sx: { borderRadius: 2 },
       }}
     >
-      <DialogTitle sx={{ pb: 1 }}>
-        <Typography variant="h5" component="div" sx={{ fontWeight: 500 }}>
-          Novo Ingrediente
+      {' '}
+      <DialogTitle>
+        <Typography variant="h4" component="div" sx={{ fontWeight: 500 }}>
+          Cadastro de Ingrediente
         </Typography>
       </DialogTitle>
-
       <DialogContent dividers>
-        <Box sx={{ py: 1 }}>
-          <Stack spacing={3}>
+        <Box sx={{ py: 2 }}>
+          <Stack spacing={2}>
             <TextField
               label="Nome do Ingrediente"
               name="name"
@@ -237,7 +259,6 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
               autoFocus
               disabled={ingredientLoading}
             />
-
             <FormControl fullWidth required error={!!errors.category}>
               <InputLabel id="category-label">Categoria</InputLabel>
               <Select
@@ -267,59 +288,69 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
                   {errors.category}
                 </Typography>
               )}
-            </FormControl>
+            </FormControl>{' '}
+            <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
+              Preço de Compra
+            </Typography>
+            <TextField
+              fullWidth
+              label="Preço"
+              name="price.price"
+              type="number"
+              value={formData.price?.price || ''}
+              onChange={handleChange}
+              error={!!errors['price.price']}
+              helperText={errors['price.price']}
+              InputProps={{
+                inputProps: { min: 0, step: 0.01 },
+                startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+              }}
+            />
+            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+              <TextField
+                fullWidth
+                label="Quantidade"
+                name="price.quantity"
+                type="number"
+                value={formData.price?.quantity || ''}
+                onChange={handleChange}
+                error={!!errors['price.quantity']}
+                helperText={errors['price.quantity']}
+                InputProps={{
+                  inputProps: { min: 0, step: 0.01 },
+                }}
+              />
 
-            <Box sx={{ border: '1px solid', borderColor: 'divider', p: 2, borderRadius: 1 }}>
-              <Typography variant="subtitle1" gutterBottom>
-                Informações de Preço
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-                <TextField
-                  fullWidth
-                  label="Preço"
-                  name="price.price"
-                  type="number"
-                  value={formData.price?.price || ''}
-                  onChange={handleChange}
-                  error={!!errors['price.price']}
-                  helperText={errors['price.price']}
-                  InputProps={{
-                    inputProps: { min: 0, step: 0.01 },
-                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-                  }}
-                />
-                <TextField
-                  fullWidth
-                  label="Quantidade"
-                  name="price.quantity"
-                  type="number"
-                  value={formData.price?.quantity || ''}
-                  onChange={handleChange}
-                  error={!!errors['price.quantity']}
-                  helperText={errors['price.quantity']}
-                  InputProps={{
-                    inputProps: { min: 0, step: 0.01 },
-                  }}
-                />
-                <TextField
-                  fullWidth
-                  label="Unidade de Medida"
+              <FormControl fullWidth error={!!errors['price.unitMeasure']}>
+                <InputLabel>Medida</InputLabel>
+                <Select
+                  label="Medida"
                   name="price.unitMeasure"
-                  select
-                  value={formData.price?.unitMeasure || 'Quilograma'}
+                  value={formData.price?.unitMeasure || ''}
                   onChange={handleChange}
-                  error={!!errors['price.unitMeasure']}
-                  helperText={errors['price.unitMeasure']}
+                  disabled={loadingUnitMeasures}
                 >
-                  <MenuItem value="Quilograma">Quilograma</MenuItem>
-                  <MenuItem value="Grama">Grama</MenuItem>
-                  <MenuItem value="Litro">Litro</MenuItem>
-                  <MenuItem value="Mililitro">Mililitro</MenuItem>
-                  <MenuItem value="Unidade">Unidade</MenuItem>
-                </TextField>
-              </Box>
+                  {loadingUnitMeasures ? (
+                    <MenuItem value="">
+                      <CircularProgress size={20} />
+                    </MenuItem>
+                  ) : unitMeasures.length > 0 ? (
+                    unitMeasures.map((unit) => (
+                      <MenuItem key={unit._id} value={unit.name}>
+                        {unit.name} ({unit.acronym})
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem value="">Nenhuma unidade disponível</MenuItem>
+                  )}
+                </Select>
+                {errors['price.unitMeasure'] && (
+                  <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1 }}>
+                    {errors['price.unitMeasure']}
+                  </Typography>
+                )}
+              </FormControl>
             </Box>
-
             <FormControl fullWidth error={!!errors.image}>
               <Button
                 variant="outlined"
@@ -355,7 +386,6 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
           </Stack>
         </Box>
       </DialogContent>
-
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={ingredientLoading || uploading}>
           Cancelar
