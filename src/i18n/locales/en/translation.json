@@ -1,0 +1,169 @@
+{
+  "welcome": "FROM FIRE TO SUGAR",
+  "language": "Language",
+  "theme": {
+    "toggle": "Switch to {{theme}} theme",
+    "light": "light",
+    "dark": "dark"
+  },
+  "notifications": {
+    "title": "Notifications"
+  },
+  "menu": {
+    "dashboard": "Dashboard",
+    "home": "Home",
+    "recipes": "Recipes",
+    "ingredients": "Ingredients",
+    "suppliers": "Suppliers",
+    "profile": "Profile",
+    "close": "Close menu"
+  },
+  "navbar": {
+    "home": "Home",
+    "recipes": "Recipes",
+    "ingredients": "Ingredients",
+    "suppliers": "Suppliers",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "forgotPassword": "Forgot Password?"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "ingredients": {
+    "title": "Available Ingredients",
+    "subtitle": "Find all ingredients for your favorite recipes",
+    "viewAll": "View all ingredients",
+    "priceInfo": "Price Information",
+    "pricePerUnit": "Price per {{unit}}",
+    "fields": {
+      "name": "Ingredient",
+      "category": "Category",
+      "price": "Price",
+      "quantity": "Quantity",
+      "unitMeasure": "Unit of Measure"
+    },
+    "results": {
+      "showing": "Showing {{count}} of {{total}} ingredients{{categories, plural, =0 {} other { ({{categories}} categories selected)}}"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "categoryRequired": "Category is required",
+      "priceNotNegative": "Price cannot be negative",
+      "priceRequired": "Price is required",
+      "quantityNotNegative": "Quantity cannot be negative",
+      "quantityRequired": "Quantity is required",
+      "unitMeasureRequired": "Unit of measure is required"
+    },
+    "measures": {
+      "kilogram": "Kilogram",
+      "gram": "Gram",
+      "liter": "Liter",
+      "milliliter": "Milliliter",
+      "unit": "Unit"
+    },
+    "form": {
+      "name": "Ingredient name",
+      "namePlaceholder": "Enter ingredient name",
+      "category": "Category",
+      "categoryPlaceholder": "Select a category",
+      "price": "Price",
+      "quantity": "Quantity",
+      "image": "Image",
+      "imageUpload": "Upload image",
+      "priceInfo": "Price Information",
+      "clickToUpload": "Click to upload image",
+      "unitMeasure": "Unit of Measure"
+    },
+    "newIngredient": "New Ingredient",
+    "newCategory": "New Category",
+    "details": "Ingredient Details",
+    "sortOptions": {
+      "nameAsc": "Name (A-Z)",
+      "nameDesc": "Name (Z-A)"
+    },
+    "actions": {
+      "edit": "Edit Ingredient",
+      "delete": "Delete Ingredient",
+      "viewDetails": "View Details",
+      "cancel": "Cancel",
+      "save": "Save",
+      "close": "Close"
+    },
+    "filters": {
+      "searchPlaceholder": "Search ingredients...",
+      "categories": "Categories",
+      "all": "All",
+      "used": "Used"
+    },
+    "messages": {
+      "notFound": "No ingredients found",
+      "tryFilters": "Try changing filters or adding new ingredients",
+      "loadError": "Error loading ingredient details",
+      "createSuccess": "Ingredient created successfully!",
+      "updateSuccess": "Ingredient updated successfully!",
+      "deleteSuccess": "Ingredient deleted successfully!",
+      "priceUpdateSuccess": "Price information updated successfully!",
+      "error": {
+        "load": "Error loading ingredients",
+        "create": "Error creating ingredient",
+        "update": "Error updating ingredient",
+        "delete": "Error deleting ingredient",
+        "priceUpdate": "Error updating price information"
+      }
+    },
+    "nutrition": {
+      "title": "Nutritional Information",
+      "per100g": "Per 100g portion",
+      "loading": "Loading nutritional information...",
+      "error": "Error loading nutritional information",
+      "notFound": "No nutritional information found",
+      "fields": {
+        "energy": "Energy Value",
+        "carbs": "Carbohydrates",
+        "protein": "Protein",
+        "totalFats": "Total Fats",
+        "saturatedFats": "Saturated Fats",
+        "transFats": "Trans Fats",
+        "fiber": "Dietary Fiber",
+        "sodium": "Sodium",
+        "calcium": "Calcium",
+        "iron": "Iron",
+        "vitaminC": "Vitamin C",
+        "cholesterol": "Cholesterol",
+        "potassium": "Potassium",
+        "zinc": "Zinc"
+      },
+      "units": {
+        "kcal": "kcal",
+        "g": "g",
+        "mg": "mg",
+        "mcg": "mcg"
+      }
+    }
+  },
+  "profile": {
+    "title": "Personal Details",
+    "plan": "Plan: {{plan}}",
+    "planFree": "Free",
+    "fields": {
+      "fullName": "Full Name",
+      "email": "Email",
+      "phone": "Phone"
+    },
+    "actions": {
+      "edit": "Edit Profile",
+      "cancel": "Cancel",
+      "save": "Save Changes"
+    },
+    "messages": {
+      "updateSuccess": "Profile updated successfully!",
+      "updateError": "Error updating profile. Please try again."
+    }
+  }
+}

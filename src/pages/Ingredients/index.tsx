@@ -47,6 +47,7 @@ import { Ingredient } from '../../types/ingredients';
 
 // Hooks
 import { useDebounce } from '../../hooks/useDebounce';
+import { useTranslation } from 'react-i18next';
 
 // Interface para as opções de ordenação
 interface SortOption {
@@ -66,6 +67,7 @@ interface EditedPrices {
 
 // Componente da página de ingredientes
 const IngredientsPage: React.FC = () => {
+  const { t } = useTranslation();
   // Estados locais
   const [sortOption, setSortOption] = useState('name_asc');
   const [modalOpen, setModalOpen] = useState(false);
@@ -313,11 +315,12 @@ const IngredientsPage: React.FC = () => {
           }}
         >
           <Box>
+            {' '}
             <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 500 }}>
-              Ingredientes disponíveis
+              {t('ingredients.title')}
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Encontre todos os ingredientes para suas receitas favoritas
+              {t('ingredients.subtitle')}
             </Typography>
           </Box>
 
@@ -329,7 +332,8 @@ const IngredientsPage: React.FC = () => {
               onClick={handleToggleEdit}
               sx={{ borderRadius: 3, px: 3 }}
             >
-              {isEditing ? 'Cancelar Edição' : 'Editar Valores'}
+              {' '}
+              {isEditing ? t('ingredients.actions.cancel') : t('ingredients.actions.edit')}
             </Button>
 
             {isEditing && (
@@ -341,7 +345,7 @@ const IngredientsPage: React.FC = () => {
                 sx={{ borderRadius: 3, px: 3 }}
                 disabled={selectedItems.length === 0}
               >
-                Salvar Alterações
+                {t('ingredients.actions.save')}
               </Button>
             )}
 
@@ -353,7 +357,7 @@ const IngredientsPage: React.FC = () => {
                 onClick={handleOpenModal}
                 sx={{ borderRadius: 3, px: 3 }}
               >
-                Novo Ingrediente
+                {t('ingredients.newIngredient')}
               </Button>
             )}
           </Box>
@@ -378,7 +382,7 @@ const IngredientsPage: React.FC = () => {
             }}
           >
             <TextField
-              placeholder="Buscar ingredientes..."
+              placeholder={t('ingredients.filters.searchPlaceholder')}
               variant="outlined"
               fullWidth
               value={searchInput}
@@ -440,18 +444,21 @@ const IngredientsPage: React.FC = () => {
 
         {/* Tabs Utilizados/Geral */}
         <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
+          {' '}
           <Tabs value={currentTab} onChange={handleTabChange} aria-label="abas de ingredientes">
-            <Tab label="Utilizados" value="used" />
-            <Tab label="Geral" value="all" />
+            <Tab label={t('ingredients.filters.used')} value="used" />
+            <Tab label={t('ingredients.filters.all')} value="all" />
           </Tabs>
         </Box>
 
         {/* Contagem de resultados */}
         {!ingredientsLoading && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Mostrando {paginatedIngredients.length} de {totalFilteredItems} ingredientes
-            {selectedCategories.length > 0 &&
-              ` (${selectedCategories.length} categorias selecionadas)`}
+            {t('ingredients.results.showing', {
+              count: paginatedIngredients.length,
+              total: totalFilteredItems,
+              categories: selectedCategories.length,
+            })}
           </Typography>
         )}
 
@@ -460,6 +467,7 @@ const IngredientsPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow>
+                {' '}
                 <TableCell padding="checkbox">
                   {isEditing && (
                     <Checkbox
@@ -472,10 +480,10 @@ const IngredientsPage: React.FC = () => {
                     />
                   )}
                 </TableCell>
-                <TableCell>Ingrediente</TableCell>
-                <TableCell>Categoria</TableCell>
-                <TableCell>Preço</TableCell>
-                <TableCell>Quantidade</TableCell>
+                <TableCell>{t('ingredients.fields.name')}</TableCell>
+                <TableCell>{t('ingredients.fields.category')}</TableCell>
+                <TableCell>{t('ingredients.fields.price')}</TableCell>
+                <TableCell>{t('ingredients.fields.quantity')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -576,11 +584,12 @@ const IngredientsPage: React.FC = () => {
                 <TableRow>
                   <TableCell colSpan={5} align="center">
                     <Box sx={{ p: 4 }}>
+                      {' '}
                       <Typography variant="h6" color="text.secondary">
-                        Nenhum ingrediente encontrado
+                        {t('ingredients.messages.notFound')}
                       </Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                        Tente mudar os filtros ou adicionar novos ingredientes
+                        {t('ingredients.messages.tryFilters')}
                       </Typography>
                     </Box>
                   </TableCell>

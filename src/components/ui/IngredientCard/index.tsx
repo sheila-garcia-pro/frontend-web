@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   CardMedia,
@@ -22,6 +23,7 @@ interface IngredientCardProps {
 }
 
 const IngredientCard: React.FC<IngredientCardProps> = ({ ingredient, onViewDetails, onDelete }) => {
+  const { t } = useTranslation();
   const { _id, name, image, isEdit } = ingredient;
 
   const handleDelete = (event: React.MouseEvent) => {
@@ -51,9 +53,10 @@ const IngredientCard: React.FC<IngredientCardProps> = ({ ingredient, onViewDetai
         backgroundColor: (theme) => theme.palette.background.paper,
       }}
     >
+      {' '}
       {isEdit && (
         <Box sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}>
-          <Tooltip title="Deletar ingrediente">
+          <Tooltip title={t('ingredients.actions.delete')}>
             <IconButton
               size="small"
               onClick={handleDelete}
@@ -131,7 +134,7 @@ const IngredientCard: React.FC<IngredientCardProps> = ({ ingredient, onViewDetai
           }}
           variant="outlined"
         >
-          Ver Detalhes
+          {t('ingredients.actions.viewDetails')}
         </Button>
       </CardActions>
     </Card>

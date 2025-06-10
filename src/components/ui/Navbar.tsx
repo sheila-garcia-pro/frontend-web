@@ -28,6 +28,9 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
 import Logo from '@components/common/Logo';
 
+import LanguageSelector from './LanguageSelector';
+import { useTranslation } from 'react-i18next';
+
 // Interface de propriedades
 interface NavbarProps {
   drawerWidth: number;
@@ -37,10 +40,10 @@ interface NavbarProps {
 
 // Componente Navbar
 const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }) => {
-  const dispatch = useDispatch();
   const { mode, toggleTheme } = useTheme();
   const muiTheme = useMuiTheme();
   const { user } = useSelector((state: RootState) => state.auth);
+  const { t } = useTranslation();
   const { logout } = useAuth();
 
   // Estado do menu de usuário
@@ -129,6 +132,9 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
         </Box>
         {/* Ações da direita */}
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          {' '}
+          {/* Seletor de Idioma */}
+          <LanguageSelector />
           {/* Botão de tema */}
           <Tooltip title={`Mudar para tema ${mode === 'light' ? 'escuro' : 'claro'}`}>
             <IconButton
@@ -145,7 +151,6 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
               {mode === 'light' ? <DarkModeIcon /> : <LightModeIcon />}
             </IconButton>
           </Tooltip>
-
           {/* Botão de notificações */}
           <Tooltip title="Notificações">
             <IconButton
@@ -172,7 +177,6 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
               </Badge>
             </IconButton>
           </Tooltip>
-
           {/* Menu de usuário */}
           <Box sx={{ ml: 1 }}>
             <Tooltip title="Opções da conta">
@@ -257,11 +261,11 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
                     color: mode === 'light' ? '#F5F3E7' : '#23291C',
                   }}
                 />
-                Perfil
+                {t('navbar.profile')}
               </MenuItem>
               <MenuItem onClick={handleLogout}>
                 <LogoutIcon fontSize="small" sx={{ mr: 1 }} />
-                Sair
+                {t('navbar.logout')}
               </MenuItem>
             </Menu>
           </Box>

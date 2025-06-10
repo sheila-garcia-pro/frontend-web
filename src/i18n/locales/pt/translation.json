@@ -1,0 +1,170 @@
+{
+  "welcome": "DO FOGO AO AÇÚCAR",
+  "language": "Idioma",
+  "theme": {
+    "toggle": "Mudar para tema {{theme}}",
+    "light": "claro",
+    "dark": "escuro"
+  },
+  "notifications": {
+    "title": "Notificações"
+  },
+  "menu": {
+    "dashboard": "Painel",
+    "home": "Início",
+    "recipes": "Receitas",
+    "ingredients": "Ingredientes",
+    "suppliers": "Fornecedores",
+    "profile": "Perfil",
+    "close": "Fechar menu"
+  },
+  "navbar": {
+    "home": "Início",
+    "recipes": "Receitas",
+    "ingredients": "Ingredientes",
+    "suppliers": "Fornecedores",
+    "profile": "Perfil",
+    "logout": "Sair"
+  },
+  "auth": {
+    "login": "Entrar",
+    "register": "Cadastrar",
+    "forgotPassword": "Esqueceu a senha?"
+  },
+  "common": {
+    "cancel": "Cancelar",
+    "save": "Salvar"
+  },
+  "ingredients": {
+    "title": "Ingredientes disponíveis",
+    "subtitle": "Encontre todos os ingredientes para suas receitas favoritas",
+    "viewAll": "Ver todos os ingredientes",
+    "priceInfo": "Informações de Preço",
+    "clickToUpload": "Clique para fazer upload da imagem",
+    "fields": {
+      "name": "Ingrediente",
+      "category": "Categoria",
+      "price": "Preço",
+      "quantity": "Quantidade",
+      "unitMeasure": "Unidade de Medida"
+    },
+    "results": {
+      "showing": "Mostrando {{count}} de {{total}} ingredientes{{categories, plural, =0 {} other { ({{categories}} categorias selecionadas)}}"
+    },
+    "form": {
+      "name": "Nome do ingrediente",
+      "namePlaceholder": "Digite o nome do ingrediente",
+      "category": "Categoria",
+      "categoryPlaceholder": "Selecione uma categoria",
+      "price": "Preço",
+      "quantity": "Quantidade",
+      "image": "Imagem",
+      "imageUpload": "Carregar imagem",
+      "validation": {
+        "required": "Campo obrigatório",
+        "invalidPrice": "Preço inválido",
+        "invalidQuantity": "Quantidade inválida",
+        "imageRequired": "Imagem é obrigatória",
+        "nameRequired": "O nome é obrigatório",
+        "categoryRequired": "A categoria é obrigatória",
+        "priceNotNegative": "O preço não pode ser negativo",
+        "priceRequired": "O preço é obrigatório",
+        "quantityNotNegative": "A quantidade não pode ser negativa",
+        "quantityRequired": "A quantidade é obrigatória",
+        "unitMeasureRequired": "A unidade de medida é obrigatória"
+      }
+    },
+    "newIngredient": "Novo Ingrediente",
+    "newCategory": "Nova Categoria",
+    "details": "Detalhes do Ingrediente",
+    "sortOptions": {
+      "nameAsc": "Nome (A-Z)",
+      "nameDesc": "Nome (Z-A)"
+    },
+    "actions": {
+      "edit": "Editar Ingrediente",
+      "delete": "Deletar Ingrediente",
+      "viewDetails": "Ver Detalhes",
+      "cancel": "Cancelar",
+      "save": "Salvar",
+      "close": "Fechar"
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar ingredientes...",
+      "categories": "Categorias",
+      "all": "Todos",
+      "used": "Utilizados"
+    },
+    "messages": {
+      "notFound": "Nenhum ingrediente encontrado",
+      "tryFilters": "Tente mudar os filtros ou adicionar novos ingredientes",
+      "loadError": "Erro ao carregar detalhes do ingrediente",
+      "createSuccess": "Ingrediente criado com sucesso!",
+      "updateSuccess": "Ingrediente atualizado com sucesso!",
+      "deleteSuccess": "Ingrediente excluído com sucesso!",
+      "priceUpdateSuccess": "Informações de preço atualizadas com sucesso!",
+      "error": {
+        "load": "Erro ao carregar ingredientes",
+        "create": "Erro ao criar ingrediente",
+        "update": "Erro ao atualizar ingrediente",
+        "delete": "Erro ao excluir ingrediente",
+        "priceUpdate": "Erro ao atualizar informações de preço"
+      }
+    },
+    "measures": {
+      "kilogram": "Quilograma",
+      "gram": "Grama",
+      "liter": "Litro",
+      "milliliter": "Mililitro",
+      "unit": "Unidade"
+    },
+    "nutrition": {
+      "title": "Informação Nutricional",
+      "per100g": "Porção de 100g",
+      "loading": "Carregando informações nutricionais...",
+      "error": "Erro ao carregar informações nutricionais",
+      "notFound": "Nenhuma informação nutricional encontrada",
+      "fields": {
+        "energy": "Valor Energético",
+        "carbs": "Carboidratos",
+        "protein": "Proteínas",
+        "totalFats": "Gorduras Totais",
+        "saturatedFats": "Gorduras Saturadas",
+        "transFats": "Gorduras Trans",
+        "fiber": "Fibra Alimentar",
+        "sodium": "Sódio",
+        "calcium": "Cálcio",
+        "iron": "Ferro",
+        "vitaminC": "Vitamina C",
+        "cholesterol": "Colesterol",
+        "potassium": "Potássio",
+        "zinc": "Zinco"
+      },
+      "units": {
+        "kcal": "kcal",
+        "g": "g",
+        "mg": "mg",
+        "mcg": "mcg"
+      }
+    }
+  },
+  "profile": {
+    "title": "Detalhes Pessoais",
+    "plan": "Plano: {{plan}}",
+    "planFree": "Grátis",
+    "fields": {
+      "fullName": "Nome Completo",
+      "email": "Email",
+      "phone": "Telefone"
+    },
+    "actions": {
+      "edit": "Editar Perfil",
+      "cancel": "Cancelar",
+      "save": "Salvar Alterações"
+    },
+    "messages": {
+      "updateSuccess": "Perfil atualizado com sucesso!",
+      "updateError": "Erro ao atualizar perfil. Tente novamente."
+    }
+  }
+}
