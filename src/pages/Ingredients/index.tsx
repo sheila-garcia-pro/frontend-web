@@ -1,8 +1,7 @@
-import React, { ElementType, useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
-  Grid,
   TextField,
   InputAdornment,
   Tabs,
@@ -15,13 +14,21 @@ import {
   Container,
   Button,
   Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Checkbox,
+  Avatar,
 } from '@mui/material';
-import { Search, Add, Category } from '@mui/icons-material';
+import { Search, Add, Edit, Save } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 
 // Componentes
 import {
-  IngredientCard,
   IngredientSkeleton,
   IngredientModal,
   CategoryModal,
@@ -32,9 +39,11 @@ import {
 import {
   fetchIngredientsRequest,
   deleteIngredientRequest,
+  updatePriceMeasureRequest,
 } from '../../store/slices/ingredientsSlice';
 import { fetchCategoriesRequest } from '../../store/slices/categoriesSlice';
 import { RootState } from '../../store';
+import { Ingredient } from '../../types/ingredients';
 
 // Hooks
 import { useDebounce } from '../../hooks/useDebounce';
@@ -43,6 +52,16 @@ import { useDebounce } from '../../hooks/useDebounce';
 interface SortOption {
   value: string;
   label: string;
+}
+
+// Interface para preços editados
+interface EditedPrice {
+  price: number;
+  quantity: number;
+}
+
+interface EditedPrices {
+  [key: string]: EditedPrice;
 }
 
 // Componente da página de ingredientes
@@ -57,7 +76,10 @@ const IngredientsPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [currentTab, setCurrentTab] = useState<'used' | 'all'>('all');
-  const ITEMS_PER_PAGE = 12;
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [editedPrices, setEditedPrices] = useState<EditedPrices>({});
+  const ITEMS_PER_PAGE = 20;
 
   // Redux
   const dispatch = useDispatch();
@@ -174,8 +196,10 @@ const IngredientsPage: React.FC = () => {
   const handleCloseCategoryModal = () => setCategoryModalOpen(false);
 
   const handleViewDetails = (id: string) => {
-    setSelectedIngredientId(id);
-    setDetailsModalOpen(true);
+    if (!isEditing) {
+      setSelectedIngredientId(id);
+      setDetailsModalOpen(true);
+    }
   };
 
   const handleCloseDetails = () => {
@@ -183,30 +207,96 @@ const IngredientsPage: React.FC = () => {
     setSelectedIngredientId(null);
   };
 
-  const handleDeleteIngredient = (id: string) => {
-    dispatch(deleteIngredientRequest(id));
+  const handleToggleEdit = () => {
+    setIsEditing(!isEditing);
+    if (!isEditing) {
+      setSelectedItems([]);
+      setEditedPrices({});
+    }
   };
 
-  // Renderização do esqueleto de carregamento
+  const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      setSelectedItems(paginatedIngredients.map((ing) => ing._id));
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleSelectItem = (id: string) => {
+    setSelectedItems((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((item) => item !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
+  const handlePriceChange = (id: string, field: 'price' | 'quantity', value: string) => {
+    setEditedPrices((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        [field]: parseFloat(value) || 0,
+      },
+    }));
+  };
+
+  const handleSaveChanges = () => {
+    // Quando a API de atualização em massa estiver disponível, implemente aqui
+    // Por enquanto, vamos atualizar um por um
+    selectedItems.forEach((id) => {
+      const changes = editedPrices[id];
+      if (changes) {
+        const ingredient = allIngredients.find((ing) => ing._id === id);
+        if (ingredient) {
+          dispatch(
+            updatePriceMeasureRequest({
+              id,
+              params: {
+                price: changes.price || ingredient.price?.price || 0,
+                quantity: changes.quantity || ingredient.price?.quantity || 0,
+                unitMeasure: ingredient.price?.unitMeasure || 'Quilograma',
+              },
+            }),
+          );
+        }
+      }
+    });
+
+    setIsEditing(false);
+    setSelectedItems([]);
+    setEditedPrices({});
+  };
+
   const renderSkeletons = () => {
     return Array.from({ length: ITEMS_PER_PAGE }).map((_, index) => (
-      <Grid
-        item
-        key={`skeleton-${index}`}
-        xs={12}
-        sm={6}
-        md={4}
-        lg={3}
-        component={'div' as ElementType}
-      >
-        <IngredientSkeleton />
-      </Grid>
+      <TableRow key={`skeleton-${index}`}>
+        <TableCell padding="checkbox">
+          <Checkbox disabled />
+        </TableCell>
+        <TableCell>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <IngredientSkeleton />
+          </Box>
+        </TableCell>
+        <TableCell>
+          <IngredientSkeleton />
+        </TableCell>
+        <TableCell>
+          <IngredientSkeleton />
+        </TableCell>
+        <TableCell>
+          <IngredientSkeleton />
+        </TableCell>
+      </TableRow>
     ));
   };
 
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ py: 4 }}>
+    <Box sx={{ p: 3 }}>
+      <Container maxWidth="xl">
         {/* Cabeçalho com título e botões */}
         <Box
           sx={{
@@ -233,17 +323,39 @@ const IngredientsPage: React.FC = () => {
 
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Button
-              variant="contained"
-              color="primary"
-              startIcon={<Add />}
-              onClick={handleOpenModal}
-              sx={{
-                borderRadius: 3,
-                px: 3,
-              }}
+              variant={isEditing ? 'outlined' : 'contained'}
+              color={isEditing ? 'error' : 'primary'}
+              startIcon={isEditing ? <Save /> : <Edit />}
+              onClick={handleToggleEdit}
+              sx={{ borderRadius: 3, px: 3 }}
             >
-              Novo Ingrediente
+              {isEditing ? 'Cancelar Edição' : 'Editar Valores'}
             </Button>
+
+            {isEditing && (
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<Save />}
+                onClick={handleSaveChanges}
+                sx={{ borderRadius: 3, px: 3 }}
+                disabled={selectedItems.length === 0}
+              >
+                Salvar Alterações
+              </Button>
+            )}
+
+            {!isEditing && (
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<Add />}
+                onClick={handleOpenModal}
+                sx={{ borderRadius: 3, px: 3 }}
+              >
+                Novo Ingrediente
+              </Button>
+            )}
           </Box>
         </Box>
 
@@ -344,40 +456,139 @@ const IngredientsPage: React.FC = () => {
         )}
 
         {/* Lista de ingredientes */}
-        <Grid container spacing={3}>
-          {ingredientsLoading ? (
-            renderSkeletons()
-          ) : paginatedIngredients.length > 0 ? (
-            paginatedIngredients.map((ingredient) => (
-              <Grid
-                item
-                key={ingredient._id}
-                xs={12}
-                sm={6}
-                md={4}
-                lg={3}
-                component={'div' as ElementType}
-              >
-                <IngredientCard
-                  ingredient={ingredient}
-                  onViewDetails={handleViewDetails}
-                  onDelete={handleDeleteIngredient}
-                />
-              </Grid>
-            ))
-          ) : (
-            <Grid item xs={12} component={'div' as ElementType}>
-              <Box sx={{ p: 4, textAlign: 'center' }}>
-                <Typography variant="h6" color="text.secondary">
-                  Nenhum ingrediente encontrado
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  Tente mudar os filtros ou adicionar novos ingredientes
-                </Typography>
-              </Box>
-            </Grid>
-          )}
-        </Grid>
+        <TableContainer component={Paper} sx={{ mb: 3, borderRadius: 2 }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell padding="checkbox">
+                  {isEditing && (
+                    <Checkbox
+                      checked={selectedItems.length === paginatedIngredients.length}
+                      indeterminate={
+                        selectedItems.length > 0 &&
+                        selectedItems.length < paginatedIngredients.length
+                      }
+                      onChange={handleSelectAll}
+                    />
+                  )}
+                </TableCell>
+                <TableCell>Ingrediente</TableCell>
+                <TableCell>Categoria</TableCell>
+                <TableCell>Preço</TableCell>
+                <TableCell>Quantidade</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {ingredientsLoading ? (
+                renderSkeletons()
+              ) : paginatedIngredients.length > 0 ? (
+                paginatedIngredients.map((ingredient) => (
+                  <TableRow
+                    key={ingredient._id}
+                    hover
+                    onClick={() => handleViewDetails(ingredient._id)}
+                    sx={{ cursor: 'pointer' }}
+                  >
+                    <TableCell padding="checkbox">
+                      {isEditing && (
+                        <Checkbox
+                          checked={selectedItems.includes(ingredient._id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleSelectItem(ingredient._id);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar
+                          src={ingredient.image}
+                          alt={ingredient.name}
+                          variant="rounded"
+                          sx={{ width: 40, height: 40 }}
+                        />
+                        <Typography>{ingredient.name}</Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={ingredient.category}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {isEditing && selectedItems.includes(ingredient._id) ? (
+                        <TextField
+                          type="number"
+                          size="small"
+                          value={
+                            editedPrices[ingredient._id]?.price ?? ingredient.price?.price ?? ''
+                          }
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handlePriceChange(ingredient._id, 'price', e.target.value);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          InputProps={{
+                            startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                          }}
+                          sx={{ width: 120 }}
+                        />
+                      ) : (
+                        `R$ ${ingredient.price?.price?.toFixed(2) ?? '0.00'}`
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isEditing && selectedItems.includes(ingredient._id) ? (
+                        <TextField
+                          type="number"
+                          size="small"
+                          value={
+                            editedPrices[ingredient._id]?.quantity ??
+                            ingredient.price?.quantity ??
+                            ''
+                          }
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handlePriceChange(ingredient._id, 'quantity', e.target.value);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                {ingredient.price?.unitMeasure}
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={{ width: 150 }}
+                        />
+                      ) : (
+                        `${ingredient.price?.quantity ?? '0'} ${ingredient.price?.unitMeasure ?? 'Quilograma'}`
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} align="center">
+                    <Box sx={{ p: 4 }}>
+                      <Typography variant="h6" color="text.secondary">
+                        Nenhum ingrediente encontrado
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        Tente mudar os filtros ou adicionar novos ingredientes
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
         {/* Paginação */}
         {!ingredientsLoading && totalPages > 1 && (
@@ -392,21 +603,21 @@ const IngredientsPage: React.FC = () => {
             />
           </Box>
         )}
-      </Box>
 
-      {/* Modal para adicionar ingrediente */}
-      <IngredientModal open={modalOpen} onClose={handleCloseModal} />
+        {/* Modal para adicionar ingrediente */}
+        <IngredientModal open={modalOpen} onClose={handleCloseModal} />
 
-      {/* Modal para adicionar categoria */}
-      <CategoryModal open={categoryModalOpen} onClose={handleCloseCategoryModal} />
+        {/* Modal para adicionar categoria */}
+        <CategoryModal open={categoryModalOpen} onClose={handleCloseCategoryModal} />
 
-      {/* Modal de detalhes do ingrediente */}
-      <IngredientDetailsModal
-        open={detailsModalOpen}
-        onClose={handleCloseDetails}
-        ingredientId={selectedIngredientId}
-      />
-    </Container>
+        {/* Modal de detalhes do ingrediente */}
+        <IngredientDetailsModal
+          open={detailsModalOpen}
+          onClose={handleCloseDetails}
+          ingredientId={selectedIngredientId}
+        />
+      </Container>
+    </Box>
   );
 };
 

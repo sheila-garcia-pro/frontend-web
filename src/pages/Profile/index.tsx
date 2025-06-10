@@ -153,30 +153,22 @@ const ProfilePage: React.FC = () => {
           return;
         }
       }
-      const updateData: Record<string, string> = {};
 
-      // Dados básicos (enviar sempre que estivermos editando)
-      if (isEditing) {
-        updateData.name = formData.name;
-        updateData.email = formData.email;
-        updateData.phone = formData.phone || '';
-        updateData.image = formData.image; // Sempre envia o estado atual da imagem
-      } // Tratamento específico para imagem
-      // Sempre inclui o campo image se estivermos editando,
-      // para garantir que ele será enviado como string vazia quando removermos a imagem
-      if (formData.image !== user.image || formData.image === '') {
-        updateData.image = formData.image;
-      }
+      const updateData: Record<string, string> = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || '',
+        image: formData.image, // Sempre inclui a imagem no payload
+      };
 
-      // Dados de senha
+      // Adiciona campos de senha se estiver alterando
       if (isChangingPassword) {
         updateData.password = passwordData.password;
         updateData.newPassword = passwordData.newPassword;
       }
 
-      dispatch(updateUserRequest(updateData));
+      await dispatch(updateUserRequest(updateData));
 
-      // Mostrar mensagem de sucesso
       if (formData.image !== user.image) {
         notification.showSuccess(
           formData.image ? 'Imagem atualizada com sucesso!' : 'Imagem removida com sucesso!',
