@@ -114,7 +114,7 @@ const HomePage: React.FC = () => {
             {t('welcome')}
           </Typography>
         </Box>
-        {/* Seção de Ingredientes */}
+        {/* Seção de Ingredientes
         <Box
           sx={{
             my: 6,
@@ -221,7 +221,9 @@ const HomePage: React.FC = () => {
             </>
           )}
         </Box>
-        <Divider sx={{ my: 5 }} /> {/* Seção de Receitas */}
+              */}
+        <Divider sx={{ my: 5 }} />{' '}
+        {/* Seção de Receitas 
         <Box
           sx={{
             my: 6,
@@ -324,8 +326,8 @@ const HomePage: React.FC = () => {
             </>
           )}
         </Box>
+        */}
       </Box>
-
       {/* Modal de detalhes do ingrediente */}
       <IngredientDetailsModal
         open={detailsModalOpen}

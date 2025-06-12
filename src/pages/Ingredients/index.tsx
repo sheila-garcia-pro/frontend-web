@@ -23,8 +23,10 @@ import {
   Paper,
   Checkbox,
   Avatar,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
-import { Search, Add, Edit, Save } from '@mui/icons-material';
+import { Search, Add, Edit, Save, Refresh } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 
 // Componentes
@@ -271,6 +273,17 @@ const IngredientsPage: React.FC = () => {
     setSelectedItems([]);
     setEditedPrices({});
   };
+  const handleRefreshList = () => {
+    dispatch(
+      fetchIngredientsRequest({
+        page: currentPage,
+        itemPerPage: ITEMS_PER_PAGE,
+        search: debouncedSearchTerm,
+        category: selectedCategories.length > 0 ? selectedCategories[0] : undefined,
+        forceRefresh: true, // Adiciona flag para forçar atualização
+      }),
+    );
+  };
 
   const renderSkeletons = () => {
     return Array.from({ length: ITEMS_PER_PAGE }).map((_, index) => (
@@ -325,6 +338,17 @@ const IngredientsPage: React.FC = () => {
           </Box>
 
           <Box sx={{ display: 'flex', gap: 2 }}>
+            <Tooltip title={t('common.refresh') || 'Atualizar lista'}>
+              <IconButton
+                onClick={handleRefreshList}
+                color="primary"
+                aria-label="atualizar lista"
+                sx={{ borderRadius: 2 }}
+              >
+                <Refresh />
+              </IconButton>
+            </Tooltip>
+
             <Button
               variant={isEditing ? 'outlined' : 'contained'}
               color={isEditing ? 'error' : 'primary'}
@@ -332,7 +356,6 @@ const IngredientsPage: React.FC = () => {
               onClick={handleToggleEdit}
               sx={{ borderRadius: 3, px: 3 }}
             >
-              {' '}
               {isEditing ? t('ingredients.actions.cancel') : t('ingredients.actions.edit')}
             </Button>
 

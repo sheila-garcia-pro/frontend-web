@@ -146,18 +146,10 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
   const handleCloseEdit = () => {
     setEditModalOpen(false);
   };
-
   const handleEditSuccess = async () => {
     handleCloseEdit();
     if (ingredientId) {
       await loadIngredient(ingredientId);
-      dispatch(
-        fetchIngredientsRequest({
-          page: 1,
-          itemPerPage: 12,
-          search: '',
-        }),
-      );
     }
   };
 
@@ -197,6 +189,13 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
     try {
       await updateIngredientPriceMeasure(ingredient._id, updateData);
       await loadIngredient(ingredient._id);
+      dispatch(
+        fetchIngredientsRequest({
+          page: 1,
+          itemPerPage: 1000,
+          search: '',
+        }),
+      );
       dispatch(
         addNotification({
           message: 'Informação atualizada com sucesso!',
@@ -240,12 +239,13 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="sm"
+      maxWidth="md"
       fullWidth
       PaperProps={{
         sx: {
           borderRadius: 2,
           position: 'relative',
+          minWidth: { sm: '600px', md: '900px' },
         },
       }}
     >
@@ -559,7 +559,16 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                           <Typography variant="caption" color="text.secondary">
                             {t('ingredients.nutrition.per100g')}
                           </Typography>
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: { xs: 1.5, sm: 2 },
+                              mt: 2,
+                              mx: -1,
+                              p: 1,
+                            }}
+                          >
                             {[
                               {
                                 label: t('ingredients.nutrition.fields.energy'),
@@ -569,6 +578,16 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                               {
                                 label: t('ingredients.nutrition.fields.carbs'),
                                 value: selectedTable.carbohydrateG,
+                                unit: t('ingredients.nutrition.units.g'),
+                              },
+                              {
+                                label: t('ingredients.nutrition.fields.totalSugar'),
+                                value: selectedTable.totalSugarG || '0',
+                                unit: t('ingredients.nutrition.units.g'),
+                              },
+                              {
+                                label: t('ingredients.nutrition.fields.addSugar'),
+                                value: selectedTable.addSugarG || '0',
                                 unit: t('ingredients.nutrition.units.g'),
                               },
                               {
@@ -583,7 +602,22 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                               },
                               {
                                 label: t('ingredients.nutrition.fields.saturatedFats'),
-                                value: selectedTable.saturatedFatsG,
+                                value: selectedTable.saturatedFatsG || '0',
+                                unit: t('ingredients.nutrition.units.g'),
+                              },
+                              {
+                                label: t('ingredients.nutrition.fields.transFats'),
+                                value: selectedTable.transFatsG || '0',
+                                unit: t('ingredients.nutrition.units.g'),
+                              },
+                              {
+                                label: t('ingredients.nutrition.fields.monounsaturated'),
+                                value: selectedTable.monounsaturatedG || '0',
+                                unit: t('ingredients.nutrition.units.g'),
+                              },
+                              {
+                                label: t('ingredients.nutrition.fields.polyunsaturated'),
+                                value: selectedTable.polyunsaturatedG || '0',
                                 unit: t('ingredients.nutrition.units.g'),
                               },
                               {
@@ -592,8 +626,18 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                                 unit: t('ingredients.nutrition.units.g'),
                               },
                               {
+                                label: t('ingredients.nutrition.fields.cholesterol'),
+                                value: selectedTable.cholesterolMG || '0',
+                                unit: t('ingredients.nutrition.units.mg'),
+                              },
+                              {
                                 label: t('ingredients.nutrition.fields.sodium'),
                                 value: selectedTable.sodiumMG,
+                                unit: t('ingredients.nutrition.units.mg'),
+                              },
+                              {
+                                label: t('ingredients.nutrition.fields.potassium'),
+                                value: selectedTable.potassiumMG || '0',
                                 unit: t('ingredients.nutrition.units.mg'),
                               },
                               {
@@ -602,46 +646,120 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                                 unit: t('ingredients.nutrition.units.mg'),
                               },
                               {
+                                label: t('ingredients.nutrition.fields.magnesium'),
+                                value: selectedTable.magnesiumMG || '0',
+                                unit: t('ingredients.nutrition.units.mg'),
+                              },
+                              {
+                                label: t('ingredients.nutrition.fields.phosphorus'),
+                                value: selectedTable.phosphorusMG || '0',
+                                unit: t('ingredients.nutrition.units.mg'),
+                              },
+                              {
                                 label: t('ingredients.nutrition.fields.iron'),
                                 value: selectedTable.ironMG,
                                 unit: t('ingredients.nutrition.units.mg'),
                               },
                               {
-                                label: t('ingredients.nutrition.fields.vitaminC'),
-                                value: selectedTable.vitaminCMCG,
+                                label: t('ingredients.nutrition.fields.copper'),
+                                value: selectedTable.copperMG || '0',
+                                unit: t('ingredients.nutrition.units.mg'),
+                              },
+                              {
+                                label: t('ingredients.nutrition.fields.zinc'),
+                                value: selectedTable.zincMG || '0',
+                                unit: t('ingredients.nutrition.units.mg'),
+                              },
+                              {
+                                label: t('ingredients.nutrition.fields.manganese'),
+                                value: selectedTable.manganeseMG || '0',
+                                unit: t('ingredients.nutrition.units.mg'),
+                              },
+                              {
+                                label: t('ingredients.nutrition.fields.retinol'),
+                                value: selectedTable.retinolMCG || '0',
                                 unit: t('ingredients.nutrition.units.mcg'),
                               },
-                            ].map(
-                              (item) =>
-                                item.value &&
-                                item.value !== 'null' && (
-                                  <Box
-                                    key={item.label}
-                                    sx={{
-                                      flex: '1 0 calc(50% - 8px)',
-                                      minWidth: '150px',
-                                    }}
-                                  >
-                                    <Paper
-                                      variant="outlined"
-                                      sx={{
-                                        p: 1.5,
-                                        height: '100%',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        bgcolor: 'background.default',
-                                      }}
-                                    >
-                                      <Typography variant="body2" color="text.secondary">
-                                        {item.label}
-                                      </Typography>
-                                      <Typography variant="body1" fontWeight="bold">
-                                        {parseFloat(item.value).toFixed(1)} {item.unit}
-                                      </Typography>
-                                    </Paper>
-                                  </Box>
-                                ),
-                            )}
+                              {
+                                label: t('ingredients.nutrition.fields.rae'),
+                                value: selectedTable.raeMCG || '0',
+                                unit: t('ingredients.nutrition.units.mcg'),
+                              },
+                              {
+                                label: t('ingredients.nutrition.fields.vitaminD'),
+                                value: selectedTable.vitaminDMCG || '0',
+                                unit: t('ingredients.nutrition.units.mcg'),
+                              },
+                              {
+                                label: t('ingredients.nutrition.fields.thiamine'),
+                                value: selectedTable.thiamineMG || '0',
+                                unit: t('ingredients.nutrition.units.mg'),
+                              },
+                              {
+                                label: t('ingredients.nutrition.fields.riboflavin'),
+                                value: selectedTable.riboflavinMG || '0',
+                                unit: t('ingredients.nutrition.units.mg'),
+                              },
+                              {
+                                label: t('ingredients.nutrition.fields.niacin'),
+                                value: selectedTable.niacinMG || '0',
+                                unit: t('ingredients.nutrition.units.mg'),
+                              },
+                              {
+                                label: t('ingredients.nutrition.fields.vitaminB6'),
+                                value: selectedTable.vitaminB6PiridoxinaMG || '0',
+                                unit: t('ingredients.nutrition.units.mg'),
+                              },
+                              {
+                                label: t('ingredients.nutrition.fields.vitaminB12'),
+                                value: selectedTable.vitaminB12MG || '0',
+                                unit: t('ingredients.nutrition.units.mg'),
+                              },
+                              {
+                                label: t('ingredients.nutrition.fields.vitaminC'),
+                                value: selectedTable.vitaminCMCG || '0',
+                                unit: t('ingredients.nutrition.units.mcg'),
+                              },
+                            ].map((item) => (
+                              <Box
+                                key={item.label}
+                                sx={{
+                                  flex: {
+                                    xs: '1 0 100%',
+                                    sm: '1 0 calc(50% - 8px)',
+                                    md: '1 0 calc(25% - 12px)',
+                                  },
+                                  minWidth: { xs: '100%', sm: '200px' },
+                                }}
+                              >
+                                <Paper
+                                  variant="outlined"
+                                  sx={{
+                                    p: 1.5,
+                                    height: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    bgcolor: 'background.default',
+                                    transition: 'all 0.2s ease-in-out',
+                                    '&:hover': {
+                                      transform: 'translateY(-2px)',
+                                      boxShadow: 1,
+                                    },
+                                  }}
+                                >
+                                  <Typography variant="body2" color="text.secondary">
+                                    {item.label}
+                                  </Typography>
+                                  <Typography variant="body1" fontWeight="bold">
+                                    {(() => {
+                                      const value = parseFloat(item.value || '0');
+                                      return isNaN(value) ? '0' : value.toFixed(1);
+                                    })()}{' '}
+                                    {item.unit}
+                                  </Typography>
+                                </Paper>
+                              </Box>
+                            ))}
                           </Box>
                         </Paper>
                       </Box>
