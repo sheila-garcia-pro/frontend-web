@@ -167,25 +167,14 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
       newErrors.category = t('ingredients.validation.categoryRequired');
       isValid = false;
     }
+
     if (formData.price) {
       if (Number(formData.price.price) < 0) {
         newErrors['price.price'] = t('ingredients.validation.priceNotNegative');
         isValid = false;
       }
-      if (!formData.price.price) {
-        newErrors['price.price'] = t('ingredients.validation.priceRequired');
-        isValid = false;
-      }
       if (Number(formData.price.quantity) < 0) {
         newErrors['price.quantity'] = t('ingredients.validation.quantityNotNegative');
-        isValid = false;
-      }
-      if (!formData.price.quantity) {
-        newErrors['price.quantity'] = t('ingredients.validation.quantityRequired');
-        isValid = false;
-      }
-      if (!formData.price.unitMeasure) {
-        newErrors['price.unitMeasure'] = t('ingredients.validation.unitMeasureRequired');
         isValid = false;
       }
     }
@@ -193,55 +182,59 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
     setErrors(newErrors);
     return isValid;
   };
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validate()) {
       setIsSubmitted(true);
-      const changedFields = Object.entries(formData).reduce((acc, [key, value]) => {
-        if (value !== undefined) {
-          if (key === 'price') {
-            if (!ingredient.price || JSON.stringify(value) !== JSON.stringify(ingredient.price)) {
-              // Se o preço foi alterado, usa o endpoint específico de preço
-              dispatch(
-                updatePriceMeasureRequest({
-                  id: ingredient._id,
-                  params: value as { price: number; quantity: number; unitMeasure: string },
-                }),
-              );
 
-              // Recarrega a lista de ingredientes após a atualização do preço
-              dispatch(
-                fetchIngredientsRequest({
-                  page: 1,
-                  itemPerPage: 1000,
-                }),
-              );
-
-              return acc;
+      try {
+        const changedFields = Object.entries(formData).reduce((acc, [key, value]) => {
+          if (value !== undefined) {
+            if (key === 'price') {
+              if (!ingredient.price || JSON.stringify(value) !== JSON.stringify(ingredient.price)) {
+                // Se o preço foi alterado, usa o endpoint específico de preço
+                dispatch(
+                  updatePriceMeasureRequest({
+                    id: ingredient._id,
+                    params: value as { price: number; quantity: number; unitMeasure: string },
+                  }),
+                );
+              }
+            } else if (value !== ingredient[key as keyof Ingredient]) {
+              (acc as Record<string, unknown>)[key] = value;
             }
-          } else if (value !== ingredient[key as keyof Ingredient]) {
-            (acc as Record<string, unknown>)[key] = value;
           }
+          return acc;
+        }, {} as Partial<CreateIngredientParams>);
+
+        if (Object.keys(changedFields).length > 0) {
+          dispatch(
+            updateIngredientRequest({
+              id: ingredient._id,
+              params: changedFields,
+            }),
+          );
         }
-        return acc;
-      }, {} as Partial<CreateIngredientParams>);
 
-      if (Object.keys(changedFields).length > 0) {
-        dispatch(
-          updateIngredientRequest({
-            id: ingredient._id,
-            params: changedFields,
-          }),
-        );
+        // Aguarda o patch ser concluído
+        await new Promise((resolve) => setTimeout(resolve, 3000));
 
-        // Recarrega a lista de ingredientes após a atualização
+        // Atualiza a lista após 3 segundos
         dispatch(
           fetchIngredientsRequest({
             page: 1,
             itemPerPage: 1000,
           }),
         );
-      } else {
+
+        // Fecha o modal apenas após garantir que tudo foi concluído
+        if (onEditSuccess) {
+          onEditSuccess();
+        }
         onClose();
+        setIsSubmitted(false);
+      } catch (error) {
+        console.error('Erro ao atualizar ingrediente:', error);
+        setIsSubmitted(false);
       }
     }
   };
@@ -296,7 +289,6 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
               <TextField
                 fullWidth
-                required
                 label={t('ingredients.form.price')}
                 name="price.price"
                 type="number"
@@ -310,7 +302,6 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
               />
               <TextField
                 fullWidth
-                required
                 label={t('ingredients.form.quantity')}
                 name="price.quantity"
                 type="number"

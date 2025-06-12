@@ -24,6 +24,15 @@ export interface CreateIngredientParams {
   };
 }
 
+// Interface para parâmetros de busca
+export interface SearchParams {
+  page: number;
+  itemPerPage: number;
+  category?: string;
+  search?: string;
+  forceRefresh?: boolean;
+}
+
 // Interface para resposta da API de ingredientes
 export interface IngredientsResponse {
   data: Ingredient[];
@@ -54,10 +63,4 @@ export interface CategoriesResponse {
   itemPerPage: number;
 }
 
-// Interface para parâmetros de busca
-export interface SearchParams {
-  page: number;
-  itemPerPage: number;
-  category?: string | null;
-  search?: string;
-}
+// (Removido: declaração duplicada de SearchParams)

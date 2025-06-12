@@ -33,7 +33,8 @@
   },
   "common": {
     "cancel": "Cancel",
-    "save": "Save"
+    "save": "Save",
+    "refresh": "Refresh"
   },
   "ingredients": {
     "title": "Available Ingredients",
@@ -49,7 +50,7 @@
       "unitMeasure": "Unit of Measure"
     },
     "results": {
-      "showing": "Showing {{count}} of {{total}} ingredients{{categories, plural, =0 {} other { ({{categories}} categories selected)}}"
+      "showing": "{{categories, plural, =0 {} other { ({{categories}} categories selected"
     },
     "validation": {
       "nameRequired": "Name is required",
@@ -128,16 +129,32 @@
         "carbs": "Carbohydrates",
         "protein": "Protein",
         "totalFats": "Total Fats",
+        "totalSugar": "Total Sugars",
+        "addSugar": "Added Sugars",
         "saturatedFats": "Saturated Fats",
         "transFats": "Trans Fats",
+        "monounsaturated": "Monounsaturated Fats",
+        "polyunsaturated": "Polyunsaturated Fats",
         "fiber": "Dietary Fiber",
+        "cholesterol": "Cholesterol",
         "sodium": "Sodium",
         "calcium": "Calcium",
+        "magnesium": "Magnesium",
+        "phosphorus": "Phosphorus",
         "iron": "Iron",
-        "vitaminC": "Vitamin C",
-        "cholesterol": "Cholesterol",
         "potassium": "Potassium",
-        "zinc": "Zinc"
+        "copper": "Copper",
+        "zinc": "Zinc",
+        "manganese": "Manganese",
+        "retinol": "Retinol",
+        "rae": "Vitamin A (RAE)",
+        "vitaminD": "Vitamin D",
+        "thiamine": "Thiamine (B1)",
+        "riboflavin": "Riboflavin (B2)",
+        "niacin": "Niacin (B3)",
+        "vitaminB6": "Vitamin B6",
+        "vitaminB12": "Vitamin B12",
+        "vitaminC": "Vitamin C"
       },
       "units": {
         "kcal": "kcal",
