@@ -1,29 +1,28 @@
-import React, { ElementType, useState, useEffect, FC } from 'react';
+import React, { FC, useState, useEffect } from 'react';
 import {
+  Container,
   Box,
   Typography,
-  Grid,
   TextField,
   InputAdornment,
-  Pagination,
   FormControl,
   Select,
   MenuItem,
+  Pagination,
   SelectChangeEvent,
-  Container,
-  Divider,
-  Chip,
+  Button,
+  IconButton,
+  Tooltip,
+  Grid,
 } from '@mui/material';
-import { Search, Restaurant } from '@mui/icons-material';
+import { Search, Restaurant, Add, Edit, Save, Refresh } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
-
-// Componentes
-import RecipeCard from '@components/ui/RecipeCard';
-import RecipeSkeleton from '@components/ui/SkeletonLoading/RecipeSkeleton';
-
-// Serviços e Redux
-import { fetchReceitas, Recipe } from '@services/dataService';
-import { addNotification } from '@store/slices/uiSlice';
+import { addNotification } from '../../store/slices/uiSlice';
+import RecipeCard from '../../components/ui/RecipeCard';
+import RecipeSkeleton from '../../components/ui/SkeletonLoading/RecipeSkeleton';
+import { getCachedRecipes } from '../../services/api/recipes';
+import { Recipe } from '../../types/recipes';
+import RecipeModal from '../../components/ui/RecipeModal';
 
 // Interface para as opções de ordenação
 interface SortOption {
@@ -41,11 +40,12 @@ const RecipesPage: FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedType, setSelectedType] = useState<string>('');
   const [sortOption, setSortOption] = useState('name_asc');
+  const [totalPages, setTotalPages] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Redux
   const dispatch = useDispatch();
-
-  // Configurações de paginação
   const itemsPerPage = 8;
 
   // Efeito para carregar os dados
@@ -54,33 +54,34 @@ const RecipesPage: FC = () => {
       setLoading(true);
 
       try {
-        // Carregar receitas simulando requisição à API
-        const data = await fetchReceitas();
+        const response = await getCachedRecipes({
+          page: currentPage,
+          itemPerPage: itemsPerPage,
+          category: selectedType,
+          search: searchTerm,
+        });
 
-        // Atualizar estado com os dados recebidos
-        setReceitas(data);
+        setReceitas(response.data);
+        setTotalPages(response.totalPages);
 
-        // Notificação de sucesso
         dispatch(
           addNotification({
             message: 'Receitas carregadas com sucesso!',
             type: 'success',
-            duration: 4000, // 4 segundos
+            duration: 4000,
           }),
         );
       } catch (error) {
         console.error('Erro ao carregar receitas:', error);
 
-        // Notificação de erro
         dispatch(
           addNotification({
             message: 'Erro ao carregar receitas.',
             type: 'error',
-            duration: 5000, // 5 segundos
+            duration: 5000,
           }),
         );
 
-        // Definir array vazio para evitar erros
         setReceitas([]);
       } finally {
         setLoading(false);
@@ -88,7 +89,7 @@ const RecipesPage: FC = () => {
     };
 
     loadData();
-  }, [dispatch]);
+  }, [dispatch, currentPage, selectedType, searchTerm]);
 
   // Opções de ordenação
   const sortOptions: SortOption[] = [
@@ -102,22 +103,12 @@ const RecipesPage: FC = () => {
       label: 'Nome (Z-A)',
       sortFn: (a, b) => b.name.localeCompare(a.name),
     },
-    {
-      value: 'servings_asc',
-      label: 'Porções (menor-maior)',
-      sortFn: (a, b) => a.servings - b.servings,
-    },
-    {
-      value: 'servings_desc',
-      label: 'Porções (maior-menor)',
-      sortFn: (a, b) => b.servings - a.servings,
-    },
   ];
 
   // Manipuladores de eventos
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
-    setCurrentPage(1); // Reset da página ao buscar
+    setCurrentPage(1);
   };
 
   const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
@@ -127,17 +118,80 @@ const RecipesPage: FC = () => {
 
   const handleTypeChange = (event: SelectChangeEvent) => {
     setSelectedType(event.target.value);
-    setCurrentPage(1); // Reset da página ao mudar o tipo
+    setCurrentPage(1);
   };
 
   const handleSortChange = (event: SelectChangeEvent) => {
     setSortOption(event.target.value);
   };
 
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleRecipeCreated = () => {
+    // Recarregar a lista de receitas após criar uma nova
+    handleRefreshList();
+  };
+
+  const handleToggleEdit = () => {
+    setIsEditing(!isEditing);
+  };
+
+  const handleRefreshList = async () => {
+    setLoading(true);
+    try {
+      const response = await getCachedRecipes({
+        page: currentPage,
+        itemPerPage: itemsPerPage,
+        category: selectedType,
+        search: searchTerm,
+      });
+
+      setReceitas(response.data);
+      setTotalPages(response.totalPages);
+
+      dispatch(
+        addNotification({
+          message: 'Lista de receitas atualizada com sucesso!',
+          type: 'success',
+          duration: 3000,
+        }),
+      );
+    } catch (error) {
+      console.error('Erro ao atualizar receitas:', error);
+      dispatch(
+        addNotification({
+          message: 'Erro ao atualizar lista de receitas.',
+          type: 'error',
+          duration: 5000,
+        }),
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveChanges = () => {
+    // Implementar lógica de salvamento das alterações
+    setIsEditing(false);
+    dispatch(
+      addNotification({
+        message: 'Alterações salvas com sucesso!',
+        type: 'success',
+        duration: 3000,
+      }),
+    );
+  };
+
   // Obter tipos de pratos únicos para o filtro
   const dishTypes =
     receitas.length > 0
-      ? ['', ...Array.from(new Set(receitas.map((recipe) => recipe.dishType)))]
+      ? ['', ...Array.from(new Set(receitas.map((recipe) => recipe.category)))]
       : [''];
 
   // Filtragem das receitas
@@ -148,13 +202,13 @@ const RecipesPage: FC = () => {
     filteredRecipes = filteredRecipes.filter(
       (recipe) =>
         recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        recipe.dishType.toLowerCase().includes(searchTerm.toLowerCase()),
+        recipe.category.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }
 
   // Aplicar filtro de tipo
   if (selectedType) {
-    filteredRecipes = filteredRecipes.filter((recipe) => recipe.dishType === selectedType);
+    filteredRecipes = filteredRecipes.filter((recipe) => recipe.category === selectedType);
   }
 
   // Aplicar ordenação
@@ -164,31 +218,21 @@ const RecipesPage: FC = () => {
   }
 
   // Paginação
-  const totalPages = Math.ceil(filteredRecipes.length / itemsPerPage);
+  const totalFilteredPages = Math.ceil(filteredRecipes.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedRecipes = filteredRecipes.slice(startIndex, startIndex + itemsPerPage);
-
-  // Renderização dos skeleton loaders durante o carregamento
+  const paginatedRecipes = filteredRecipes.slice(startIndex, startIndex + itemsPerPage); // Renderização dos skeleton loaders durante o carregamento
   const renderSkeletons = () => {
-    return Array.from({ length: 8 }).map((_, index) => (
-      <Grid
-        item
-        key={`skeleton-${index}`}
-        xs={12}
-        sm={6}
-        md={4}
-        lg={3}
-        component={'div' as ElementType}
-      >
+    return Array.from({ length: itemsPerPage }).map((_, index) => (
+      <Grid key={`skeleton-${index}`} size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 3 }}>
         <RecipeSkeleton />
       </Grid>
     ));
   };
 
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ py: 4 }}>
-        {/* Título */}
+    <Box sx={{ p: 3 }}>
+      <Container maxWidth="xl">
+        {/* Cabeçalho com título e botões - Padronizado igual ao de ingredientes */}
         <Box
           sx={{
             mb: 5,
@@ -196,68 +240,110 @@ const RecipesPage: FC = () => {
             borderRadius: 2,
             background: (theme) =>
               `linear-gradient(135deg, ${theme.palette.primary.light}20, ${theme.palette.primary.main}10)`,
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { sm: 'center' },
+            justifyContent: 'space-between',
+            gap: 2,
           }}
         >
-          <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 500 }}>
-            Receitas disponíveis
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Explore nossas receitas para criar pratos incríveis
-          </Typography>
-        </Box>
+          <Box>
+            <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 500 }}>
+              Receitas disponíveis
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Explore nossas receitas para criar pratos incríveis
+            </Typography>
+          </Box>
 
-        {/* Filtros */}
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Tooltip title="Atualizar lista">
+              <IconButton
+                onClick={handleRefreshList}
+                color="primary"
+                aria-label="atualizar lista"
+                sx={{ borderRadius: 2 }}
+              >
+                <Refresh />
+              </IconButton>
+            </Tooltip>
+
+            <Button
+              variant={isEditing ? 'outlined' : 'contained'}
+              color={isEditing ? 'error' : 'primary'}
+              startIcon={isEditing ? <Save /> : <Edit />}
+              onClick={handleToggleEdit}
+              sx={{ borderRadius: 3, px: 3 }}
+            >
+              {isEditing ? 'Cancelar' : 'Editar Receita'}
+            </Button>
+
+            {isEditing && (
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<Save />}
+                onClick={handleSaveChanges}
+                sx={{ borderRadius: 3, px: 3 }}
+              >
+                Salvar
+              </Button>
+            )}
+
+            {!isEditing && (
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<Add />}
+                onClick={handleOpenModal}
+                sx={{ borderRadius: 3, px: 3 }}
+              >
+                Nova Receita
+              </Button>
+            )}
+          </Box>
+        </Box>
+        {/* Filtros e Busca - Padronizado */}
         <Box
           sx={{
             mb: 4,
             display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            alignItems: { md: 'center' },
+            flexDirection: 'column',
             gap: 2,
           }}
         >
-          <TextField
-            placeholder="Buscar por nome ou tipo de prato..."
-            variant="outlined"
-            fullWidth
-            value={searchTerm}
-            onChange={handleSearchChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-            }}
+          {/* Linha superior com busca e ordenação */}
+          <Box
             sx={{
-              flexGrow: 1,
-              maxWidth: { md: '50%' },
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 3,
-              },
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              alignItems: { md: 'center' },
+              gap: 2,
             }}
-          />
+          >
+            <TextField
+              placeholder="Buscar receitas..."
+              variant="outlined"
+              fullWidth
+              value={searchTerm}
+              onChange={handleSearchChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                flexGrow: 1,
+                maxWidth: { md: '50%' },
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 3,
+                },
+              }}
+            />
 
-          <Box sx={{ display: 'flex', gap: 2, width: { xs: '100%', md: 'auto' } }}>
-            <FormControl sx={{ minWidth: 150, flexGrow: { xs: 1, md: 0 } }}>
-              <Select
-                value={selectedType}
-                onChange={handleTypeChange}
-                displayEmpty
-                size="small"
-                sx={{ borderRadius: 3 }}
-                renderValue={(selected) => (selected ? selected : 'Todos os tipos')}
-              >
-                <MenuItem value="">Todos os tipos</MenuItem>
-                {dishTypes.filter(Boolean).map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {type}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl sx={{ minWidth: 150, flexGrow: { xs: 1, md: 0 } }}>
+            <FormControl sx={{ minWidth: 200 }}>
               <Select
                 value={sortOption}
                 onChange={handleSortChange}
@@ -273,94 +359,105 @@ const RecipesPage: FC = () => {
               </Select>
             </FormControl>
           </Box>
-        </Box>
 
-        {/* Filtros ativos */}
-        {selectedType && (
-          <Box sx={{ mb: 3, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            <Chip
-              icon={<Restaurant fontSize="small" />}
-              label={`Tipo: ${selectedType}`}
-              onDelete={() => setSelectedType('')}
-              color="primary"
-              variant="outlined"
-              sx={{ borderRadius: 3 }}
-            />
-          </Box>
-        )}
-
-        {/* Contagem de resultados */}
-        {!loading && (
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Mostrando {paginatedRecipes.length} de {filteredRecipes.length} receitas
-          </Typography>
-        )}
-
-        {/* Lista de receitas */}
-        <Grid container spacing={3}>
-          {loading ? (
-            renderSkeletons()
-          ) : paginatedRecipes.length > 0 ? (
-            paginatedRecipes.map((recipe) => (
-              <Grid
-                item
-                key={recipe.id}
-                xs={12}
-                sm={6}
-                md={4}
-                lg={3}
-                component={'div' as ElementType}
+          {/* Filtro por categoria */}
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <FormControl sx={{ minWidth: 250 }}>
+              <Select
+                value={selectedType}
+                onChange={handleTypeChange}
+                displayEmpty
+                size="small"
+                startAdornment={
+                  <InputAdornment position="start">
+                    <Restaurant />
+                  </InputAdornment>
+                }
+                sx={{ borderRadius: 3 }}
               >
+                <MenuItem value="">
+                  <em>Todas as categorias</em>
+                </MenuItem>
+                {dishTypes.slice(1).map((type) => (
+                  <MenuItem key={type} value={type}>
+                    {type}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Informações de resultados */}
+            <Typography variant="body2" color="text.secondary">
+              {loading ? 'Carregando...' : `${filteredRecipes.length} receita(s)`}
+            </Typography>
+          </Box>
+        </Box>{' '}
+        {/* Grid de Receitas */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          {loading ? (
+            // Skeleton durante carregamento
+            renderSkeletons()
+          ) : paginatedRecipes.length > 0 ? ( // Receitas encontradas
+            paginatedRecipes.map((recipe) => (
+              <Grid key={recipe._id} size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 3 }}>
                 <RecipeCard
-                  id={recipe.id}
+                  id={recipe._id}
                   name={recipe.name}
                   image={recipe.image}
-                  dishType={recipe.dishType}
-                  servings={recipe.servings}
+                  category={recipe.category}
+                  preparationTime={recipe.preparationTime}
+                  descripition={recipe.descripition}
                 />
               </Grid>
             ))
           ) : (
-            <Grid item xs={12} component={'div' as ElementType}>
+            // Nenhuma receita encontrada
+            <Grid size={{ xs: 12 }}>
               <Box
                 sx={{
-                  p: 5,
                   textAlign: 'center',
+                  py: 8,
+                  bgcolor: 'background.paper',
+                  borderRadius: 2,
                   border: '1px dashed',
                   borderColor: 'divider',
-                  borderRadius: 2,
-                  my: 4,
                 }}
               >
-                <Typography variant="h6">Nenhuma receita encontrada</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  Tente ajustar seus filtros de busca ou tente novamente mais tarde
+                <Restaurant sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  Nenhuma receita encontrada
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {searchTerm || selectedType
+                    ? 'Tente ajustar os filtros de busca'
+                    : 'Comece criando sua primeira receita'}
                 </Typography>
               </Box>
             </Grid>
           )}
         </Grid>
-
         {/* Paginação */}
-        {!loading && totalPages > 1 && (
+        {!loading && filteredRecipes.length > itemsPerPage && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
             <Pagination
-              count={totalPages}
+              count={Math.max(totalFilteredPages, totalPages)}
               page={currentPage}
               onChange={handlePageChange}
               color="primary"
+              size="large"
               showFirstButton
               showLastButton
-              sx={{
-                '& .MuiPaginationItem-root': {
-                  borderRadius: 2,
-                },
-              }}
             />
           </Box>
         )}
-      </Box>
-    </Container>
+        {/* Modal de receitas */}
+        <RecipeModal
+          open={isModalOpen}
+          onClose={handleCloseModal}
+          onRecipeCreated={handleRecipeCreated}
+        />
+      </Container>
+    </Box>
   );
 };
 

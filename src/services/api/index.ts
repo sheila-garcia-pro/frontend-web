@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { setupInterceptors } from '@services/interceptors';
+import { setupInterceptors } from '@services/interceptors/index_simple';
 
 // Constantes
 const API_URL = import.meta.env.VITE_API_URL || 'https://sgpro-api.squareweb.app';

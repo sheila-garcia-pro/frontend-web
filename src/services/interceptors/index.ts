@@ -1,6 +1,7 @@
 import { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { sanitizeData } from '@utils/security';
 import { log } from '../../utils/logger';
+import tokenManager from '@utils/tokenManager';
 
 const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token';
 
@@ -21,32 +22,11 @@ export const setupInterceptors = (api: AxiosInstance): void => {
   // Interceptor de requisição para adicionar token
   api.interceptors.request.use(
     (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
-      const token = localStorage.getItem(TOKEN_KEY);
+      const token = tokenManager.getToken();
 
       if (token) {
         config.headers = config.headers || {};
         config.headers.Authorization = `Bearer ${token}`;
-      }
-
-      // Sanitizar dados em logs (em qualquer ambiente, não apenas em desenvolvimento)
-      const methodsWithData = ['post', 'put', 'patch'];
-      const method = config.method?.toLowerCase();
-
-      if (method && methodsWithData.includes(method) && config.data) {
-        // Não modifique dados reais, apenas faça log sanitizado
-        const sanitizedData = sanitizeData(config.data);
-
-        // Em desenvolvimento, loga os dados sanitizados usando o logger seguro
-        if (import.meta.env.MODE !== 'production') {
-          log.request(method, config.url || '', sanitizedData);
-        }
-
-        // Opcionalmente, podemos adicionar um cabeçalho personalizado para sinalizar
-        // que esta requisição contém dados sensíveis
-        if (JSON.stringify(sanitizedData) !== JSON.stringify(config.data)) {
-          config.headers = config.headers || {};
-          config.headers['X-Contains-Sensitive-Data'] = 'true';
-        }
       }
 
       return config;
@@ -67,53 +47,37 @@ export const setupInterceptors = (api: AxiosInstance): void => {
       return response;
     },
     (error: AxiosError): Promise<AxiosError> => {
-      // Obter código de status e mensagem de erro
       const status = error.response?.status;
-      const errorMessage = extractErrorMessage(error); // Tratar diferentes códigos de status
-      switch (status) {
-        case 401: {
-          // Limpa o token
-          localStorage.removeItem(TOKEN_KEY);
-          log.warn('Sessão expirada ou inválida. Redirecionando para login...');
+      const errorMessage = extractErrorMessage(error);
+      // Se receber 401 Unauthorized, limpar token e redirecionar
+      if (status === 401) {
+        console.log('❌ 401 Unauthorized detectado - limpando token e redirecionando...');
 
-          // Limpar o estado do Redux também
-          const event = new CustomEvent('auth:sessionExpired');
-          window.dispatchEvent(event);
+        // Limpar token imediatamente
+        tokenManager.clearAuthData();
 
-          // Prevenir loops - só redireciona se não estiver em nenhuma rota de autenticação
-          const authRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
-          if (!authRoutes.includes(window.location.pathname)) {
-            window.location.href = '/login';
-          }
-          break;
+        // Disparar evento para que hooks possam reagir
+        window.dispatchEvent(new CustomEvent('auth:tokenExpired'));
+
+        // Verificar se não está já em uma rota de autenticação para evitar loops
+        const currentPath = window.location.pathname;
+        const authRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+
+        if (!authRoutes.includes(currentPath)) {
+          // Redirecionar para login imediatamente
+          console.log('🔄 Redirecionando para /login...');
+          window.location.replace('/login');
         }
 
-        case 403: // Proibido (sem permissão)
-          log.error('Acesso negado:', errorMessage);
-          // Pode redirecionar para uma página de "Acesso negado" ou mostrar um alerta
-          break;
-
-        case 404: // Não encontrado
-          log.error('Recurso não encontrado:', errorMessage);
-          break;
-
-        case 422: // Erro de validação
-          log.error('Erro de validação:', errorMessage);
-          break;
-
-        case 500: // Erro de servidor
-        case 502: // Bad Gateway
-        case 503: // Serviço indisponível
-          log.error('Erro do servidor:', errorMessage);
-          // Pode mostrar uma página de "Serviço indisponível" ou uma mensagem global
-          break;
-
-        default:
-          log.error(`Erro ${status || 'desconhecido'}:`, errorMessage);
+        // Ainda retornar o erro para que os componentes possam tratar se necessário
+        return Promise.reject({
+          ...error,
+          message: 'Sessão expirada. Redirecionando para login...',
+        });
       }
 
-      // Aqui você pode integrar com um sistema de notificações global
-      // Por exemplo: toast.error(errorMessage);
+      // Para outros erros, apenas registrar no log
+      log.error(`Erro ${status || 'desconhecido'}:`, errorMessage);
 
       return Promise.reject({
         ...error,

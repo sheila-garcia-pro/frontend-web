@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import tokenManager from '@utils/tokenManager';
 
 // Tipos
 export interface User {
@@ -18,14 +19,33 @@ export interface AuthState {
   error: string | null;
 }
 
-// Estado inicial
-const initialState: AuthState = {
-  user: null,
-  token: null,
-  isAuthenticated: false,
-  loading: false,
-  error: null,
+// Verificar se há token armazenado para definir estado inicial
+const getInitialAuthState = (): AuthState => {
+  const token = tokenManager.getToken();
+
+  if (token) {
+    console.log('🔐 Token encontrado no localStorage - inicializando como autenticado');
+    return {
+      user: null, // Será preenchido quando checkAuth for executado
+      token,
+      isAuthenticated: true,
+      loading: true, // Inicia carregando para verificar se o token é válido
+      error: null,
+    };
+  }
+
+  console.log('❌ Nenhum token encontrado - inicializando como não autenticado');
+  return {
+    user: null,
+    token: null,
+    isAuthenticated: false,
+    loading: false,
+    error: null,
+  };
 };
+
+// Estado inicial
+const initialState: AuthState = getInitialAuthState();
 
 // Slice de autenticação
 const authSlice = createSlice({
@@ -33,7 +53,7 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     // Login
-    loginRequest: (state, action: PayloadAction<{ email: string; password: string }>) => {
+    loginRequest: (state, _action: PayloadAction<{ email: string; password: string }>) => {
       state.loading = true;
       state.error = null;
     },
@@ -63,7 +83,7 @@ const authSlice = createSlice({
     // Registro
     registerRequest: (
       state,
-      action: PayloadAction<{ name: string; email: string; password: string; phone: string }>,
+      _action: PayloadAction<{ name: string; email: string; password: string; phone: string }>,
     ) => {
       state.loading = true;
       state.error = null;
@@ -84,7 +104,7 @@ const authSlice = createSlice({
     },
 
     // Recuperação de senha
-    forgotPasswordRequest: (state, action: PayloadAction<{ email: string }>) => {
+    forgotPasswordRequest: (state, _action: PayloadAction<{ email: string }>) => {
       state.loading = true;
       state.error = null;
     },
@@ -100,7 +120,7 @@ const authSlice = createSlice({
     // Redefinição de senha com token
     resetPasswordRequest: (
       state,
-      action: PayloadAction<{ token: string; newPassword: string }>,
+      _action: PayloadAction<{ token: string; newPassword: string }>,
     ) => {
       state.loading = true;
       state.error = null;
@@ -132,7 +152,7 @@ const authSlice = createSlice({
     },
 
     // Atualização do usuário
-    updateUserRequest: (state, action: PayloadAction<Partial<User>>) => {
+    updateUserRequest: (state, _action: PayloadAction<Partial<User>>) => {
       state.loading = true;
       state.error = null;
     },
@@ -143,11 +163,18 @@ const authSlice = createSlice({
     updateUserFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
       state.error = action.payload;
-    },
-
-    // Limpar erros
+    }, // Limpar erros
     clearError: (state) => {
       state.error = null;
+    },
+
+    // Sessão expirada - limpa tudo e força logout
+    sessionExpired: (state) => {
+      state.user = null;
+      state.token = null;
+      state.isAuthenticated = false;
+      state.loading = false;
+      state.error = 'Sua sessão expirou. Faça login novamente.';
     },
   },
 });
@@ -174,6 +201,7 @@ export const {
   updateUserSuccess,
   updateUserFailure,
   clearError,
+  sessionExpired,
 } = authSlice.actions;
 
 // Exporta reducer

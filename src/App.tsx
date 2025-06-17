@@ -5,17 +5,20 @@ import { store } from '@store/index';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { CssBaseline } from '@mui/material';
 import NotificationsManager from '@components/common/NotificationsManager';
+import SilentErrorBoundary from '@components/common/SilentErrorBoundary';
 import './i18n/i18n'; // Importando a configuração do i18n
 
 const App: React.FC = () => {
   return (
-    <Provider store={store}>
-      <ThemeProvider>
-        <CssBaseline />
-        <AppRoutes />
-        <NotificationsManager />
-      </ThemeProvider>
-    </Provider>
+    <SilentErrorBoundary>
+      <Provider store={store}>
+        <ThemeProvider>
+          <CssBaseline />
+          <AppRoutes />
+          <NotificationsManager />
+        </ThemeProvider>
+      </Provider>
+    </SilentErrorBoundary>
   );
 };
 

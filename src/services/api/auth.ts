@@ -1,5 +1,6 @@
 import api from './index';
 import { User } from '@store/slices/authSlice';
+import tokenManager from '@utils/tokenManager';
 
 // Interfaces
 interface LoginCredentials {
@@ -43,8 +44,7 @@ export const register = async (credentials: RegisterCredentials): Promise<User> 
 
 // Verificação de token/Obter usuário logado
 export const verifyToken = async (): Promise<{ user: User }> => {
-  const tokenKey = import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token';
-  const token = localStorage.getItem(tokenKey);
+  const token = tokenManager.getToken();
 
   if (!token) {
     throw new Error('Token não encontrado');
@@ -94,11 +94,6 @@ export const resetPassword = async (
 
 // Logout (apenas local, não envolve API)
 export const logout = (): void => {
-  const tokenKey = import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token';
-
-  // Remover o token do localStorage
-  localStorage.removeItem(tokenKey);
-
-  // Limpar também qualquer outro dado de autenticação que possa existir
-  sessionStorage.removeItem(tokenKey);
+  // Usar tokenManager para limpar todos os dados de autenticação
+  tokenManager.clearAuthData();
 };

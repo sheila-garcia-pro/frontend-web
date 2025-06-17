@@ -26,6 +26,7 @@ import { setGlobalLoading } from '@store/slices/uiSlice';
 import * as authService from '@services/api/auth';
 import * as usersService from '@services/api/users';
 import { addNotification } from '@store/slices/uiSlice';
+import tokenManager from '@utils/tokenManager';
 
 // Tipos
 type LoginPayload = { email: string; password: string };
@@ -52,11 +53,10 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
     if (!response || !response.token) {
       throw new Error('Não foi possível realizar o login. Por favor, tente novamente.');
     }
-
     const { token } = response;
 
-    // Salva o token no localStorage
-    localStorage.setItem(import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token', token);
+    // Salva o token no localStorage usando tokenManager
+    tokenManager.setToken(token);
 
     try {
       // Busca os dados do usuário atual
@@ -111,13 +111,11 @@ function* registerSaga(action: PayloadAction<RegisterPayload>): SagaIterator {
     const loginCredentials = {
       login: action.payload.email,
       password: action.payload.password,
-    };
-
-    // Obter token de login
+    }; // Obter token de login
     const { token } = yield call(authService.login, loginCredentials);
 
-    // Salva o token no localStorage
-    localStorage.setItem(import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token', token);
+    // Salva o token no localStorage usando tokenManager
+    tokenManager.setToken(token);
 
     // Despacha a ação de sucesso
     yield put(registerSuccess({ user, token }));
@@ -149,7 +147,7 @@ function* registerSaga(action: PayloadAction<RegisterPayload>): SagaIterator {
 
 // Saga Verificação de Token
 function* checkAuthSaga(): SagaIterator {
-  const token = localStorage.getItem(import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token');
+  const token = tokenManager.getToken();
 
   if (!token) {
     yield put(checkAuthFailure());
@@ -170,14 +168,24 @@ function* checkAuthSaga(): SagaIterator {
     // Se não obteve usuário, considera falha na autenticação
     throw new Error('Falha ao obter dados do usuário');
   } catch (error) {
-    // Se o token for inválido ou houver qualquer erro, remove o token
-    localStorage.removeItem(import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token');
+    // Se o token for inválido ou houver qualquer erro, limpa os dados de autenticação
+    tokenManager.clearAuthData();
 
     // Despacha a ação de falha
     yield put(checkAuthFailure());
 
-    // Redireciona para login se não estiver lá
-    if (window.location.pathname !== '/login') {
+    // Se o erro for 401 (Unauthorized), é token expirado
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response?: { status?: number } };
+      if (axiosError.response?.status === 401) {
+        // Não redirecionar aqui pois o interceptor já vai tratar
+        return;
+      }
+    }
+
+    // Para outros erros, redireciona apenas se não estiver em rota de autenticação
+    const authRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+    if (!authRoutes.includes(window.location.pathname)) {
       window.location.href = '/login';
     }
   }
