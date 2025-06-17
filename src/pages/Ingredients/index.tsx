@@ -471,26 +471,14 @@ const IngredientsPage: React.FC = () => {
           <Tabs value={currentTab} onChange={handleTabChange} aria-label="abas de ingredientes">
             <Tab label={t('ingredients.filters.used')} value="used" />
             <Tab label={t('ingredients.filters.all')} value="all" />
-          </Tabs>
+          </Tabs>{' '}
         </Box>
-
-        {/* Contagem de resultados */}
-        {!ingredientsLoading && (
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {t('ingredients.results.showing', {
-              count: paginatedIngredients.length,
-              total: totalFilteredItems,
-              categories: selectedCategories.length,
-            })}
-          </Typography>
-        )}
 
         {/* Lista de ingredientes */}
         <TableContainer component={Paper} sx={{ mb: 3, borderRadius: 2 }}>
           <Table>
             <TableHead>
               <TableRow>
-                {' '}
                 <TableCell padding="checkbox">
                   {isEditing && (
                     <Checkbox

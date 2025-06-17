@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { RootState } from '@store/index';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@hooks/useAuth';
+import { useDispatch } from 'react-redux';
+import { checkAuthRequest } from '@store/slices/authSlice';
 
 // Layouts
 import MainLayout from '@components/layouts/MainLayout';
@@ -33,25 +33,15 @@ interface AuthRouteProps {
 
 // Componente para proteger rotas - redireciona para login quando não autenticado
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ element }) => {
-  const { isAuthenticated, loading, checkAuth } = useAuth();
-  const tokenKey = import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token';
+  const { isAuthenticated, loading } = useAuth();
 
-  // Verificar autenticação quando o componente montar
-  useEffect(() => {
-    const token = localStorage.getItem(tokenKey);
-    if (!token) {
-      // Se não houver token, não precisa fazer a verificação
-      return;
-    }
-    checkAuth();
-  }, [checkAuth, tokenKey]);
-
-  // Mostrar nada enquanto verifica autenticação
+  // Se está carregando, não fazer nada (o loading global está sendo mostrado)
   if (loading) {
     return null;
   }
 
   if (!isAuthenticated) {
+    console.log('🚫 Usuário não autenticado - redirecionando para login');
     // Redireciona para a página de login se não estiver autenticado
     return <Navigate to="/login" replace />;
   }
@@ -62,20 +52,16 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ element }) => {
 
 // Componente para rotas de autenticação - acessíveis quando não autenticado
 const AuthRoute: React.FC<AuthRouteProps> = ({ element }) => {
-  const { isAuthenticated, loading, checkAuth } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
-  // Verificar autenticação quando o componente montar
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  // Mostrar nada enquanto verifica autenticação
+  // Se está carregando, não fazer nada (o loading global está sendo mostrado)
   if (loading) {
     return null;
   }
 
   // Se estiver autenticado, redireciona para a página principal
   if (isAuthenticated) {
+    console.log('✅ Usuário já autenticado - redirecionando para home');
     return <Navigate to="/" replace />;
   }
 
@@ -85,12 +71,32 @@ const AuthRoute: React.FC<AuthRouteProps> = ({ element }) => {
 
 // Componente que contém as rotas - este componente está DENTRO do contexto Router
 const AppRoutesContent: React.FC = () => {
-  const { checkAuth } = useAuth();
+  const dispatch = useDispatch();
+  const { loading } = useAuth();
 
-  // Verificar autenticação quando a aplicação iniciar
+  // Verificar autenticação apenas uma vez na inicialização
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    console.log('🔄 Iniciando verificação de autenticação...');
+    dispatch(checkAuthRequest());
+  }, [dispatch]);
+
+  // Mostrar loading enquanto verifica autenticação inicial
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          fontSize: '18px',
+          backgroundColor: '#f5f5f5',
+        }}
+      >
+        Verificando autenticação...
+      </div>
+    );
+  }
 
   return (
     <Routes>
@@ -101,11 +107,11 @@ const AppRoutesContent: React.FC = () => {
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
       </Route>
-      {/* Rotas protegidas - requerem autenticação */}{' '}
+      {/* Rotas protegidas - requerem autenticação */}
       <Route path="/" element={<PrivateRoute element={<MainLayout />} />}>
         <Route index element={<HomePage />} />
         <Route path="ingredients" element={<IngredientsPage />} />
-        <Route path="recipes" element={<RecipesPage />} />{' '}
+        <Route path="recipes" element={<RecipesPage />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="suppliers" element={<SuppliersPage />} />
         <Route path="profile" element={<ProfilePage />} />

@@ -16,7 +16,9 @@ import GlobalLoader from '@components/common/GlobalLoader';
 const DRAWER_WIDTH = 240;
 
 // Estilização do container principal
-const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
+const Main = styled('main', {
+  shouldForwardProp: (prop) => prop !== 'open' && prop !== 'isMobile',
+})<{
   open: boolean;
   isMobile: boolean;
 }>(({ theme, open, isMobile }) => ({
@@ -40,7 +42,6 @@ const MainLayout: React.FC = () => {
   // Redux
   const dispatch = useDispatch();
   const { sidebarOpen } = useSelector((state: RootState) => state.ui);
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
   // Responsividade
   const theme = useTheme();

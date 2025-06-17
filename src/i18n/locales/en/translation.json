@@ -50,7 +50,9 @@
       "unitMeasure": "Unit of Measure"
     },
     "results": {
-      "showing": "{{categories, plural, =0 {} other { ({{categories}} categories selected"
+      "showing": "Showing {{count}} of {{total}} ingredients",
+      "oneCategory": "1 category selected",
+      "multipleCategories": "{{count}} categories selected"
     },
     "validation": {
       "nameRequired": "Name is required",

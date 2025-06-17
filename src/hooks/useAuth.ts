@@ -1,9 +1,8 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import {
   loginRequest,
-  loginSuccess,
   logout as logoutAction,
   registerRequest,
   checkAuthRequest,
@@ -40,18 +39,6 @@ export const useAuth = (): UseAuthReturn => {
   const dispatch = useDispatch();
   const { user, isAuthenticated, loading, error } = useSelector((state: RootState) => state.auth);
 
-  // Adicionando listener para evento de sessão expirada
-  useEffect(() => {
-    const handleSessionExpired = () => {
-      dispatch(logoutAction());
-    };
-
-    window.addEventListener('auth:sessionExpired', handleSessionExpired);
-    return () => {
-      window.removeEventListener('auth:sessionExpired', handleSessionExpired);
-    };
-  }, [dispatch]);
-
   // Login usando o Redux
   const login = useCallback(
     (credentials: LoginCredentials) => {
@@ -87,17 +74,8 @@ export const useAuth = (): UseAuthReturn => {
 
     // Redireciona para a página de login
     window.location.href = '/login';
-  }, [dispatch]);
-  // Verificação de autenticação
+  }, [dispatch]); // Verificação de autenticação - apenas dispatch, sem verificar token
   const checkAuth = useCallback(() => {
-    const token = localStorage.getItem(
-      import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token',
-    );
-    if (!token) {
-      // Se não houver token, já marca como não autenticado
-      dispatch(logoutAction());
-      return;
-    }
     dispatch(checkAuthRequest());
   }, [dispatch]);
 
