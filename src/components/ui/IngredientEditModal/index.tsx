@@ -23,6 +23,8 @@ import {
 } from '../../../store/slices/ingredientsSlice';
 import { RootState } from '../../../store';
 import { CreateIngredientParams, Ingredient } from '../../../types/ingredients';
+import { UnitMeasure } from '../../../types/unitMeasure';
+import { getUnitMeasures } from '../../../services/api/unitMeasure';
 
 import { useTranslation } from 'react-i18next';
 
@@ -50,14 +52,16 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
     price: ingredient.price || {
       price: 0,
       quantity: 0,
-      unitMeasure: 'Quilograma',
+      unitMeasure: 'Quilogramas',
     },
   });
+
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [uploading, setUploading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [unitMeasures, setUnitMeasures] = useState<UnitMeasure[]>([]);
+  const [loadingUnitMeasures, setLoadingUnitMeasures] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
   // Resetar formulário quando o modal fecha ou o ingrediente muda
   useEffect(() => {
     setFormData({
@@ -67,11 +71,30 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
       price: ingredient.price || {
         price: 0,
         quantity: 0,
-        unitMeasure: 'Quilograma',
+        unitMeasure: 'Quilogramas',
       },
     });
     setErrors({});
   }, [open, ingredient]);
+
+  // Buscar unidades de medida quando o modal abrir
+  useEffect(() => {
+    const fetchUnitMeasures = async () => {
+      if (!open) return;
+
+      setLoadingUnitMeasures(true);
+      try {
+        const units = await getUnitMeasures();
+        setUnitMeasures(units);
+      } catch (error) {
+        console.error('Erro ao buscar unidades de medida:', error);
+      } finally {
+        setLoadingUnitMeasures(false);
+      }
+    };
+
+    fetchUnitMeasures();
+  }, [open]);
 
   useEffect(() => {
     if (isSubmitted && !ingredientLoading) {
@@ -88,7 +111,7 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
     if (name.startsWith('price.')) {
       const priceField = name.split('.')[1];
       setFormData((prev) => {
-        const currentPrice = prev.price || { price: 0, quantity: 0, unitMeasure: 'Quilograma' };
+        const currentPrice = prev.price || { price: 0, quantity: 0, unitMeasure: 'Quilogramas' };
         return {
           ...prev,
           price: {
@@ -322,12 +345,20 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
                 error={!!errors['price.unitMeasure']}
                 helperText={errors['price.unitMeasure']}
                 select
+                disabled={loadingUnitMeasures}
               >
-                <MenuItem value="Quilograma">{t('ingredients.measures.kilogram')}</MenuItem>
-                <MenuItem value="Grama">{t('ingredients.measures.gram')}</MenuItem>
-                <MenuItem value="Litro">{t('ingredients.measures.liter')}</MenuItem>
-                <MenuItem value="Mililitro">{t('ingredients.measures.milliliter')}</MenuItem>
-                <MenuItem value="Unidade">{t('ingredients.measures.unit')}</MenuItem>
+                {loadingUnitMeasures ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={20} />
+                    Carregando...
+                  </MenuItem>
+                ) : (
+                  unitMeasures.map((unit) => (
+                    <MenuItem key={unit._id} value={unit.name}>
+                      {unit.name} ({unit.acronym})
+                    </MenuItem>
+                  ))
+                )}
               </TextField>
             </Box>
           </Box>

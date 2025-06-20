@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect } from 'react';
+import React, { FC, useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Box,
@@ -11,16 +11,17 @@ import {
   Pagination,
   SelectChangeEvent,
   Button,
-  IconButton,
-  Tooltip,
   Grid,
 } from '@mui/material';
-import { Search, Restaurant, Add, Refresh } from '@mui/icons-material';
+import { Search, Restaurant, Add } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { addNotification } from '../../store/slices/uiSlice';
 import RecipeCard from '../../components/ui/RecipeCard';
 import RecipeSkeleton from '../../components/ui/SkeletonLoading/RecipeSkeleton';
-import { getCachedRecipes } from '../../services/api/recipes';
+import RecipeCategoryMenu from '../../components/ui/RecipeCategoryMenuConsolidated';
+import { getCachedRecipes, getRecipes } from '../../services/api/recipes';
+import { clearCache } from '../../services/api';
 import { Recipe } from '../../types/recipes';
 import RecipeModal from '../../components/ui/RecipeModal';
 
@@ -32,6 +33,12 @@ interface SortOption {
 }
 
 // Componente da página de receitas
+//
+// Sistema de atualização da lista:
+// - Após criar uma receita: usa handleForceRefreshList (limpa cache)
+// - Após editar uma receita: navega de volta com state.reloadList = true
+// - Após excluir uma receita: navega de volta com state.reloadList = true
+// - Refresh manual: usa handleRefreshList (com cache)
 const RecipesPage: FC = () => {
   // Estados
   const [loading, setLoading] = useState(true);
@@ -43,9 +50,79 @@ const RecipesPage: FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Redux
+  // Redux e Navigation
   const dispatch = useDispatch();
+  const location = useLocation();
   const itemsPerPage = 8;
+
+  // Função para recarregar forçadamente a lista (sem cache - para após exclusões)
+  const handleForceRefreshList = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Limpa completamente o cache antes de fazer a nova requisição
+      clearCache('/v1/users/me/recipe');
+
+      const response = await getRecipes({
+        page: currentPage,
+        itemPerPage: itemsPerPage,
+        category: selectedType,
+        search: searchTerm,
+      });
+
+      setReceitas(response.data);
+      setTotalPages(response.totalPages);
+
+      console.log('🔄 Lista recarregada com dados frescos da API');
+    } catch (error) {
+      console.error('Erro ao recarregar receitas:', error);
+      dispatch(
+        addNotification({
+          message: 'Erro ao recarregar lista de receitas.',
+          type: 'error',
+          duration: 5000,
+        }),
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, selectedType, searchTerm, dispatch]);
+  // Efeito para detectar quando chegamos com estado de reload (após exclusão ou edição)
+  useEffect(() => {
+    const state = location.state as {
+      reloadList?: boolean;
+      deletedRecipeName?: string;
+      editedRecipeName?: string;
+    } | null;
+
+    if (state?.reloadList) {
+      console.log('🔄 Detectado reload após operação - usando refresh forçado');
+
+      // Força o reload da lista SEM cache
+      handleForceRefreshList();
+
+      // Mostra notificação sobre a operação realizada
+      if (state.deletedRecipeName) {
+        dispatch(
+          addNotification({
+            message: `Receita "${state.deletedRecipeName}" excluída com sucesso!`,
+            type: 'success',
+            duration: 4000,
+          }),
+        );
+      } else if (state.editedRecipeName) {
+        dispatch(
+          addNotification({
+            message: `Receita "${state.editedRecipeName}" atualizada com sucesso!`,
+            type: 'success',
+            duration: 4000,
+          }),
+        );
+      }
+
+      // Limpa o state para evitar reloads desnecessários
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, dispatch, handleForceRefreshList]);
 
   // Efeito para carregar os dados
   useEffect(() => {
@@ -131,44 +208,10 @@ const RecipesPage: FC = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
   };
-
   const handleRecipeCreated = () => {
-    // Recarregar a lista de receitas após criar uma nova
-    handleRefreshList();
-  };
-
-  const handleRefreshList = async () => {
-    setLoading(true);
-    try {
-      const response = await getCachedRecipes({
-        page: currentPage,
-        itemPerPage: itemsPerPage,
-        category: selectedType,
-        search: searchTerm,
-      });
-
-      setReceitas(response.data);
-      setTotalPages(response.totalPages);
-
-      dispatch(
-        addNotification({
-          message: 'Lista de receitas atualizada com sucesso!',
-          type: 'success',
-          duration: 3000,
-        }),
-      );
-    } catch (error) {
-      console.error('Erro ao atualizar receitas:', error);
-      dispatch(
-        addNotification({
-          message: 'Erro ao atualizar lista de receitas.',
-          type: 'error',
-          duration: 5000,
-        }),
-      );
-    } finally {
-      setLoading(false);
-    }
+    // Usar refresh forçado (sem cache) após criar uma nova receita
+    // Isso garante que a nova receita aparecerá imediatamente na lista
+    handleForceRefreshList();
   };
 
   // Obter tipos de pratos únicos para o filtro
@@ -237,19 +280,9 @@ const RecipesPage: FC = () => {
             <Typography variant="body1" color="text.secondary">
               Explore nossas receitas para criar pratos incríveis
             </Typography>
-          </Box>
-
+          </Box>{' '}
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <Tooltip title="Atualizar lista">
-              <IconButton
-                onClick={handleRefreshList}
-                color="primary"
-                aria-label="atualizar lista"
-                sx={{ borderRadius: 2 }}
-              >
-                <Refresh />
-              </IconButton>
-            </Tooltip>
+            <RecipeCategoryMenu onCategoryUpdated={handleForceRefreshList} />
 
             <Button
               variant="contained"

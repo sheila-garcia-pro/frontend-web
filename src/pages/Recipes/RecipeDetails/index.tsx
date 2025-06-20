@@ -176,15 +176,13 @@ const RecipeDetailsPage: FC = () => {
       console.log('🔄 Debug - Refreshing recipe with ID:', recipeIdToUse);
       const refreshedRecipe = await getFreshRecipeById(recipeIdToUse);
       console.log('🔄 Debug - Refreshed recipe:', refreshedRecipe);
-      setRecipe(refreshedRecipe);
-
-      dispatch(
-        addNotification({
-          message: 'Receita atualizada com sucesso!',
-          type: 'success',
-          duration: 4000,
-        }),
-      );
+      setRecipe(refreshedRecipe); // Navegar de volta para a lista com estado para forçar reload
+      navigate('/recipes', {
+        state: {
+          reloadList: true,
+          editedRecipeName: updatedRecipe.name,
+        },
+      });
 
       console.log('🔄 Dados da receita atualizados via API (dados frescos)');
     } catch (error) {
@@ -203,9 +201,14 @@ const RecipeDetailsPage: FC = () => {
       setRefreshing(false);
     }
   };
-
   const handleRecipeDeleted = () => {
-    navigate('/recipes');
+    console.log('🔄 Navegando de volta para /recipes com state de reload');
+    navigate('/recipes', {
+      state: {
+        reloadList: true,
+        deletedRecipeName: recipe?.name,
+      },
+    });
   };
 
   if (loading) {

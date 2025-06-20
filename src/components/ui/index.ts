@@ -8,6 +8,8 @@ export { default as CategoryModal } from './CategoryModal';
 // Componentes de Receitas
 export { default as RecipeEditModal } from './RecipeEditModal/RecipeEditModal';
 export { default as RecipeDeleteModal } from './RecipeDeleteModal';
+export { default as RecipeCategoryMenu } from './RecipeCategoryMenu';
+export { default as RecipeCategoryMenuConsolidated } from './RecipeCategoryMenuConsolidated';
 
 // Componentes de Upload
 export { default as ImageUpload } from './ImageUpload';

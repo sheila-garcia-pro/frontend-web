@@ -31,26 +31,31 @@ const RecipeDeleteModal: React.FC<RecipeDeleteModalProps> = ({
 }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
-
   const handleDelete = async () => {
     if (!recipe) return;
 
+    console.log('🗑️ Iniciando exclusão da receita:', recipe.name);
     setLoading(true);
     try {
       await deleteRecipe(recipe._id);
+      console.log('✅ Receita excluída com sucesso da API');
 
       dispatch(
         addNotification({
-          message: 'Receita excluída com sucesso!',
+          message: 'Receita excluída com sucesso! Redirecionando...',
           type: 'success',
-          duration: 4000,
+          duration: 3000,
         }),
       );
 
-      onRecipeDeleted();
-      onClose();
+      // Pequeno delay para mostrar a notificação antes de fechar
+      setTimeout(() => {
+        console.log('🔄 Chamando onRecipeDeleted...');
+        onRecipeDeleted();
+        onClose();
+      }, 500);
     } catch (error) {
-      console.error('Erro ao excluir receita:', error);
+      console.error('❌ Erro ao excluir receita:', error);
       dispatch(
         addNotification({
           message: 'Erro ao excluir receita. Tente novamente.',
@@ -101,29 +106,27 @@ const RecipeDeleteModal: React.FC<RecipeDeleteModalProps> = ({
             <strong>Atenção!</strong> Esta ação não pode ser desfeita.
           </Typography>
         </Alert>
-
         <Typography variant="body1" sx={{ mb: 2 }}>
           Tem certeza de que deseja excluir a receita:
-        </Typography>
-
+        </Typography>{' '}
         <Box
           sx={{
             p: 2,
-            bgcolor: 'grey.100',
+            bgcolor: 'background.paper',
             borderRadius: 1,
             border: '1px solid',
-            borderColor: 'grey.300',
+            borderColor: 'divider',
+            boxShadow: 1,
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main' }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main', mb: 0.5 }}>
             {recipe.name}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.primary" sx={{ opacity: 0.8 }}>
             SKU: {recipe.sku} • Categoria: {recipe.category}
           </Typography>
-        </Box>
-
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+        </Box>{' '}
+        <Typography variant="body2" color="text.primary" sx={{ mt: 2, opacity: 0.9 }}>
           Todos os dados relacionados a esta receita serão permanentemente removidos.
         </Typography>
       </DialogContent>
