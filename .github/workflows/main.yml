@@ -3,7 +3,7 @@ name: Build and Upload to SquareCloud - Front-end.
 on:
   push:
     branches:
-      - main
+      - fix/test-deploy-20-06
 jobs:
   deploy:
     uses: sheila-garcia-pro/pipeline-deploy/.github/workflows/deploy.yml@main
