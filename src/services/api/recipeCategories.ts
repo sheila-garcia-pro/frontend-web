@@ -9,6 +9,14 @@ export interface RecipeCategoriesResponse {
   categoriesRecipes: RecipeCategory[];
 }
 
+export interface CreateRecipeCategoryParams {
+  name: string;
+}
+
+export interface UpdateRecipeCategoryParams {
+  name: string;
+}
+
 // Obter categorias de receitas do usuário
 export const getUserRecipeCategories = async (): Promise<RecipeCategory[]> => {
   try {
@@ -22,6 +30,39 @@ export const getUserRecipeCategories = async (): Promise<RecipeCategory[]> => {
     return [];
   } catch (error) {
     console.error('Erro ao buscar categorias de receitas:', error);
+    throw error;
+  }
+};
+
+// Criar nova categoria de receita
+export const createRecipeCategory = async (params: CreateRecipeCategoryParams): Promise<void> => {
+  try {
+    await api.post('/v1/users/me/category-recipe', params);
+  } catch (error) {
+    console.error('Erro ao criar categoria de receita:', error);
+    throw error;
+  }
+};
+
+// Atualizar categoria de receita
+export const updateRecipeCategory = async (
+  id: string,
+  params: UpdateRecipeCategoryParams,
+): Promise<void> => {
+  try {
+    await api.patch(`/v1/users/me/category-recipe/${id}`, params);
+  } catch (error) {
+    console.error('Erro ao atualizar categoria de receita:', error);
+    throw error;
+  }
+};
+
+// Excluir categoria de receita
+export const deleteRecipeCategory = async (id: string): Promise<void> => {
+  try {
+    await api.delete(`/v1/users/me/category-recipe/${id}`);
+  } catch (error) {
+    console.error('Erro ao excluir categoria de receita:', error);
     throw error;
   }
 };
