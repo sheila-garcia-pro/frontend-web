@@ -1,5 +1,11 @@
 import api, { cachedGet, clearCache } from './index';
-import { Recipe, CreateRecipeParams, RecipesResponse, SearchParams } from '../../types/recipes';
+import {
+  Recipe,
+  CreateRecipeParams,
+  RecipesResponse,
+  SearchParams,
+  RecipeDetailResponse,
+} from '../../types/recipes';
 
 type QueryParams = {
   [key: string]: number | string | undefined;
@@ -56,14 +62,26 @@ export const getCachedRecipes = async (params: SearchParams): Promise<RecipesRes
 
 // Obter receita por ID (sem cache)
 export const getRecipeById = async (id: string): Promise<Recipe> => {
-  const response = await api.get<Recipe>(`/v1/users/me/recipe/${id}`);
-  return response.data;
+  const response = await api.get<RecipeDetailResponse[]>(`/v1/users/me/recipe/${id}`);
+  return response.data[0].recipes;
 };
 
 // Obter receita por ID (com cache)
 export const getCachedRecipeById = async (id: string): Promise<Recipe> => {
-  const response = await cachedGet<Recipe>(`/v1/users/me/recipe/${id}`);
-  return response;
+  const response = await cachedGet<RecipeDetailResponse[]>(`/v1/users/me/recipe/${id}`);
+  return response[0].recipes;
+};
+
+// Obter receita por ID (sem cache - para dados frescos após edição)
+export const getFreshRecipeById = async (id: string): Promise<Recipe> => {
+  if (!id || id === 'undefined') {
+    throw new Error('ID da receita é obrigatório e não pode ser undefined');
+  }
+
+  console.log('🔍 getFreshRecipeById - Making request with ID:', id);
+  const response = await api.get<RecipeDetailResponse[]>(`/v1/users/me/recipe/${id}`);
+  console.log('🔍 getFreshRecipeById - API response:', response.data);
+  return response.data[0].recipes;
 };
 
 // Criar uma nova receita
@@ -78,7 +96,18 @@ export const updateRecipe = async (
   id: string,
   params: Partial<CreateRecipeParams>,
 ): Promise<Recipe> => {
+  if (!id || id === 'undefined') {
+    throw new Error('ID da receita é obrigatório para atualização');
+  }
+
+  console.log('🔍 updateRecipe - Making request with ID:', id);
+  console.log('🔍 updateRecipe - Request params:', params);
+
   const response = await api.patch<Recipe>(`/v1/users/me/recipe/${id}`, params);
+
+  console.log('🔍 updateRecipe - API response:', response.data);
+  console.log('🔍 updateRecipe - Response _id:', response.data?._id);
+
   clearCache('/v1/users/me/recipe');
   clearCache(`/v1/users/me/recipe/${id}`);
   return response.data;

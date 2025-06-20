@@ -31,7 +31,7 @@ import tokenManager from '@utils/tokenManager';
 // Tipos
 type LoginPayload = { email: string; password: string };
 type RegisterPayload = { name: string; email: string; password: string; phone: string };
-type UpdateUserPayload = Partial<User>;
+type UpdateUserPayload = Partial<Omit<User, 'image'>> & { image?: string | null };
 type ForgotPasswordPayload = { email: string };
 type ResetPasswordPayload = { token: string; newPassword: string };
 

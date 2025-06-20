@@ -15,7 +15,7 @@ import {
   Tooltip,
   Grid,
 } from '@mui/material';
-import { Search, Restaurant, Add, Edit, Save, Refresh } from '@mui/icons-material';
+import { Search, Restaurant, Add, Refresh } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { addNotification } from '../../store/slices/uiSlice';
 import RecipeCard from '../../components/ui/RecipeCard';
@@ -42,7 +42,6 @@ const RecipesPage: FC = () => {
   const [sortOption, setSortOption] = useState('name_asc');
   const [totalPages, setTotalPages] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
 
   // Redux
   const dispatch = useDispatch();
@@ -138,10 +137,6 @@ const RecipesPage: FC = () => {
     handleRefreshList();
   };
 
-  const handleToggleEdit = () => {
-    setIsEditing(!isEditing);
-  };
-
   const handleRefreshList = async () => {
     setLoading(true);
     try {
@@ -174,18 +169,6 @@ const RecipesPage: FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSaveChanges = () => {
-    // Implementar lógica de salvamento das alterações
-    setIsEditing(false);
-    dispatch(
-      addNotification({
-        message: 'Alterações salvas com sucesso!',
-        type: 'success',
-        duration: 3000,
-      }),
-    );
   };
 
   // Obter tipos de pratos únicos para o filtro
@@ -269,38 +252,14 @@ const RecipesPage: FC = () => {
             </Tooltip>
 
             <Button
-              variant={isEditing ? 'outlined' : 'contained'}
-              color={isEditing ? 'error' : 'primary'}
-              startIcon={isEditing ? <Save /> : <Edit />}
-              onClick={handleToggleEdit}
+              variant="contained"
+              color="primary"
+              startIcon={<Add />}
+              onClick={handleOpenModal}
               sx={{ borderRadius: 3, px: 3 }}
             >
-              {isEditing ? 'Cancelar' : 'Editar Receita'}
+              Nova Receita
             </Button>
-
-            {isEditing && (
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<Save />}
-                onClick={handleSaveChanges}
-                sx={{ borderRadius: 3, px: 3 }}
-              >
-                Salvar
-              </Button>
-            )}
-
-            {!isEditing && (
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<Add />}
-                onClick={handleOpenModal}
-                sx={{ borderRadius: 3, px: 3 }}
-              >
-                Nova Receita
-              </Button>
-            )}
           </Box>
         </Box>
         {/* Filtros e Busca - Padronizado */}

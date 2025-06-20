@@ -19,6 +19,10 @@ export interface RecipesResponse {
   totalPages: number;
 }
 
+export interface RecipeDetailResponse {
+  recipes: Recipe;
+}
+
 export interface SearchParams {
   page?: number;
   itemPerPage?: number;
@@ -30,7 +34,7 @@ export interface CreateRecipeParams {
   name: string;
   sku: string;
   category: string;
-  image: string;
+  image: string | null;
   yieldRecipe: string;
   typeYield: string;
   preparationTime: string;

@@ -16,13 +16,22 @@ import {
   Stack,
   Box,
   FormHelperText,
+  InputAdornment,
 } from '@mui/material';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../../store';
-import { useTranslation } from 'react-i18next';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { Schedule as ScheduleIcon, Scale as ScaleIcon } from '@mui/icons-material';
+import { Dayjs } from 'dayjs';
+import 'dayjs/locale/pt-br';
+import { useDispatch } from 'react-redux';
 import { CreateRecipeParams } from '../../../types/recipes';
 import { addNotification } from '../../../store/slices/uiSlice';
 import { createRecipe } from '../../../services/api/recipes';
+import { getUserRecipeCategories, RecipeCategory } from '../../../services/api/recipeCategories';
+import { getYieldsRecipes } from '../../../services/api/yields';
+import { getUnitMeasures } from '../../../services/api/unitMeasure';
+import { UnitMeasure } from '../../../types/unitMeasure';
 import api from '../../../services/api';
 
 interface RecipeModalProps {
@@ -31,19 +40,14 @@ interface RecipeModalProps {
   onRecipeCreated?: () => void;
 }
 
-interface Category {
-  _id: string;
-  name: string;
-}
-
-interface Yield {
+// Local interface for yields to match API response format
+interface YieldItem {
   _id: string;
   name: string;
   description?: string;
 }
 
 const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreated }) => {
-  const { t } = useTranslation();
   const dispatch = useDispatch();
 
   const [formData, setFormData] = useState<CreateRecipeParams>({
@@ -63,19 +67,24 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [preparationTimeValue, setPreparationTimeValue] = useState<Dayjs | null>(null);
 
-  const [userCategories, setUserCategories] = useState<Category[]>([]);
-  const [yields, setYields] = useState<Yield[]>([]);
+  const [userCategories, setUserCategories] = useState<RecipeCategory[]>([]);
+  const [yields, setYields] = useState<YieldItem[]>([]);
+  const [unitMeasures, setUnitMeasures] = useState<UnitMeasure[]>([]);
 
   const [loadingUserCategories, setLoadingUserCategories] = useState(false);
   const [loadingYields, setLoadingYields] = useState(false);
+  const [loadingUnitMeasures, setLoadingUnitMeasures] = useState(false);
+
+  console.log(userCategories, yields, unitMeasures); // Debug log to check initial state
 
   const loadUserCategories = useCallback(async () => {
     try {
       setLoadingUserCategories(true);
-      const response = await api.get<Category[]>('/v1/users/me/category-recipe');
-      setUserCategories(response.data || []);
-      console.log('Categorias do usuário carregadas:', response.data);
+      const categories = await getUserRecipeCategories();
+      setUserCategories(categories);
+      console.log('Categorias do usuário carregadas:', categories);
     } catch (error) {
       console.error('Erro ao carregar categorias do usuário:', error);
       dispatch(
@@ -93,8 +102,18 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
   const loadYields = useCallback(async () => {
     try {
       setLoadingYields(true);
-      const response = await api.get<Yield[]>('/v1/yields-recipes');
-      setYields(response.data || []);
+      const yieldsData = await getYieldsRecipes();
+      console.log('Yields carregados:', yieldsData); // Debug log
+      console.log('Tipo de dados dos yields:', typeof yieldsData, Array.isArray(yieldsData)); // Debug log
+
+      // Map the API data to our local interface format
+      const mappedYields: YieldItem[] = yieldsData.map((yieldItem) => ({
+        _id: yieldItem._id,
+        name: yieldItem.name,
+        description: yieldItem.description,
+      }));
+
+      setYields(mappedYields);
     } catch (error) {
       console.error('Erro ao carregar rendimentos:', error);
       dispatch(
@@ -109,12 +128,34 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
     }
   }, [dispatch]);
 
+  const loadUnitMeasures = useCallback(async () => {
+    try {
+      setLoadingUnitMeasures(true);
+      const unitMeasuresData = await getUnitMeasures();
+      console.log('Unidades de medida carregadas:', unitMeasuresData); // Debug log
+      setUnitMeasures(unitMeasuresData);
+    } catch (error) {
+      console.error('Erro ao carregar unidades de medida:', error);
+      dispatch(
+        addNotification({
+          message: 'Erro ao carregar unidades de medida',
+          type: 'error',
+          duration: 4000,
+        }),
+      );
+    } finally {
+      setLoadingUnitMeasures(false);
+    }
+  }, [dispatch]);
+
   useEffect(() => {
     if (open) {
+      console.log('Modal aberto, carregando dados...'); // Debug log
       loadUserCategories();
       loadYields();
+      loadUnitMeasures();
     }
-  }, [open, loadUserCategories, loadYields]);
+  }, [open, loadUserCategories, loadYields, loadUnitMeasures]);
 
   useEffect(() => {
     if (!open) {
@@ -133,6 +174,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
       setErrors({});
       setSelectedFile(null);
       setSubmitting(false);
+      setPreparationTimeValue(null);
     }
   }, [open]);
 
@@ -140,11 +182,66 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<string>,
   ) => {
     const { name, value } = e.target;
+    console.log('handleChange chamado:', { name, value }); // Debug log
     if (name) {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      // Ensure value is never undefined to prevent controlled/uncontrolled switch
+      const safeValue = value === undefined ? '' : value;
+      setFormData((prev) => ({ ...prev, [name]: safeValue }));
       if (errors[name]) {
         setErrors((prev) => ({ ...prev, [name]: '' }));
       }
+    }
+  };
+
+  const handleTimeChange = (newValue: Dayjs | null) => {
+    setPreparationTimeValue(newValue);
+    if (newValue) {
+      const hours = newValue.hour();
+      const minutes = newValue.minute();
+
+      let timeString = '';
+      if (hours > 0) {
+        timeString += `${hours}h`;
+      }
+      if (minutes > 0) {
+        timeString += `${timeString ? ' ' : ''}${minutes}min`;
+      }
+      if (!timeString) {
+        timeString = '0min';
+      }
+
+      setFormData((prev) => ({ ...prev, preparationTime: timeString }));
+      if (errors.preparationTime) {
+        setErrors((prev) => ({ ...prev, preparationTime: '' }));
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, preparationTime: '' }));
+    }
+  };
+
+  const formatWeight = (value: string) => {
+    // Remove tudo que não é número ou ponto/vírgula
+    const numericValue = value.replace(/[^\d.,]/g, '');
+    // Substitui vírgula por ponto para padronização
+    return numericValue.replace(',', '.');
+  };
+
+  const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formattedValue = formatWeight(e.target.value);
+    setFormData((prev) => ({ ...prev, weightRecipe: formattedValue }));
+    if (errors.weightRecipe) {
+      setErrors((prev) => ({ ...prev, weightRecipe: '' }));
+    }
+  };
+
+  const handleCategoryChange = (event: SelectChangeEvent<string>) => {
+    const value = event.target.value;
+    console.log('handleCategoryChange chamado:', value); // Debug log
+    // Ensure value is never undefined to prevent controlled/uncontrolled switch
+    const safeValue = value === undefined ? '' : value;
+    setFormData((prev) => ({ ...prev, category: safeValue }));
+    if (errors.category) {
+      setErrors((prev) => ({ ...prev, category: '' }));
     }
   };
 
@@ -178,9 +275,13 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
           const errorMessage = response.data?.message || 'Erro ao fazer upload da imagem';
           setErrors((prev) => ({ ...prev, image: errorMessage }));
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erro no upload:', error);
-        const errorMessage = error.response?.data?.message || 'Erro ao fazer upload da imagem';
+        const errorMessage =
+          error instanceof Error && 'response' in error && error.response
+            ? (error.response as { data?: { message?: string } })?.data?.message ||
+              'Erro ao fazer upload da imagem'
+            : 'Erro ao fazer upload da imagem';
         setErrors((prev) => ({ ...prev, image: errorMessage }));
         dispatch(
           addNotification({
@@ -195,7 +296,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
     }
   };
 
-  console.log(userCategories, 'userCategories');
   const validate = (): boolean => {
     const newErrors: { [key: string]: string } = {};
 
@@ -248,7 +348,31 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
 
     try {
       setSubmitting(true);
-      await createRecipe(formData);
+
+      // Find the category name from the selected category ID
+      const selectedCategory = userCategories.find((cat) => cat.id === formData.category);
+      const categoryName = selectedCategory ? selectedCategory.name : formData.category;
+
+      // Find the weight unit from the selected unit ID
+      const selectedWeightUnit = unitMeasures.find(
+        (unit) => unit._id === formData.typeWeightRecipe,
+      );
+      const weightUnitName = selectedWeightUnit
+        ? selectedWeightUnit.name
+        : formData.typeWeightRecipe;
+
+      // Create the submission data with proper format
+      const submissionData = {
+        ...formData,
+        category: categoryName,
+        yieldRecipe: formData.yieldRecipe, // This is now a free text field
+        typeYield: formData.typeYield, // This is now the name directly
+        typeWeightRecipe: weightUnitName,
+      };
+
+      console.log('Dados enviados para API:', submissionData); // Debug log
+
+      await createRecipe(submissionData);
 
       dispatch(
         addNotification({
@@ -260,9 +384,13 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
 
       onRecipeCreated?.();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao criar receita:', error);
-      const errorMessage = error.response?.data?.message || 'Erro ao criar receita';
+      const errorMessage =
+        error instanceof Error && 'response' in error && error.response
+          ? (error.response as { data?: { message?: string } })?.data?.message ||
+            'Erro ao criar receita'
+          : 'Erro ao criar receita';
       dispatch(
         addNotification({
           message: errorMessage,
@@ -274,6 +402,11 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
       setSubmitting(false);
     }
   };
+
+  // Debug: Monitor changes to yieldRecipe
+  useEffect(() => {
+    console.log('formData.yieldRecipe mudou para:', formData.yieldRecipe);
+  }, [formData.yieldRecipe]);
 
   const isLoadingCategories = loadingUserCategories;
 
@@ -323,7 +456,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
                 labelId="category-label"
                 name="category"
                 value={formData.category}
-                onChange={handleChange}
+                onChange={handleCategoryChange}
                 label="Categoria"
                 disabled={isLoadingCategories}
               >
@@ -334,7 +467,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
                   </MenuItem>
                 ) : (
                   userCategories.map((category) => (
-                    <MenuItem key={category._id} value={category._id}>
+                    <MenuItem key={category.id} value={category.id}>
                       {category.name}
                     </MenuItem>
                   ))
@@ -348,98 +481,167 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
               {errors.category && <FormHelperText error>{errors.category}</FormHelperText>}
             </FormControl>
 
-            <FormControl fullWidth required error={!!errors.yieldRecipe}>
-              <InputLabel id="yield-label">Rendimento</InputLabel>
-              <Select
-                labelId="yield-label"
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
+                label="Quantidade"
                 name="yieldRecipe"
                 value={formData.yieldRecipe}
                 onChange={handleChange}
-                label="Rendimento"
-                disabled={loadingYields}
-              >
-                {loadingYields ? (
-                  <MenuItem value="" disabled>
-                    <CircularProgress size={20} sx={{ mr: 1 }} />
-                    Carregando rendimentos...
-                  </MenuItem>
-                ) : (
-                  yields.map((yieldItem) => (
-                    <MenuItem key={yieldItem._id} value={yieldItem._id}>
-                      <Box>
-                        <Typography variant="body2">{yieldItem.name}</Typography>
-                        {yieldItem.description && (
-                          <Typography variant="caption" color="text.secondary">
-                            {yieldItem.description}
-                          </Typography>
-                        )}
-                      </Box>
+                fullWidth
+                required
+                variant="outlined"
+                error={!!errors.yieldRecipe}
+                helperText={errors.yieldRecipe || 'Digite a quantidade de rendimento'}
+                placeholder="Ex: 4, 6, 8"
+                type="number"
+                inputProps={{
+                  min: 1,
+                  step: 1,
+                }}
+                sx={{ flex: 1 }}
+              />
+
+              <FormControl fullWidth required error={!!errors.typeYield} sx={{ flex: 1 }}>
+                <InputLabel id="type-yield-label">Tipo</InputLabel>
+                <Select
+                  labelId="type-yield-label"
+                  name="typeYield"
+                  value={formData.typeYield}
+                  onChange={handleChange}
+                  label="Tipo"
+                  disabled={loadingYields}
+                >
+                  {loadingYields ? (
+                    <MenuItem value="" disabled>
+                      <CircularProgress size={20} sx={{ mr: 1 }} />
+                      Carregando tipos...
                     </MenuItem>
-                  ))
+                  ) : (
+                    yields.map((yieldItem) => (
+                      <MenuItem key={yieldItem._id} value={yieldItem.name}>
+                        {yieldItem.name} {yieldItem.description && `- ${yieldItem.description}`}
+                      </MenuItem>
+                    ))
+                  )}
+                  {!loadingYields && yields.length === 0 && (
+                    <MenuItem value="" disabled>
+                      Nenhum tipo disponível
+                    </MenuItem>
+                  )}
+                </Select>
+                {errors.typeYield && <FormHelperText error>{errors.typeYield}</FormHelperText>}
+              </FormControl>
+            </Box>
+
+            {formData.yieldRecipe && formData.typeYield && (
+              <Box sx={{ mt: -2, mb: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Rendimento:{' '}
+                  <strong>
+                    {formData.yieldRecipe} {formData.typeYield?.toLowerCase()}
+                  </strong>
+                </Typography>
+              </Box>
+            )}
+
+            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+              <TimePicker
+                label="Tempo de Preparação"
+                value={preparationTimeValue}
+                onChange={handleTimeChange}
+                format="HH:mm"
+                ampm={false}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    required: true,
+                    error: !!errors.preparationTime,
+                    helperText: errors.preparationTime || 'Selecione o tempo de preparação',
+                    InputProps: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <ScheduleIcon />
+                        </InputAdornment>
+                      ),
+                    },
+                  },
+                }}
+              />
+            </LocalizationProvider>
+
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
+                label="Peso da Receita"
+                name="weightRecipe"
+                value={formData.weightRecipe}
+                onChange={handleWeightChange}
+                fullWidth
+                required
+                variant="outlined"
+                error={!!errors.weightRecipe}
+                helperText={errors.weightRecipe || 'Digite apenas números (ex: 1.5, 250)'}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <ScaleIcon />
+                    </InputAdornment>
+                  ),
+                  inputProps: {
+                    inputMode: 'decimal',
+                    pattern: '[0-9]*[.,]?[0-9]*',
+                  },
+                }}
+                placeholder="Ex: 1.5, 250, 0.5"
+                sx={{ flex: 2 }}
+              />
+
+              <FormControl fullWidth required error={!!errors.typeWeightRecipe} sx={{ flex: 1 }}>
+                <InputLabel id="weight-type-label">Unidade</InputLabel>
+                <Select
+                  labelId="weight-type-label"
+                  name="typeWeightRecipe"
+                  value={formData.typeWeightRecipe}
+                  onChange={handleChange}
+                  label="Unidade"
+                  disabled={loadingUnitMeasures}
+                >
+                  {loadingUnitMeasures ? (
+                    <MenuItem value="" disabled>
+                      <CircularProgress size={20} sx={{ mr: 1 }} />
+                      Carregando unidades...
+                    </MenuItem>
+                  ) : (
+                    unitMeasures.map((unit) => (
+                      <MenuItem key={unit._id} value={unit._id}>
+                        {unit.name} ({unit.acronym})
+                      </MenuItem>
+                    ))
+                  )}
+                  {!loadingUnitMeasures && unitMeasures.length === 0 && (
+                    <MenuItem value="" disabled>
+                      Nenhuma unidade disponível
+                    </MenuItem>
+                  )}
+                </Select>
+                {errors.typeWeightRecipe && (
+                  <FormHelperText error>{errors.typeWeightRecipe}</FormHelperText>
                 )}
-                {!loadingYields && yields.length === 0 && (
-                  <MenuItem value="" disabled>
-                    Nenhum rendimento disponível
-                  </MenuItem>
-                )}
-              </Select>
-              {errors.yieldRecipe && <FormHelperText error>{errors.yieldRecipe}</FormHelperText>}
-            </FormControl>
+              </FormControl>
+            </Box>
 
-            <TextField
-              label="Tipo de Rendimento"
-              name="typeYield"
-              value={formData.typeYield}
-              onChange={handleChange}
-              fullWidth
-              required
-              variant="outlined"
-              error={!!errors.typeYield}
-              helperText={errors.typeYield}
-              placeholder="Ex: porções, pessoas, unidades"
-            />
-
-            <TextField
-              label="Tempo de Preparação"
-              name="preparationTime"
-              value={formData.preparationTime}
-              onChange={handleChange}
-              fullWidth
-              required
-              variant="outlined"
-              error={!!errors.preparationTime}
-              helperText={errors.preparationTime}
-              placeholder="Ex: 30 minutos, 1 hora"
-            />
-
-            <TextField
-              label="Peso da Receita"
-              name="weightRecipe"
-              type="number"
-              value={formData.weightRecipe}
-              onChange={handleChange}
-              fullWidth
-              required
-              variant="outlined"
-              error={!!errors.weightRecipe}
-              helperText={errors.weightRecipe}
-              InputProps={{
-                inputProps: { min: 0, step: 0.01 },
-              }}
-            />
-
-            <TextField
-              label="Tipo de Peso"
-              name="typeWeightRecipe"
-              value={formData.typeWeightRecipe}
-              onChange={handleChange}
-              fullWidth
-              required
-              variant="outlined"
-              error={!!errors.typeWeightRecipe}
-              helperText={errors.typeWeightRecipe}
-              placeholder="Ex: kg, g, litros, ml"
-            />
+            {formData.weightRecipe && formData.typeWeightRecipe && (
+              <Box sx={{ mt: -2, mb: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Peso total:{' '}
+                  <strong>
+                    {formData.weightRecipe}{' '}
+                    {unitMeasures
+                      .find((u) => u._id === formData.typeWeightRecipe)
+                      ?.name.toLowerCase()}
+                  </strong>
+                </Typography>
+              </Box>
+            )}
 
             <TextField
               label="Descrição"
