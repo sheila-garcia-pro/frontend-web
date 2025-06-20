@@ -47,16 +47,19 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
     };
 
     // Chama o serviço de API para login
-    const response = yield call(authService.login, credentials);
-
-    // Verifica se obteve um token válido
+    const response = yield call(authService.login, credentials); // Verifica se obteve um token válido
     if (!response || !response.token) {
       throw new Error('Não foi possível realizar o login. Por favor, tente novamente.');
     }
-    const { token } = response;
+    const { token, refreshToken } = response;
 
     // Salva o token no localStorage usando tokenManager
     tokenManager.setToken(token);
+
+    // Salva o refresh token se fornecido
+    if (refreshToken) {
+      tokenManager.setRefreshToken(refreshToken);
+    }
 
     try {
       // Busca os dados do usuário atual

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { logout } from '@store/slices/authSlice';
 import tokenManager from '@utils/tokenManager';
+import useRefreshToken from '@hooks/useRefreshToken';
 
 /**
  * Hook que monitora mudanças no localStorage para detectar remoção de token
@@ -11,6 +12,7 @@ export const useTokenWatcher = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
+  const { attemptRefresh, shouldRefresh } = useRefreshToken();
 
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
@@ -30,10 +32,8 @@ export const useTokenWatcher = () => {
     };
 
     // Listener para mudanças no localStorage
-    window.addEventListener('storage', handleStorageChange);
-
-    // Verificação periódica (a cada 30 segundos)
-    const intervalCheck = setInterval(() => {
+    window.addEventListener('storage', handleStorageChange); // Verificação periódica (a cada 30 segundos)
+    const intervalCheck = setInterval(async () => {
       const token = tokenManager.getToken();
       const currentPath = location.pathname;
       const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
@@ -43,11 +43,24 @@ export const useTokenWatcher = () => {
         console.log('⏱️ Verificação periódica: sem token - redirecionando');
         dispatch(logout());
         navigate('/login', { replace: true });
+        return;
       }
 
       // Se tem token mas está expirado
       if (token && tokenManager.isTokenExpired() && !publicRoutes.includes(currentPath)) {
-        console.log('⏱️ Verificação periódica: token expirado - limpando');
+        console.log('⏱️ Verificação periódica: token expirado - tentando renovar...');
+
+        // Tentar renovar o token se possível
+        if (shouldRefresh()) {
+          const refreshSuccess = await attemptRefresh();
+
+          if (refreshSuccess) {
+            console.log('✅ Token renovado automaticamente durante verificação periódica');
+            return;
+          }
+        }
+
+        console.log('❌ Não foi possível renovar o token - fazendo logout');
         tokenManager.clearAuthData();
         dispatch(logout());
         navigate('/login', { replace: true });
@@ -58,7 +71,7 @@ export const useTokenWatcher = () => {
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(intervalCheck);
     };
-  }, [navigate, location.pathname, dispatch]);
+  }, [navigate, location.pathname, dispatch, attemptRefresh, shouldRefresh]);
 };
 
 export default useTokenWatcher;

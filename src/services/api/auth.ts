@@ -17,8 +17,14 @@ interface RegisterCredentials {
 
 interface AuthResponse {
   token: string;
+  refreshToken?: string;
   status?: number;
   message?: string;
+}
+
+interface RefreshTokenResponse {
+  token: string;
+  refreshToken?: string;
 }
 
 interface UserUpdateInput {
@@ -96,4 +102,19 @@ export const resetPassword = async (
 export const logout = (): void => {
   // Usar tokenManager para limpar todos os dados de autenticação
   tokenManager.clearAuthData();
+};
+
+// Refresh Token - renovar token de acesso usando refresh token
+export const refreshToken = async (): Promise<RefreshTokenResponse> => {
+  const refreshTokenValue = tokenManager.getRefreshToken();
+
+  if (!refreshTokenValue) {
+    throw new Error('Refresh token não encontrado');
+  }
+
+  const response = await api.post<RefreshTokenResponse>('/v1/auth/refresh', {
+    refreshToken: refreshTokenValue,
+  });
+
+  return response.data;
 };
