@@ -173,16 +173,40 @@
     "fields": {
       "fullName": "Full Name",
       "email": "Email",
-      "phone": "Phone"
+      "phone": "Phone",
+      "phonePlaceholder": "Enter your phone number",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password"
     },
     "actions": {
       "edit": "Edit Profile",
       "cancel": "Cancel",
-      "save": "Save Changes"
+      "save": "Save Changes",
+      "changePassword": "Change Password",
+      "removePhoto": "Remove photo",
+      "changePhoto": "Change photo"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Invalid email",
+      "phoneInvalid": "Phone must have 10 or 11 digits",
+      "currentPasswordRequired": "Current password is required",
+      "newPasswordRequired": "New password is required",
+      "passwordMinLength": "Password must be at least 6 characters",
+      "confirmPasswordRequired": "Password confirmation is required",
+      "passwordsNotMatch": "Passwords do not match",
+      "fixFormErrors": "Please fix the form errors",
+      "fixPasswordErrors": "Please fix the password form errors"
     },
     "messages": {
       "updateSuccess": "Profile updated successfully!",
-      "updateError": "Error updating profile. Please try again."
+      "updateError": "Error updating profile. Please try again.",
+      "imageAdded": "Image added successfully!",
+      "imageUpdated": "Image updated successfully!",
+      "imageRemoved": "Image removed successfully!",
+      "imageUploadError": "Error uploading image. Please try again."
     }
   }
 }

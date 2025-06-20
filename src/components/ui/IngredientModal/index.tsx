@@ -66,12 +66,31 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
       setLoadingUnitMeasures(false);
     }
   }, []);
-
   useEffect(() => {
     if (open) {
       loadUnitMeasures();
     }
   }, [open, loadUnitMeasures]);
+
+  // Reset form when modal is opened or closed
+  useEffect(() => {
+    if (!open) {
+      // Reset form when modal is closed
+      setFormData({
+        name: '',
+        category: '',
+        image: '',
+        price: {
+          price: '',
+          quantity: '',
+          unitMeasure: 'Quilograma',
+        },
+      });
+      setErrors({});
+      setSelectedFile(null);
+      setIsSubmitted(false);
+    }
+  }, [open]);
 
   useEffect(() => {
     if (isSubmitted && !ingredientLoading) {
@@ -102,7 +121,6 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
       );
     }
   }, [open, dispatch]);
-
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }> | SelectChangeEvent,
   ) => {
@@ -113,7 +131,9 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
         setFormData((prev) => ({
           ...prev,
           price: {
-            ...(prev.price || { price: '', quantity: '', unitMeasure: 'Quilograma' }),
+            price: prev.price?.price || '',
+            quantity: prev.price?.quantity || '',
+            unitMeasure: prev.price?.unitMeasure || 'Quilograma',
             [priceField]: value,
           },
         }));

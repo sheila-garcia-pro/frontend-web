@@ -18,6 +18,7 @@ import DashboardPage from '@pages/Dashboard';
 import NotFoundPage from '@pages/NotFound';
 import IngredientsPage from '@pages/Ingredients';
 import RecipesPage from '@pages/Recipes';
+import RecipeDetailsPage from '@pages/Recipes/RecipeDetails';
 import SuppliersPage from '@pages/Suppliers';
 import ProfilePage from '@pages/Profile';
 
@@ -109,9 +110,11 @@ const AppRoutesContent: React.FC = () => {
       </Route>
       {/* Rotas protegidas - requerem autenticação */}
       <Route path="/" element={<PrivateRoute element={<MainLayout />} />}>
+        {' '}
         <Route index element={<HomePage />} />
         <Route path="ingredients" element={<IngredientsPage />} />
         <Route path="recipes" element={<RecipesPage />} />
+        <Route path="recipes/:id" element={<RecipeDetailsPage />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="suppliers" element={<SuppliersPage />} />
         <Route path="profile" element={<ProfilePage />} />

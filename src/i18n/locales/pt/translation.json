@@ -174,16 +174,40 @@
     "fields": {
       "fullName": "Nome Completo",
       "email": "Email",
-      "phone": "Telefone"
+      "phone": "Telefone",
+      "phonePlaceholder": "Digite seu telefone",
+      "currentPassword": "Senha Atual",
+      "newPassword": "Nova Senha",
+      "confirmPassword": "Confirmar Nova Senha"
     },
     "actions": {
       "edit": "Editar Perfil",
       "cancel": "Cancelar",
-      "save": "Salvar Alterações"
+      "save": "Salvar Alterações",
+      "changePassword": "Alterar Senha",
+      "removePhoto": "Remover foto",
+      "changePhoto": "Alterar foto"
+    },
+    "validation": {
+      "nameRequired": "Nome é obrigatório",
+      "emailRequired": "Email é obrigatório",
+      "emailInvalid": "Email inválido",
+      "phoneInvalid": "Telefone deve ter 10 ou 11 dígitos",
+      "currentPasswordRequired": "Senha atual é obrigatória",
+      "newPasswordRequired": "Nova senha é obrigatória",
+      "passwordMinLength": "A senha deve ter pelo menos 6 caracteres",
+      "confirmPasswordRequired": "Confirmação de senha é obrigatória",
+      "passwordsNotMatch": "As senhas não coincidem",
+      "fixFormErrors": "Por favor, corrija os erros no formulário",
+      "fixPasswordErrors": "Por favor, corrija os erros no formulário de senha"
     },
     "messages": {
       "updateSuccess": "Perfil atualizado com sucesso!",
-      "updateError": "Erro ao atualizar perfil. Tente novamente."
+      "updateError": "Erro ao atualizar perfil. Tente novamente.",
+      "imageAdded": "Imagem adicionada com sucesso!",
+      "imageUpdated": "Imagem atualizada com sucesso!",
+      "imageRemoved": "Imagem removida com sucesso!",
+      "imageUploadError": "Erro ao fazer upload da imagem. Tente novamente."
     }
   }
 }

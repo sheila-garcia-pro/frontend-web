@@ -25,7 +25,7 @@ interface UserUpdateInput {
   name?: string;
   email?: string;
   phone?: string;
-  image?: string;
+  image?: string | null;
   password?: string;
   newPassword?: string;
 }

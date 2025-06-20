@@ -13,13 +13,15 @@ import {
 } from '@mui/material';
 import { Camera, Delete } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { RootState } from '@store/index';
-import { updateUser, uploadUserImage } from '@services/api/auth';
+import { uploadUserImage } from '@services/api/auth';
 import useNotification from '@hooks/useNotification';
 import { useTheme } from '../../contexts/ThemeContext';
 import { updateUserRequest } from '@store/slices/authSlice';
 
 const ProfilePage: React.FC = () => {
+  const { t } = useTranslation();
   const user = useSelector((state: RootState) => state.auth.user);
   const notification = useNotification();
   const dispatch = useDispatch();
@@ -28,10 +30,29 @@ const ProfilePage: React.FC = () => {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Função para aplicar máscara de telefone
+  const applyPhoneMask = (value: string): string => {
+    // Remove todos os caracteres não numéricos
+    const numericValue = value.replace(/\D/g, '');
+
+    // Aplica a máscara baseada no comprimento
+    if (numericValue.length <= 2) {
+      return numericValue;
+    } else if (numericValue.length <= 7) {
+      return `(${numericValue.slice(0, 2)}) ${numericValue.slice(2)}`;
+    } else if (numericValue.length <= 11) {
+      return `(${numericValue.slice(0, 2)}) ${numericValue.slice(2, 7)}-${numericValue.slice(7)}`;
+    } else {
+      // Limita a 11 dígitos
+      return `(${numericValue.slice(0, 2)}) ${numericValue.slice(2, 7)}-${numericValue.slice(7, 11)}`;
+    }
+  };
+
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    phone: user?.phone || '',
+    phone: user?.phone ? applyPhoneMask(user.phone) : '',
     image: user?.image === undefined ? '' : user.image,
   });
 
@@ -49,16 +70,22 @@ const ProfilePage: React.FC = () => {
     newPassword: '',
     confirmPassword: '',
   });
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+
+    let processedValue = value;
+
+    // Aplica máscara de telefone automaticamente
+    if (name === 'phone') {
+      processedValue = applyPhoneMask(value);
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: processedValue,
     }));
-    validateField(name, value);
+    validateField(name, processedValue);
   };
-
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPasswordData((prev) => ({
@@ -67,43 +94,45 @@ const ProfilePage: React.FC = () => {
     }));
     validateField(name, value);
   };
-
   const validateField = (name: string, value: string) => {
     let error = '';
 
     switch (name) {
       case 'name':
         if (!value.trim()) {
-          error = 'Nome é obrigatório';
+          error = t('profile.validation.nameRequired');
         }
         break;
 
       case 'email':
         if (!value.trim()) {
-          error = 'Email é obrigatório';
+          error = t('profile.validation.emailRequired');
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          error = 'Email inválido';
+          error = t('profile.validation.emailInvalid');
         }
         break;
 
       case 'phone':
-        if (value && !/^\(\d{2}\) \d{5}-\d{4}$/.test(value)) {
-          error = 'Telefone deve estar no formato (99) 99999-9999';
+        if (value) {
+          // Remove caracteres não numéricos para validação
+          const numericPhone = value.replace(/\D/g, '');
+          if (numericPhone.length < 10 || numericPhone.length > 11) {
+            error = t('profile.validation.phoneInvalid');
+          }
         }
         break;
-
       case 'password':
         if (isChangingPassword && !value) {
-          error = 'Senha atual é obrigatória';
+          error = t('profile.validation.currentPasswordRequired');
         }
         break;
 
       case 'newPassword':
         if (isChangingPassword) {
           if (!value) {
-            error = 'Nova senha é obrigatória';
+            error = t('profile.validation.newPasswordRequired');
           } else if (value.length < 6) {
-            error = 'A senha deve ter pelo menos 6 caracteres';
+            error = t('profile.validation.passwordMinLength');
           }
         }
         break;
@@ -111,9 +140,9 @@ const ProfilePage: React.FC = () => {
       case 'confirmPassword':
         if (isChangingPassword) {
           if (!value) {
-            error = 'Confirmação de senha é obrigatória';
+            error = t('profile.validation.confirmPasswordRequired');
           } else if (value !== passwordData.newPassword) {
-            error = 'As senhas não coincidem';
+            error = t('profile.validation.passwordsNotMatch');
           }
         }
         break;
@@ -137,9 +166,8 @@ const ProfilePage: React.FC = () => {
       const isValid = ['name', 'email', 'phone'].every((field) =>
         validateField(field, formData[field as keyof typeof formData]),
       );
-
       if (!isValid) {
-        notification.showError('Por favor, corrija os erros no formulário');
+        notification.showError(t('profile.validation.fixFormErrors'));
         return;
       }
 
@@ -149,37 +177,49 @@ const ProfilePage: React.FC = () => {
         );
 
         if (!isPasswordValid) {
-          notification.showError('Por favor, corrija os erros no formulário de senha');
+          notification.showError(t('profile.validation.fixPasswordErrors'));
           return;
         }
       }
-
-      const updateData: Record<string, string> = {
+      const updateData: Record<string, string | null> = {
         name: formData.name,
         email: formData.email,
-        phone: formData.phone || '',
-        image: formData.image, // Sempre inclui a imagem no payload
+        phone: formData.phone ? formData.phone.replace(/\D/g, '') : '', // Remove formatação antes de enviar
       };
+
+      // Lógica para imagem:
+      // - Se tem imagem: envia a URL da imagem
+      // - Se não tem imagem (string vazia) e o usuário tinha imagem antes: envia null para deletar
+      // - Se não tem imagem e nunca teve: omite o campo
+      if (formData.image && formData.image.trim() !== '') {
+        updateData.image = formData.image;
+      } else if (user?.image && user.image.trim() !== '') {
+        // Se o usuário tinha imagem e agora está vazia, enviar null para deletar
+        updateData.image = null;
+      }
 
       // Adiciona campos de senha se estiver alterando
       if (isChangingPassword) {
         updateData.password = passwordData.password;
         updateData.newPassword = passwordData.newPassword;
       }
+      await dispatch(updateUserRequest(updateData)); // Verifica se houve mudança na imagem para mostrar notificação apropriada
+      const hadImage = user.image && user.image.trim() !== '';
+      const hasImage = formData.image && formData.image.trim() !== '';
 
-      await dispatch(updateUserRequest(updateData));
-
-      if (formData.image !== user.image) {
-        notification.showSuccess(
-          formData.image ? 'Imagem atualizada com sucesso!' : 'Imagem removida com sucesso!',
-        );
+      if (hadImage && !hasImage) {
+        notification.showSuccess(t('profile.messages.imageRemoved'));
+      } else if (!hadImage && hasImage) {
+        notification.showSuccess(t('profile.messages.imageAdded'));
+      } else if (hadImage && hasImage && formData.image !== user.image) {
+        notification.showSuccess(t('profile.messages.imageUpdated'));
       }
 
       setIsEditing(false);
       setIsChangingPassword(false);
       setPasswordData({ password: '', newPassword: '', confirmPassword: '' });
     } catch (error) {
-      notification.showError('Erro ao atualizar perfil. Tente novamente.');
+      notification.showError(t('profile.messages.updateError'));
     }
   };
 
@@ -199,7 +239,7 @@ const ProfilePage: React.FC = () => {
         setFormData((prev) => ({ ...prev, image: result.url }));
       }
     } catch (error) {
-      notification.showError('Erro ao fazer upload da imagem. Tente novamente.');
+      notification.showError(t('profile.messages.imageUploadError'));
     } finally {
       setUploading(false);
     }
@@ -215,10 +255,10 @@ const ProfilePage: React.FC = () => {
   return (
     <Container maxWidth="md">
       <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
+        {' '}
         <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4 }}>
-          Detalhes Pessoais
+          {t('profile.title')}
         </Typography>
-
         <Box
           sx={{
             display: 'grid',
@@ -252,7 +292,7 @@ const ProfilePage: React.FC = () => {
               {isEditing && (
                 <Box sx={{ position: 'absolute', right: -8, bottom: 16, display: 'flex', gap: 1 }}>
                   {formData.image && (
-                    <Tooltip title="Remover foto">
+                    <Tooltip title={t('profile.actions.removePhoto')}>
                       <IconButton
                         sx={{
                           bgcolor: 'error.main',
@@ -272,7 +312,7 @@ const ProfilePage: React.FC = () => {
                       </IconButton>
                     </Tooltip>
                   )}
-                  <Tooltip title="Alterar foto">
+                  <Tooltip title={t('profile.actions.changePhoto')}>
                     <IconButton
                       sx={{
                         bgcolor: 'background.paper',
@@ -287,27 +327,27 @@ const ProfilePage: React.FC = () => {
                   </Tooltip>
                 </Box>
               )}
-            </Box>
+            </Box>{' '}
             <Typography variant="subtitle1" gutterBottom>
-              Plano: Grátis
+              {t('profile.plan', { plan: t('profile.planFree') })}
             </Typography>
           </Box>
 
           <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {' '}
             <TextField
               fullWidth
-              label="Nome Completo"
+              label={t('profile.fields.fullName')}
               name="name"
               value={formData.name}
               onChange={handleInputChange}
               disabled={!isEditing}
               error={!!formErrors.name}
               helperText={formErrors.name}
-            />
-
+            />{' '}
             <TextField
               fullWidth
-              label="Email"
+              label={t('profile.fields.email')}
               name="email"
               value={formData.email}
               onChange={handleInputChange}
@@ -315,24 +355,26 @@ const ProfilePage: React.FC = () => {
               error={!!formErrors.email}
               helperText={formErrors.email}
             />
-
             <TextField
               fullWidth
-              label="Telefone"
+              label={t('profile.fields.phone')}
               name="phone"
               value={formData.phone}
               onChange={handleInputChange}
               disabled={!isEditing}
               error={!!formErrors.phone}
               helperText={formErrors.phone}
-              placeholder="(99) 99999-9999"
+              placeholder={t('profile.fields.phonePlaceholder')}
+              inputProps={{
+                maxLength: 15, // Máximo para formato (99) 99999-9999
+              }}
             />
-
             {isEditing && isChangingPassword ? (
               <>
+                {' '}
                 <TextField
                   fullWidth
-                  label="Senha Atual"
+                  label={t('profile.fields.currentPassword')}
                   name="password"
                   type="password"
                   value={passwordData.password}
@@ -340,10 +382,9 @@ const ProfilePage: React.FC = () => {
                   error={!!formErrors.password}
                   helperText={formErrors.password}
                 />
-
                 <TextField
                   fullWidth
-                  label="Nova Senha"
+                  label={t('profile.fields.newPassword')}
                   name="newPassword"
                   type="password"
                   value={passwordData.newPassword}
@@ -351,10 +392,9 @@ const ProfilePage: React.FC = () => {
                   error={!!formErrors.newPassword}
                   helperText={formErrors.newPassword}
                 />
-
                 <TextField
                   fullWidth
-                  label="Confirmar Nova Senha"
+                  label={t('profile.fields.confirmPassword')}
                   name="confirmPassword"
                   type="password"
                   value={passwordData.confirmPassword}
@@ -363,11 +403,10 @@ const ProfilePage: React.FC = () => {
                   helperText={formErrors.confirmPassword}
                 />
               </>
-            ) : null}
-
+            ) : null}{' '}
             {!isEditing ? (
               <Button variant="contained" onClick={() => setIsEditing(true)} sx={{ mt: 2 }}>
-                Editar Perfil
+                {t('profile.actions.edit')}
               </Button>
             ) : (
               <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap' }}>
@@ -380,25 +419,25 @@ const ProfilePage: React.FC = () => {
                     setFormData({
                       name: user?.name || '',
                       email: user?.email || '',
-                      phone: user?.phone || '',
+                      phone: user?.phone ? applyPhoneMask(user.phone) : '',
                       image: user?.image === undefined ? '' : user.image,
                     });
                   }}
                   sx={{ flex: 1 }}
                 >
-                  Cancelar
-                </Button>
+                  {t('profile.actions.cancel')}
+                </Button>{' '}
                 {!isChangingPassword && (
                   <Button
                     variant="outlined"
                     onClick={() => setIsChangingPassword(true)}
                     sx={{ flex: 1 }}
                   >
-                    Alterar Senha
+                    {t('profile.actions.changePassword')}
                   </Button>
                 )}
                 <Button variant="contained" onClick={handleSave} sx={{ flex: 1 }}>
-                  Salvar Alterações
+                  {t('profile.actions.save')}
                 </Button>
               </Box>
             )}
