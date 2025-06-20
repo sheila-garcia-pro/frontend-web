@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { logout } from '@store/slices/authSlice';
 import tokenManager from '@utils/tokenManager';
+import useRefreshToken from '@hooks/useRefreshToken';
 
 /**
  * Hook para verificar token na inicialização da aplicação
@@ -11,9 +12,10 @@ export const useInitialTokenCheck = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
+  const { attemptRefresh, shouldRefresh } = useRefreshToken();
 
   useEffect(() => {
-    const performInitialCheck = () => {
+    const performInitialCheck = async () => {
       const token = tokenManager.getToken();
       const currentPath = location.pathname;
 
@@ -38,11 +40,22 @@ export const useInitialTokenCheck = () => {
           navigate('/login', { replace: true });
         }
         return;
-      }
-
-      // Se tem token mas está expirado
+      } // Se tem token mas está expirado
       if (tokenManager.isTokenExpired()) {
-        console.log('⏰ Token expirado - limpando e redirecionando');
+        console.log('⏰ Token expirado - verificando refresh token...');
+
+        // Tentar renovar o token se possível
+        if (shouldRefresh()) {
+          console.log('🔄 Tentando renovar token...');
+          const refreshSuccess = await attemptRefresh();
+
+          if (refreshSuccess) {
+            console.log('✅ Token renovado com sucesso');
+            return; // Token renovado, continuar normalmente
+          }
+        }
+
+        console.log('❌ Não foi possível renovar o token - fazendo logout');
         tokenManager.clearAuthData();
         dispatch(logout());
 
@@ -57,13 +70,11 @@ export const useInitialTokenCheck = () => {
         console.log('✅ Token válido em rota pública - redirecionando para home');
         navigate('/', { replace: true });
       }
-    };
-
-    // Executar verificação após um pequeno delay para garantir que tudo esteja carregado
+    }; // Executar verificação após um pequeno delay para garantir que tudo esteja carregado
     const timer = setTimeout(performInitialCheck, 100);
 
     return () => clearTimeout(timer);
-  }, [navigate, location.pathname, dispatch]);
+  }, [navigate, location.pathname, dispatch, attemptRefresh, shouldRefresh]);
 };
 
 export default useInitialTokenCheck;
