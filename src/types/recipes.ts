@@ -1,3 +1,10 @@
+// Interface para ingredientes da receita vindos da API
+export interface RecipeIngredientAPI {
+  idIngredient: string;
+  quantityIngredientRecipe: string;
+  unitAmountUseIngredient: string;
+}
+
 export interface Recipe {
   _id: string;
   name: string;
@@ -10,6 +17,7 @@ export interface Recipe {
   weightRecipe: string;
   typeWeightRecipe: string;
   descripition: string;
+  ingredients: RecipeIngredientAPI[];
 }
 
 export interface RecipesResponse {
@@ -41,4 +49,5 @@ export interface CreateRecipeParams {
   weightRecipe: string;
   typeWeightRecipe: string;
   descripition: string;
+  ingredients?: RecipeIngredientAPI[];
 }

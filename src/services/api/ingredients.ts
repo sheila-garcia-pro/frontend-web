@@ -5,6 +5,7 @@ import {
   IngredientsResponse,
   SearchParams,
 } from '../../types/ingredients';
+import { IngredientPriceHistory } from '../../types/recipeIngredients';
 
 type QueryParams = {
   [key: string]: number | string | undefined;
@@ -136,4 +137,22 @@ export const updateIngredientPriceMeasure = async (
 export const getIngredientPriceMeasure = async (id: string): Promise<Ingredient> => {
   const response = await api.get<Ingredient>(`/v1/users/me/ingredient/${id}/price-measure`);
   return response.data;
+};
+
+// Obter histórico de preços de um ingrediente
+export const getIngredientPriceHistory = async (id: string): Promise<IngredientPriceHistory[]> => {
+  const response = await api.get<IngredientPriceHistory[]>(
+    `/v1/users/me/ingredient/${id}/historic`,
+  );
+  return response.data;
+};
+
+// Obter histórico de preços com cache
+export const getCachedIngredientPriceHistory = async (
+  id: string,
+): Promise<IngredientPriceHistory[]> => {
+  const response = await cachedGet<IngredientPriceHistory[]>(
+    `/v1/users/me/ingredient/${id}/historic`,
+  );
+  return response;
 };
