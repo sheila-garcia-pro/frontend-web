@@ -1,11 +1,5 @@
 import api, { cachedGet, clearCache } from './index';
-import {
-  Recipe,
-  CreateRecipeParams,
-  RecipesResponse,
-  SearchParams,
-  RecipeDetailResponse,
-} from '../../types/recipes';
+import { Recipe, CreateRecipeParams, RecipesResponse, SearchParams } from '../../types/recipes';
 
 type QueryParams = {
   [key: string]: number | string | undefined;
@@ -62,14 +56,14 @@ export const getCachedRecipes = async (params: SearchParams): Promise<RecipesRes
 
 // Obter receita por ID (sem cache)
 export const getRecipeById = async (id: string): Promise<Recipe> => {
-  const response = await api.get<RecipeDetailResponse[]>(`/v1/users/me/recipe/${id}`);
-  return response.data[0].recipes;
+  const response = await api.get<Recipe>(`/v1/users/me/recipe/${id}`);
+  return response.data;
 };
 
 // Obter receita por ID (com cache)
 export const getCachedRecipeById = async (id: string): Promise<Recipe> => {
-  const response = await cachedGet<RecipeDetailResponse[]>(`/v1/users/me/recipe/${id}`);
-  return response[0].recipes;
+  const response = await cachedGet<Recipe>(`/v1/users/me/recipe/${id}`);
+  return response;
 };
 
 // Obter receita por ID (sem cache - para dados frescos após edição)
@@ -79,9 +73,9 @@ export const getFreshRecipeById = async (id: string): Promise<Recipe> => {
   }
 
   console.log('🔍 getFreshRecipeById - Making request with ID:', id);
-  const response = await api.get<RecipeDetailResponse[]>(`/v1/users/me/recipe/${id}`);
+  const response = await api.get<Recipe>(`/v1/users/me/recipe/${id}`);
   console.log('🔍 getFreshRecipeById - API response:', response.data);
-  return response.data[0].recipes;
+  return response.data;
 };
 
 // Criar uma nova receita

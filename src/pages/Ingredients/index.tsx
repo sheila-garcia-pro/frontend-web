@@ -83,7 +83,7 @@ const IngredientsPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [editedPrices, setEditedPrices] = useState<EditedPrices>({});
-  const ITEMS_PER_PAGE = 20;
+  const [itemsPerPage, setItemsPerPage] = useState(100);
 
   // Redux
   const dispatch = useDispatch();
@@ -116,10 +116,15 @@ const IngredientsPage: React.FC = () => {
     dispatch(
       fetchIngredientsRequest({
         page: 1,
-        itemPerPage: 1000,
+        itemPerPage: 1000, // Buscar todos os ingredientes
       }),
     );
   }, [dispatch]);
+
+  // Reset página quando itens por página mudar
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [itemsPerPage]);
 
   // Filtragem dos ingredientes
   const filteredAndSortedIngredients = useMemo(() => {
@@ -159,11 +164,15 @@ const IngredientsPage: React.FC = () => {
 
   // Paginação
   const totalFilteredItems = filteredAndSortedIngredients.length;
-  const totalPages = Math.ceil(totalFilteredItems / ITEMS_PER_PAGE);
-  const paginatedIngredients = filteredAndSortedIngredients.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
-  );
+  const showAllItems = itemsPerPage === -1; // -1 significa "Todos"
+  const effectiveItemsPerPage = showAllItems ? totalFilteredItems : itemsPerPage;
+  const totalPages = showAllItems ? 1 : Math.ceil(totalFilteredItems / effectiveItemsPerPage);
+  const paginatedIngredients = showAllItems
+    ? filteredAndSortedIngredients
+    : filteredAndSortedIngredients.slice(
+        (currentPage - 1) * effectiveItemsPerPage,
+        currentPage * effectiveItemsPerPage,
+      );
 
   // Manipuladores de eventos
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
@@ -192,6 +201,12 @@ const IngredientsPage: React.FC = () => {
 
   const handleSortChange = (event: SelectChangeEvent) => {
     setSortOption(event.target.value);
+  };
+
+  const handleItemsPerPageChange = (event: SelectChangeEvent) => {
+    const newItemsPerPage = parseInt(event.target.value);
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset para primeira página
   };
 
   const handleOpenModal = () => setModalOpen(true);
@@ -276,8 +291,8 @@ const IngredientsPage: React.FC = () => {
   const handleRefreshList = () => {
     dispatch(
       fetchIngredientsRequest({
-        page: currentPage,
-        itemPerPage: ITEMS_PER_PAGE,
+        page: 1,
+        itemPerPage: 1000, // Buscar todos os ingredientes
         search: debouncedSearchTerm,
         category: selectedCategories.length > 0 ? selectedCategories[0] : undefined,
         forceRefresh: true, // Adiciona flag para forçar atualização
@@ -286,7 +301,8 @@ const IngredientsPage: React.FC = () => {
   };
 
   const renderSkeletons = () => {
-    return Array.from({ length: ITEMS_PER_PAGE }).map((_, index) => (
+    const skeletonCount = showAllItems ? 20 : effectiveItemsPerPage;
+    return Array.from({ length: skeletonCount }).map((_, index) => (
       <TableRow key={`skeleton-${index}`}>
         <TableCell padding="checkbox">
           <Checkbox disabled />
@@ -439,6 +455,22 @@ const IngredientsPage: React.FC = () => {
                     {option.label}
                   </MenuItem>
                 ))}
+              </Select>
+            </FormControl>
+
+            <FormControl sx={{ minWidth: 150 }}>
+              <Select
+                value={itemsPerPage.toString()}
+                onChange={handleItemsPerPageChange}
+                displayEmpty
+                size="small"
+                sx={{ borderRadius: 3 }}
+              >
+                <MenuItem value="20">20 itens</MenuItem>
+                <MenuItem value="50">50 itens</MenuItem>
+                <MenuItem value="100">100 itens</MenuItem>
+                <MenuItem value="200">200 itens</MenuItem>
+                <MenuItem value="-1">Todos</MenuItem>
               </Select>
             </FormControl>
           </Box>

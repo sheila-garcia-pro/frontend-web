@@ -6,12 +6,12 @@ const getDesignTokens = (mode: PaletteMode) => {
     mode,
     ...(mode === 'light'
       ? {
-          // Paleta para o tema light
+          // Paleta moderna e limpa para o tema light
           primary: {
-            main: '#3A4534', // Verde oliva escuro (cor principal solicitada)
-            light: '#8DA67A', // Verde claro suave
-            dark: '#2E3627', // Verde mais escuro
-            contrastText: '#F5F3E7', // Bege areia para contraste
+            main: '#059669', // Verde moderno e profissional
+            light: '#34D399', // Verde claro
+            dark: '#047857', // Verde escuro
+            contrastText: '#FFFFFF', // Branco puro para contraste
           },
           secondary: {
             main: '#DDE19E', // Amarelo claro esverdeado (cor secundária solicitada)
@@ -20,68 +20,78 @@ const getDesignTokens = (mode: PaletteMode) => {
             contrastText: '#3A4534', // Verde oliva escuro
           },
           background: {
-            default: '#F5F3E7', // Bege areia
-            paper: '#fff',
+            default: '#FFFFFF', // Branco puro
+            paper: '#FAFAFA', // Branco levemente acinzentado
           },
           text: {
-            primary: '#3A4534', // Verde oliva escuro
-            secondary: '#5A654D', // Tom médio de verde oliva
+            primary: '#1A1A1A', // Preto suave (não puro para não cansar)
+            secondary: '#666666', // Cinza médio
           },
           success: {
-            main: '#8DA67A', // Verde claro suave
-            light: '#C1C8B1', // Verde pastel
-            dark: '#3A4534', // Verde oliva escuro
+            main: '#22C55E', // Verde moderno
+            light: '#4ADE80', // Verde claro
+            dark: '#16A34A', // Verde escuro
           },
           error: {
-            main: '#D32F2F',
-            light: '#EF5350',
-            dark: '#C62828',
+            main: '#EF4444', // Vermelho moderno
+            light: '#F87171', // Vermelho claro
+            dark: '#DC2626', // Vermelho escuro
           },
           warning: {
-            main: '#DDE19E', // Amarelo claro esverdeado
-            light: '#F5F3E7', // Bege areia
-            dark: '#C1C8B1', // Verde pastel
+            main: '#F59E0B', // Amarelo/laranja moderno
+            light: '#FBBF24', // Amarelo claro
+            dark: '#D97706', // Amarelo escuro
           },
-          divider: 'rgba(58, 69, 52, 0.12)', // Verde oliva com transparência
+          info: {
+            main: '#06B6D4', // Ciano moderno
+            light: '#22D3EE', // Ciano claro
+            dark: '#0891B2', // Ciano escuro
+          },
+          divider: 'rgba(0, 0, 0, 0.08)', // Divisor sutil
         }
       : {
-          // Paleta para o tema dark - Melhorada para maior nitidez
+          // Paleta moderna e limpa para o tema dark
           primary: {
-            main: '#E8EDAA', // Amarelo mais vibrante para o modo dark
-            light: '#F5F3E7', // Bege areia
-            dark: '#C1C8B1', // Verde pastel
-            contrastText: '#23291C', // Verde escuro mais profundo
+            main: '#10B981', // Verde mais claro para contraste no dark
+            light: '#34D399', // Verde claro
+            dark: '#059669', // Verde escuro
+            contrastText: '#FFFFFF', // Branco puro
           },
           secondary: {
-            main: '#A1BC8B', // Verde claro suave mais vibrante
-            light: '#C1C8B1', // Verde pastel
-            dark: '#3A4534', // Verde oliva escuro
-            contrastText: '#FFFFFF', // Branco puro para melhor contraste
+            main: '#94A3B8', // Cinza azulado claro
+            light: '#CBD5E1', // Cinza muito claro
+            dark: '#64748B', // Cinza médio
+            contrastText: '#1A1A1A', // Preto suave
           },
           background: {
-            default: '#333D2C', // Tom mais escuro para maior contraste
-            paper: '#23291C', // Verde escuro mais profundo para cards e componentes
+            default: '#0F0F0F', // Preto profundo mas não puro
+            paper: '#1A1A1A', // Preto suave para cards
           },
           text: {
-            primary: '#FFFFFF', // Branco puro para melhor legibilidade
-            secondary: '#E8EDAA', // Amarelo mais vibrante
+            primary: '#FFFFFF', // Branco puro
+            secondary: '#A1A1AA', // Cinza claro
           },
           success: {
-            main: '#A1BC8B', // Verde mais vibrante
-            light: '#C1C8B1', // Verde pastel
-            dark: '#3A4534', // Verde oliva escuro
+            main: '#16A34A', // Verde para dark mode
+            light: '#22C55E', // Verde claro
+            dark: '#15803D', // Verde escuro
           },
           error: {
-            main: '#F44336',
-            light: '#E57373',
-            dark: '#D32F2F',
+            main: '#DC2626', // Vermelho para dark mode
+            light: '#EF4444', // Vermelho claro
+            dark: '#B91C1C', // Vermelho escuro
           },
           warning: {
-            main: '#E8EDAA', // Amarelo mais vibrante
-            light: '#F5F3E7', // Bege areia
-            dark: '#C1C8B1', // Verde pastel
+            main: '#D97706', // Amarelo para dark mode
+            light: '#F59E0B', // Amarelo claro
+            dark: '#B45309', // Amarelo escuro
           },
-          divider: 'rgba(232, 237, 170, 0.2)', // Amarelo claro com maior opacidade
+          info: {
+            main: '#0891B2', // Ciano para dark mode
+            light: '#06B6D4', // Ciano claro
+            dark: '#0E7490', // Ciano escuro
+          },
+          divider: 'rgba(255, 255, 255, 0.08)', // Divisor sutil para dark
         }),
   };
 
@@ -119,7 +129,7 @@ const getDesignTokens = (mode: PaletteMode) => {
       },
     },
     shape: {
-      borderRadius: 8, // Aumentado para bordas mais suaves
+      borderRadius: 6, // Bordas mais modernas e sutis
     },
     components: {
       MuiButton: {
@@ -127,13 +137,14 @@ const getDesignTokens = (mode: PaletteMode) => {
           root: {
             textTransform: 'none',
             fontWeight: 500,
-            padding: '8px 16px',
-            borderRadius: '8px', // Botões com bordas mais arredondadas
+            padding: '10px 20px',
+            borderRadius: '6px', // Bordas modernas
+            fontSize: '0.875rem',
           },
           contained: {
             boxShadow: 'none',
             '&:hover': {
-              boxShadow: '0px 2px 4px rgba(0,0,0,0.2)',
+              boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.15)',
             },
           },
         },
@@ -149,9 +160,16 @@ const getDesignTokens = (mode: PaletteMode) => {
         styleOverrides: {
           root: {
             '& .MuiOutlinedInput-root': {
-              borderRadius: '8px', // Inputs com bordas mais arredondadas
+              borderRadius: '6px',
+              '& fieldset': {
+                borderColor: mode === 'light' ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.15)',
+              },
               '&:hover fieldset': {
-                borderColor: mode === 'light' ? '#3A4534' : '#E8EDAA',
+                borderColor: mode === 'light' ? '#059669' : '#10B981',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: mode === 'light' ? '#059669' : '#10B981',
+                borderWidth: '2px',
               },
             },
           },
@@ -159,20 +177,36 @@ const getDesignTokens = (mode: PaletteMode) => {
       },
       MuiAppBar: {
         defaultProps: {
-          elevation: 3, // Aumentado para dar mais destaque
+          elevation: 0, // Remove sombra para visual mais limpo
         },
         styleOverrides: {
           root: {
-            backgroundColor: mode === 'light' ? '#3A4534' : '#23291C', // Verde escuro mais profundo no modo dark
-            borderBottom: mode === 'light' 
-              ? '1px solid rgba(58, 69, 52, 0.12)' 
-              : '1px solid rgba(232, 237, 170, 0.2)',
+            backgroundColor: mode === 'light' ? '#FFFFFF' : '#1A1A1A',
+            borderBottom:
+              mode === 'light'
+                ? '1px solid rgba(0, 0, 0, 0.08)'
+                : '1px solid rgba(255, 255, 255, 0.08)',
             '& .MuiToolbar-root': {
-              height: '68px', // Altura aumentada
+              height: '64px',
+              minHeight: '64px !important',
             },
             '& .MuiTypography-root': {
-              fontWeight: 600, // Texto mais em negrito
-              letterSpacing: '0.5px', // Espaçamento maior entre letras
+              fontWeight: 600,
+              color: mode === 'light' ? '#1A1A1A' : '#FFFFFF',
+            },
+            // Garante que os ícones sejam visíveis no header
+            '& .MuiIconButton-root': {
+              color: mode === 'light' ? '#1A1A1A' : '#FFFFFF',
+              '&:hover': {
+                backgroundColor:
+                  mode === 'light' ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+              },
+            },
+            '& .MuiSvgIcon-root': {
+              color: mode === 'light' ? '#1A1A1A' : '#FFFFFF',
+            },
+            '& .MuiButton-root': {
+              color: mode === 'light' ? '#1A1A1A' : '#FFFFFF',
             },
           },
         },
@@ -180,9 +214,9 @@ const getDesignTokens = (mode: PaletteMode) => {
       MuiDrawer: {
         styleOverrides: {
           paper: {
-            backgroundColor: mode === 'light' ? '#F5F3E7' : '#333D2C', // Cor de fundo mais escura
+            backgroundColor: mode === 'light' ? '#FAFAFA' : '#1A1A1A',
             borderRight: `1px solid ${
-              mode === 'light' ? 'rgba(58, 69, 52, 0.12)' : 'rgba(232, 237, 170, 0.15)'
+              mode === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)'
             }`,
           },
         },
@@ -190,16 +224,16 @@ const getDesignTokens = (mode: PaletteMode) => {
       MuiCard: {
         styleOverrides: {
           root: {
-            borderRadius: '12px', // Cards com bordas mais arredondadas
+            borderRadius: '8px',
             boxShadow:
               mode === 'light'
-                ? '0px 2px 8px rgba(58, 69, 52, 0.1)'
-                : '0px 2px 8px rgba(0, 0, 0, 0.3)',
+                ? '0px 1px 3px rgba(0, 0, 0, 0.05), 0px 1px 2px rgba(0, 0, 0, 0.1)'
+                : '0px 1px 3px rgba(0, 0, 0, 0.3), 0px 1px 2px rgba(0, 0, 0, 0.2)',
             '&:hover': {
               boxShadow:
                 mode === 'light'
-                  ? '0px 4px 12px rgba(58, 69, 52, 0.15)'
-                  : '0px 4px 12px rgba(0, 0, 0, 0.5)',
+                  ? '0px 4px 12px rgba(0, 0, 0, 0.1), 0px 2px 4px rgba(0, 0, 0, 0.1)'
+                  : '0px 4px 12px rgba(0, 0, 0, 0.4), 0px 2px 4px rgba(0, 0, 0, 0.3)',
             },
           },
         },
@@ -207,16 +241,17 @@ const getDesignTokens = (mode: PaletteMode) => {
       MuiPaper: {
         styleOverrides: {
           root: {
-            borderRadius: '12px', // Papéis com bordas mais arredondadas
+            borderRadius: '8px',
           },
         },
       },
       MuiListItem: {
         styleOverrides: {
           root: {
-            borderRadius: '8px', // Items de lista com bordas arredondadas
+            borderRadius: '6px',
             '&:hover': {
-              backgroundColor: mode === 'light' ? 'rgba(58, 69, 52, 0.05)' : 'rgba(221, 225, 158, 0.05)',
+              backgroundColor:
+                mode === 'light' ? 'rgba(5, 150, 105, 0.04)' : 'rgba(16, 185, 129, 0.08)',
             },
           },
         },
@@ -225,13 +260,13 @@ const getDesignTokens = (mode: PaletteMode) => {
       MuiAvatar: {
         styleOverrides: {
           root: {
-            backgroundColor: mode === 'light' ? '#3A4534' : '#DDE19E',
-            color: mode === 'light' ? '#F5F3E7' : '#2E3627',
+            backgroundColor: mode === 'light' ? '#059669' : '#10B981',
+            color: '#FFFFFF',
             fontWeight: 500,
           },
           colorDefault: {
-            backgroundColor: mode === 'light' ? '#8DA67A' : '#C1C8B1',
-            color: mode === 'light' ? '#F5F3E7' : '#2E3627',
+            backgroundColor: mode === 'light' ? '#64748B' : '#94A3B8',
+            color: '#FFFFFF',
           },
         },
       },
@@ -239,9 +274,9 @@ const getDesignTokens = (mode: PaletteMode) => {
       MuiBadge: {
         styleOverrides: {
           badge: {
-            backgroundColor: mode === 'light' ? '#DDE19E' : '#DDE19E',
-            color: mode === 'light' ? '#3A4534' : '#2E3627',
-            fontWeight: 'bold',
+            backgroundColor: mode === 'light' ? '#EF4444' : '#DC2626',
+            color: '#FFFFFF',
+            fontWeight: 600,
           },
         },
       },
@@ -249,15 +284,14 @@ const getDesignTokens = (mode: PaletteMode) => {
       MuiSvgIcon: {
         styleOverrides: {
           root: {
-            // Cores suaves para ícones
             '&.MuiSvgIcon-colorPrimary': {
-              color: mode === 'light' ? '#3A4534' : '#DDE19E',
+              color: mode === 'light' ? '#059669' : '#10B981',
             },
             '&.MuiSvgIcon-colorSecondary': {
-              color: mode === 'light' ? '#8DA67A' : '#C1C8B1',
+              color: mode === 'light' ? '#64748B' : '#94A3B8',
             },
             '&.MuiSvgIcon-colorAction': {
-              color: mode === 'light' ? '#5A654D' : '#F5F3E7',
+              color: mode === 'light' ? '#666666' : '#A1A1AA',
             },
           },
         },
@@ -269,7 +303,7 @@ const getDesignTokens = (mode: PaletteMode) => {
             textTransform: 'none',
             fontWeight: 500,
             '&.Mui-selected': {
-              color: mode === 'light' ? '#3A4534' : '#DDE19E',
+              color: mode === 'light' ? '#059669' : '#10B981',
             },
           },
         },
@@ -278,10 +312,14 @@ const getDesignTokens = (mode: PaletteMode) => {
       MuiMenu: {
         styleOverrides: {
           paper: {
-            backgroundColor: mode === 'light' ? '#fff' : '#2E3627',
-            boxShadow: mode === 'light' 
-              ? '0px 2px 8px rgba(58, 69, 52, 0.1)' 
-              : '0px 2px 8px rgba(0, 0, 0, 0.3)',
+            backgroundColor: mode === 'light' ? '#FFFFFF' : '#1A1A1A',
+            boxShadow:
+              mode === 'light'
+                ? '0px 4px 12px rgba(0, 0, 0, 0.1)'
+                : '0px 4px 12px rgba(0, 0, 0, 0.3)',
+            border: `1px solid ${
+              mode === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)'
+            }`,
           },
         },
       },
@@ -289,15 +327,16 @@ const getDesignTokens = (mode: PaletteMode) => {
       MuiChip: {
         styleOverrides: {
           root: {
-            backgroundColor: mode === 'light' ? 'rgba(58, 69, 52, 0.08)' : 'rgba(221, 225, 158, 0.1)',
-            borderRadius: '16px',
+            backgroundColor:
+              mode === 'light' ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)',
+            borderRadius: '12px',
             '&.MuiChip-colorPrimary': {
-              backgroundColor: mode === 'light' ? '#3A4534' : '#DDE19E',
-              color: mode === 'light' ? '#F5F3E7' : '#2E3627',
+              backgroundColor: mode === 'light' ? '#059669' : '#10B981',
+              color: '#FFFFFF',
             },
             '&.MuiChip-colorSecondary': {
-              backgroundColor: mode === 'light' ? '#DDE19E' : '#8DA67A',
-              color: mode === 'light' ? '#3A4534' : '#F5F3E7',
+              backgroundColor: mode === 'light' ? '#64748B' : '#94A3B8',
+              color: '#FFFFFF',
             },
           },
           label: {
