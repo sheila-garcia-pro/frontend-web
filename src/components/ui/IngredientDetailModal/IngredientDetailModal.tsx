@@ -38,6 +38,8 @@ import { IngredientPriceHistory, RecipeIngredient } from '../../../types/recipeI
 import { getCachedIngredientPriceHistory } from '../../../services/api/ingredients';
 import { getNutritionalTable } from '../../../services/api/nutritionalTable';
 import { NutritionalTable } from '../../../types/nutritionalTable';
+import { getCachedUnitMeasures } from '../../../services/api/unitMeasure';
+import { UnitMeasure } from '../../../types/unitMeasure';
 
 interface IngredientDetailModalProps {
   open: boolean;
@@ -67,7 +69,7 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
   const [correctionFactor, setCorrectionFactor] = useState(1.0);
   const [purchasePrice, setPurchasePrice] = useState('');
   const [purchaseQuantity, setPurchaseQuantity] = useState('');
-  const [purchaseUnit, setPurchaseUnit] = useState('Quilograma');
+  const [purchaseUnit, setPurchaseUnit] = useState('Quilogramas');
 
   // Estados para histórico de preços e tabela nutricional
   const [priceHistory, setPriceHistory] = useState<IngredientPriceHistory[]>([]);
@@ -76,19 +78,8 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
   const [loadingPriceHistory, setLoadingPriceHistory] = useState(false);
   const [loadingNutritional, setLoadingNutritional] = useState(false);
   const [currentTab, setCurrentTab] = useState(0);
-
-  // Unidades de medida
-  const unitMeasures = [
-    'Quilograma',
-    'Grama',
-    'Litro',
-    'Mililitro',
-    'Unidade',
-    'Colher (sopa)',
-    'Colher (chá)',
-    'Xícara',
-    'Copo',
-  ];
+  const [unitMeasures, setUnitMeasures] = useState<UnitMeasure[]>([]);
+  const [loadingUnits, setLoadingUnits] = useState(false);
 
   // Função para carregar histórico de preços
   const loadPriceHistory = useCallback(async (ingredientId: string) => {
@@ -119,9 +110,25 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
     }
   }, []);
 
+  // Função para carregar unidades de medida
+  const loadUnitMeasures = useCallback(async () => {
+    setLoadingUnits(true);
+    try {
+      const data = await getCachedUnitMeasures();
+      setUnitMeasures(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar unidades de medida:', error);
+    } finally {
+      setLoadingUnits(false);
+    }
+  }, []);
+
   // Resetar campos quando o ingrediente mudar ou quando houver dados existentes
   useEffect(() => {
     if (ingredient) {
+      // Carregar unidades de medida
+      loadUnitMeasures();
+
       // Se há dados existentes (modo edição), usar esses dados
       if (existingData) {
         setQuantity(existingData.quantity.toString());
@@ -145,14 +152,14 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
         setCorrectionFactor(1.0);
         setPurchasePrice(ingredient.price?.price?.toString() || '');
         setPurchaseQuantity(ingredient.price?.quantity?.toString() || '');
-        setPurchaseUnit(ingredient.price?.unitMeasure || 'Quilograma');
+        setPurchaseUnit(ingredient.price?.unitMeasure || 'Quilogramas');
       }
 
       // Carregar dados adicionais
       loadPriceHistory(ingredient._id);
       loadNutritionalTables(ingredient.name);
     }
-  }, [ingredient, existingData, loadPriceHistory, loadNutritionalTables]);
+  }, [ingredient, existingData, loadPriceHistory, loadNutritionalTables, loadUnitMeasures]);
 
   // Calcular custo estimado
   const calculateEstimatedCost = () => {
@@ -283,11 +290,18 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
                         label="Unidade"
                         onChange={(e) => setUnitMeasure(e.target.value)}
                       >
-                        {unitMeasures.map((unit) => (
-                          <MenuItem key={unit} value={unit}>
-                            {unit}
+                        {loadingUnits ? (
+                          <MenuItem disabled>
+                            <CircularProgress size={20} />
+                            Carregando unidades...
                           </MenuItem>
-                        ))}
+                        ) : (
+                          unitMeasures.map((unit) => (
+                            <MenuItem key={unit._id} value={unit.name}>
+                              {unit.name} ({unit.acronym})
+                            </MenuItem>
+                          ))
+                        )}
                       </Select>
                     </FormControl>
                   </Box>
@@ -396,12 +410,20 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
                           value={purchaseUnit}
                           label="Unidade de Compra"
                           onChange={(e) => setPurchaseUnit(e.target.value)}
+                          disabled={loadingUnits}
                         >
-                          {unitMeasures.map((unit) => (
-                            <MenuItem key={unit} value={unit}>
-                              {unit}
+                          {loadingUnits ? (
+                            <MenuItem disabled>
+                              <CircularProgress size={20} />
+                              Carregando unidades...
                             </MenuItem>
-                          ))}
+                          ) : (
+                            unitMeasures.map((unit) => (
+                              <MenuItem key={unit._id} value={unit.name}>
+                                {unit.name} ({unit.acronym})
+                              </MenuItem>
+                            ))
+                          )}
                         </Select>
                       </FormControl>
                     </Grid>

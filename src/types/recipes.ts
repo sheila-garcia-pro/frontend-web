@@ -3,6 +3,8 @@ export interface RecipeIngredientAPI {
   idIngredient: string;
   quantityIngredientRecipe: string;
   unitAmountUseIngredient: string;
+  priceQuantityIngredient?: number;
+  unitMeasure?: string;
 }
 
 export interface Recipe {
@@ -18,6 +20,7 @@ export interface Recipe {
   typeWeightRecipe: string;
   descripition: string;
   ingredients: RecipeIngredientAPI[];
+  modePreparation?: string[];
 }
 
 export interface RecipesResponse {
@@ -50,4 +53,5 @@ export interface CreateRecipeParams {
   typeWeightRecipe: string;
   descripition: string;
   ingredients?: RecipeIngredientAPI[];
+  modePreparation?: string[];
 }

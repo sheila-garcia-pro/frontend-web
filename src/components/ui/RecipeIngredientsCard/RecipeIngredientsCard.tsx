@@ -25,17 +25,21 @@ import {
 import { Search, Delete, Edit, Save, Cancel, Restaurant, AttachMoney } from '@mui/icons-material';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { getCachedIngredients } from '../../../services/api/ingredients';
+import { getCachedUnitMeasures } from '../../../services/api/unitMeasure';
+import { UnitMeasure } from '../../../types/unitMeasure';
 import { Ingredient } from '../../../types/ingredients';
 import { RecipeIngredient, IngredientSearchResult } from '../../../types/recipeIngredients';
 import IngredientDetailModal from '../IngredientDetailModal/IngredientDetailModal';
 
 interface RecipeIngredientsCardProps {
   recipeId: string;
+  initialIngredients?: RecipeIngredient[];
   onIngredientsUpdate?: (ingredients: RecipeIngredient[]) => void;
 }
 
 const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
   recipeId: _recipeId,
+  initialIngredients = [],
   onIngredientsUpdate,
 }) => {
   // Estados
@@ -53,22 +57,36 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editQuantity, setEditQuantity] = useState('');
   const [editUnit, setEditUnit] = useState('');
+  const [unitMeasures, setUnitMeasures] = useState<UnitMeasure[]>([]);
+  const [loadingUnits, setLoadingUnits] = useState(false);
 
   // Debounce para busca
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // Unidades de medida comuns
-  const unitMeasures = [
-    'Quilograma',
-    'Grama',
-    'Litro',
-    'Mililitro',
-    'Unidade',
-    'Colher (sopa)',
-    'Colher (chá)',
-    'Xícara',
-    'Copo',
-  ];
+  // Carregar ingredientes iniciais
+  useEffect(() => {
+    if (initialIngredients.length > 0) {
+      setSelectedIngredients(initialIngredients);
+      onIngredientsUpdate?.(initialIngredients);
+    }
+  }, [initialIngredients, onIngredientsUpdate]);
+
+  // Carregar unidades de medida da API
+  useEffect(() => {
+    const loadUnitMeasures = async () => {
+      setLoadingUnits(true);
+      try {
+        const data = await getCachedUnitMeasures();
+        setUnitMeasures(data || []);
+      } catch (error) {
+        console.error('Erro ao carregar unidades de medida:', error);
+      } finally {
+        setLoadingUnits(false);
+      }
+    };
+
+    loadUnitMeasures();
+  }, []);
 
   // Buscar ingredientes
   useEffect(() => {
@@ -151,8 +169,18 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
     const pricePerUnit = data.purchasePrice / data.purchaseQuantity;
     const totalCost = pricePerUnit * data.quantity * data.correctionFactor;
 
+    // Atualizar o ingrediente com novos dados de preço
+    const updatedIngredient = {
+      ...selectedIngredient,
+      price: {
+        price: data.purchasePrice,
+        quantity: data.purchaseQuantity,
+        unitMeasure: data.purchaseUnit,
+      },
+    };
+
     const newRecipeIngredient: RecipeIngredient = {
-      ingredient: selectedIngredient,
+      ingredient: updatedIngredient,
       quantity: data.quantity,
       unitMeasure: data.unitMeasure,
       totalWeight: data.quantity * data.correctionFactor,
@@ -358,12 +386,23 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
                             sx={{ width: 100 }}
                           />
                           <FormControl size="small" sx={{ minWidth: 120 }}>
-                            <Select value={editUnit} onChange={(e) => setEditUnit(e.target.value)}>
-                              {unitMeasures.map((unit) => (
-                                <MenuItem key={unit} value={unit}>
-                                  {unit}
+                            <Select
+                              value={editUnit}
+                              onChange={(e) => setEditUnit(e.target.value)}
+                              disabled={loadingUnits}
+                            >
+                              {loadingUnits ? (
+                                <MenuItem disabled>
+                                  <CircularProgress size={16} />
+                                  Carregando...
                                 </MenuItem>
-                              ))}
+                              ) : (
+                                unitMeasures.map((unit) => (
+                                  <MenuItem key={unit._id} value={unit.name}>
+                                    {unit.name} ({unit.acronym})
+                                  </MenuItem>
+                                ))
+                              )}
                             </Select>
                           </FormControl>
                           <IconButton

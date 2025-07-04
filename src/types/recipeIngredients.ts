@@ -82,14 +82,28 @@ export const convertAPIIngredientsToRecipeIngredients = async (
       const ingredient = await getIngredientById(apiIngredient.idIngredient);
       const quantity = parseFloat(apiIngredient.quantityIngredientRecipe);
 
+      // Usar preço salvo na receita se disponível, senão usar preço do ingrediente
+      let ingredientWithPrice = ingredient;
+      if (apiIngredient.priceQuantityIngredient && apiIngredient.unitMeasure) {
+        // Se a receita tem informações de preço salvas, usá-las
+        ingredientWithPrice = {
+          ...ingredient,
+          price: {
+            price: apiIngredient.priceQuantityIngredient,
+            quantity: quantity,
+            unitMeasure: apiIngredient.unitMeasure,
+          },
+        };
+      }
+
       // Calcular custo total
-      const pricePerUnit = ingredient.price
-        ? ingredient.price.price / ingredient.price.quantity
+      const pricePerUnit = ingredientWithPrice.price
+        ? ingredientWithPrice.price.price / ingredientWithPrice.price.quantity
         : 0;
       const totalCost = pricePerUnit * quantity;
 
       convertedIngredients.push({
-        ingredient,
+        ingredient: ingredientWithPrice,
         quantity,
         unitMeasure: apiIngredient.unitAmountUseIngredient,
         totalWeight: quantity,

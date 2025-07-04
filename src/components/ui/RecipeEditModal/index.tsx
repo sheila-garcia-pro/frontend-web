@@ -21,6 +21,8 @@ import { useDispatch } from 'react-redux';
 import { addNotification } from '../../../store/slices/uiSlice';
 import { Recipe, CreateRecipeParams } from '../../../types/recipes';
 import { updateRecipe } from '../../../services/api/recipes';
+import { getCachedUnitMeasures } from '../../../services/api/unitMeasure';
+import { UnitMeasure } from '../../../types/unitMeasure';
 
 interface RecipeEditModalProps {
   open: boolean;
@@ -37,6 +39,8 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
 }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
+  const [unitMeasures, setUnitMeasures] = useState<UnitMeasure[]>([]);
+  const [loadingUnits, setLoadingUnits] = useState(false);
   const [formData, setFormData] = useState<CreateRecipeParams>({
     name: '',
     sku: '',
@@ -67,6 +71,26 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
       });
     }
   }, [recipe]);
+
+  // Carregar unidades de medida da API
+  useEffect(() => {
+    const loadUnitMeasures = async () => {
+      if (!open) return;
+
+      setLoadingUnits(true);
+      try {
+        const data = await getCachedUnitMeasures();
+        setUnitMeasures(data || []);
+      } catch (error) {
+        console.error('Erro ao carregar unidades de medida:', error);
+      } finally {
+        setLoadingUnits(false);
+      }
+    };
+
+    loadUnitMeasures();
+  }, [open]);
+
   const handleInputChange =
     (field: keyof CreateRecipeParams) =>
     (
@@ -143,7 +167,8 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
 
   const yieldTypes = ['Porções', 'Pessoas', 'Unidades', 'Fatias'];
 
-  const weightTypes = ['Quilogramas', 'Gramas', 'Litros', 'Mililitros'];
+  // Mapear as unidades de medida da API para o formato esperado
+  const weightTypes = unitMeasures.map((unit) => unit.name);
 
   return (
     <Dialog

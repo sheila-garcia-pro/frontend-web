@@ -22,7 +22,15 @@ import { useDispatch } from 'react-redux';
 import { addNotification } from '../../../store/slices/uiSlice';
 import { Recipe, CreateRecipeParams } from '../../../types/recipes';
 import { updateRecipe } from '../../../services/api/recipes';
+import { getCachedIngredientById } from '../../../services/api/ingredients';
+import { syncIngredientsWithAPI } from '../../../utils/ingredientSync';
 import ImageUploadComponent from '../ImageUpload';
+import {
+  RecipeIngredient,
+  convertAPIIngredientsToRecipeIngredients,
+} from '../../../types/recipeIngredients';
+import RecipeIngredientsCard from '../RecipeIngredientsCard';
+import RecipeStepsCard from '../RecipeStepsCard';
 
 interface RecipeEditModalProps {
   open: boolean;
@@ -39,6 +47,8 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
 }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
+  const [recipeIngredients, setRecipeIngredients] = useState<RecipeIngredient[]>([]);
+  const [recipeSteps, setRecipeSteps] = useState<string[]>([]);
   const [formData, setFormData] = useState<CreateRecipeParams>({
     name: '',
     sku: '',
@@ -66,7 +76,36 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
         weightRecipe: recipe.weightRecipe,
         typeWeightRecipe: recipe.typeWeightRecipe,
         descripition: recipe.descripition,
+        ingredients: recipe.ingredients,
+        modePreparation: recipe.modePreparation,
       });
+
+      // Carregar passos da receita
+      if (recipe.modePreparation && recipe.modePreparation.length > 0) {
+        setRecipeSteps(recipe.modePreparation);
+      } else {
+        setRecipeSteps([]);
+      }
+
+      // Carregar ingredientes da receita
+      const loadRecipeIngredients = async () => {
+        if (recipe.ingredients && recipe.ingredients.length > 0) {
+          try {
+            const convertedIngredients = await convertAPIIngredientsToRecipeIngredients(
+              recipe.ingredients,
+              getCachedIngredientById,
+            );
+            setRecipeIngredients(convertedIngredients);
+          } catch (error) {
+            console.error('Erro ao converter ingredientes:', error);
+            setRecipeIngredients([]);
+          }
+        } else {
+          setRecipeIngredients([]);
+        }
+      };
+
+      loadRecipeIngredients();
     }
   }, [recipe]);
   const handleInputChange =
@@ -93,6 +132,17 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
         [field]: value,
       }));
     };
+
+  // Função para atualizar ingredientes da receita
+  const handleIngredientsUpdate = (ingredients: RecipeIngredient[]) => {
+    setRecipeIngredients(ingredients);
+  };
+
+  // Função para atualizar passos da receita
+  const handleStepsUpdate = (steps: string[]) => {
+    setRecipeSteps(steps);
+  };
+
   const handleSubmit = async () => {
     if (!recipe) {
       console.error('❌ Recipe is null or undefined');
@@ -129,7 +179,35 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
     setLoading(true);
     try {
       console.log('🚀 Calling updateRecipe with ID:', recipe._id);
-      const updatedRecipe = await updateRecipe(recipe._id, formData);
+
+      // Etapa 1: Atualizar ingredientes individuais
+      if (recipeIngredients.length > 0) {
+        console.log('🔄 Atualizando ingredientes individuais...');
+        try {
+          await syncIngredientsWithAPI(recipeIngredients);
+          console.log('✅ Todos os ingredientes foram atualizados');
+        } catch (error) {
+          console.error('❌ Erro ao atualizar alguns ingredientes:', error);
+          // Continua com a receita mesmo se houver erro nos ingredientes
+        }
+      }
+
+      // Etapa 2: Preparar dados da receita com ingredientes e passos
+      const recipeData = {
+        ...formData,
+        ingredients: recipeIngredients.map((ri) => ({
+          idIngredient: ri.ingredient._id,
+          quantityIngredientRecipe: ri.quantity.toString(),
+          unitAmountUseIngredient: ri.unitMeasure,
+          priceQuantityIngredient: ri.ingredient.price?.price || 0,
+          unitMeasure: ri.ingredient.price?.unitMeasure || ri.unitMeasure,
+        })),
+        modePreparation: recipeSteps.length > 0 ? recipeSteps : undefined,
+      };
+
+      // Etapa 3: Atualizar a receita
+      console.log('🔄 Atualizando receita...');
+      const updatedRecipe = await updateRecipe(recipe._id, recipeData);
 
       // Não mostrar notificação aqui, será mostrada na página pai após recarregar
       onRecipeUpdated(updatedRecipe);
@@ -324,6 +402,30 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
               disabled={loading}
             />
           </Grid>
+          {/* Ingredientes da Receita */}
+          {recipe && (
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ mt: 2 }}>
+                <RecipeIngredientsCard
+                  recipeId={recipe._id}
+                  initialIngredients={recipeIngredients}
+                  onIngredientsUpdate={handleIngredientsUpdate}
+                />
+              </Box>
+            </Grid>
+          )}
+          {/* Passos da Receita */}
+          {recipe && (
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ mt: 2 }}>
+                <RecipeStepsCard
+                  recipeId={recipe._id}
+                  initialSteps={recipeSteps}
+                  onStepsUpdate={handleStepsUpdate}
+                />
+              </Box>
+            </Grid>
+          )}
         </Grid>
       </DialogContent>
 

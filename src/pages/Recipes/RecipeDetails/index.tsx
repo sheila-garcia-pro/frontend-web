@@ -31,10 +31,16 @@ import { useDispatch } from 'react-redux';
 import { addNotification } from '../../../store/slices/uiSlice';
 import { Recipe } from '../../../types/recipes';
 import { getCachedRecipeById, getFreshRecipeById } from '../../../services/api/recipes';
+import { getCachedIngredientById } from '../../../services/api/ingredients';
 import RecipeEditModal from '../../../components/ui/RecipeEditModal/RecipeEditModal';
 import RecipeDeleteModal from '../../../components/ui/RecipeDeleteModal';
 import { RecipeIngredientsCard } from '../../../components/ui';
-import { RecipeIngredient } from '../../../types/recipeIngredients';
+import {
+  RecipeIngredient,
+  convertAPIIngredientsToRecipeIngredients,
+} from '../../../types/recipeIngredients';
+import RecipeStepsCard from '../../../components/ui/RecipeStepsCard';
+import RecipeSaveManager from '../../../components/ui/RecipeSaveManager';
 
 const RecipeDetailsPage: FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -47,12 +53,46 @@ const RecipeDetailsPage: FC = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [recipeIngredients, setRecipeIngredients] = useState<RecipeIngredient[]>([]);
+  const [recipeSteps, setRecipeSteps] = useState<string[]>([]);
 
   // Log dos ingredientes para debug
   useEffect(() => {
     if (recipe?.ingredients && recipe.ingredients.length > 0) {
-      console.log('🔍 Debug - Ingredientes da receita:', recipe.ingredients);
+      console.log('Ingredientes da receita carregados:', recipe.ingredients.length);
     }
+  }, [recipe?.ingredients]);
+
+  // Carregar passos da receita
+  useEffect(() => {
+    if (recipe?.modePreparation && recipe.modePreparation.length > 0) {
+      setRecipeSteps(recipe.modePreparation);
+    } else {
+      setRecipeSteps([]);
+    }
+  }, [recipe?.modePreparation]);
+
+  // Carregar ingredientes da receita
+  useEffect(() => {
+    const loadRecipeIngredients = async () => {
+      if (recipe?.ingredients && recipe.ingredients.length > 0) {
+        try {
+          console.log('🔄 Convertendo ingredientes da API para o formato do componente...');
+          const convertedIngredients = await convertAPIIngredientsToRecipeIngredients(
+            recipe.ingredients,
+            getCachedIngredientById,
+          );
+          setRecipeIngredients(convertedIngredients);
+          console.log('✅ Ingredientes convertidos:', convertedIngredients);
+        } catch (error) {
+          console.error('❌ Erro ao converter ingredientes:', error);
+          setRecipeIngredients([]);
+        }
+      } else {
+        setRecipeIngredients([]);
+      }
+    };
+
+    loadRecipeIngredients();
   }, [recipe?.ingredients]);
 
   // Carregar dados da receita
@@ -64,15 +104,7 @@ const RecipeDetailsPage: FC = () => {
       }
       setLoading(true);
       try {
-        console.log('🔍 Debug - Loading recipe with ID:', id);
-        console.log('🔍 Debug - Making API call to getCachedRecipeById...');
         const foundRecipe = await getCachedRecipeById(id);
-        console.log('🔍 Debug - Raw API response:', foundRecipe);
-        console.log('🔍 Debug - Recipe structure check:');
-        console.log('  - _id:', foundRecipe._id);
-        console.log('  - name:', foundRecipe.name);
-        console.log('  - ingredients:', foundRecipe.ingredients);
-        console.log('  - ingredients length:', foundRecipe.ingredients?.length || 0);
 
         // Garantir que ingredients seja sempre um array
         if (!foundRecipe.ingredients) {
@@ -162,8 +194,6 @@ const RecipeDetailsPage: FC = () => {
     }
   };
   const handleEditClick = () => {
-    console.log('🔍 Debug - Opening edit modal for recipe:', recipe);
-    console.log('🔍 Debug - Recipe ID:', recipe?._id);
     setEditModalOpen(true);
   };
 
@@ -249,6 +279,30 @@ const RecipeDetailsPage: FC = () => {
     // Mostrar total dos ingredientes no log para debug
     const total = ingredients.reduce((sum, item) => sum + item.totalCost, 0);
     console.log('💰 Total dos ingredientes: R$', total.toFixed(2));
+  };
+
+  // Função para atualizar passos da receita
+  const handleStepsUpdate = (steps: string[]) => {
+    setRecipeSteps(steps);
+    console.log('🔄 Passos atualizados:', steps);
+  };
+
+  // Função para quando a receita for salva com sucesso
+  const handleRecipeSaved = (updatedRecipe: Recipe) => {
+    console.log('✅ Receita salva com sucesso:', updatedRecipe);
+    handleRecipeUpdated(updatedRecipe);
+  };
+
+  // Função para quando houver erro no salvamento
+  const handleSaveError = (error: string) => {
+    console.error('❌ Erro ao salvar receita:', error);
+    dispatch(
+      addNotification({
+        message: `Erro ao salvar receita: ${error}`,
+        type: 'error',
+        duration: 5000,
+      }),
+    );
   };
 
   if (loading) {
@@ -738,41 +792,31 @@ const RecipeDetailsPage: FC = () => {
         <Box sx={{ mt: 3 }}>
           <RecipeIngredientsCard
             recipeId={recipe._id}
+            initialIngredients={recipeIngredients}
             onIngredientsUpdate={handleIngredientsUpdate}
           />
         </Box>
-        {/* Debug info para ingredientes da API */}
-        {recipe.ingredients && recipe.ingredients.length > 0 && (
-          <Card sx={{ mt: 2, borderRadius: 3, boxShadow: 1 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                🔍 Debug - Ingredientes da API ({recipe.ingredients.length} ingredientes)
-              </Typography>
-              <pre style={{ fontSize: '12px', overflowX: 'auto' }}>
-                {JSON.stringify(recipe.ingredients, null, 2)}
-              </pre>
-              {recipeIngredients.length > 0 && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Ingredientes processados ({recipeIngredients.length}):
-                  </Typography>
-                  <pre style={{ fontSize: '11px', overflowX: 'auto', color: '#2e7d32' }}>
-                    {JSON.stringify(
-                      recipeIngredients.map((ri) => ({
-                        name: ri.ingredient.name,
-                        quantity: ri.quantity,
-                        unit: ri.unitMeasure,
-                        cost: ri.totalCost,
-                      })),
-                      null,
-                      2,
-                    )}
-                  </pre>
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-        )}
+
+        {/* Card de Passos da Receita */}
+        <Box sx={{ mt: 3 }}>
+          <RecipeStepsCard
+            recipeId={recipe._id}
+            initialSteps={recipeSteps}
+            onStepsUpdate={handleStepsUpdate}
+          />
+        </Box>
+
+        {/* Botão Salvar */}
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+          <RecipeSaveManager
+            recipe={recipe}
+            recipeIngredients={recipeIngredients}
+            recipeSteps={recipeSteps}
+            onSaveComplete={handleRecipeSaved}
+            onError={handleSaveError}
+          />
+        </Box>
+
         {/* Modais */}
         <RecipeEditModal
           open={editModalOpen}
