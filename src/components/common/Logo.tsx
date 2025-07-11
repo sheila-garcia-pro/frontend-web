@@ -1,14 +1,11 @@
 import React from 'react';
 import { Box, Typography, SxProps, Theme } from '@mui/material';
 import { Link } from 'react-router-dom';
-import logoSquare from '../../assets/logo_transparente.png';
-import logoRound from '../../assets/logo_transparente.png';
-import logoWithText from '../../assets/logo_transparente_com_nome.png';
-import logoWithTextLight from '../../assets/logo_transparente_com_nome_ligth.png';
 import { useTheme } from '@mui/material/styles';
+import { getLogo, LOGO_ASSETS } from '../../assets/logoAssets';
 
 interface LogoProps {
-  variant?: 'square' | 'round' | 'with-text';
+  variant?: 'symbol' | 'full' | 'green' | 'pink' | 'beige' | 'white' | 'black';
   size?: 'small' | 'medium' | 'large' | number;
   showText?: boolean;
   onClick?: () => void;
@@ -19,9 +16,9 @@ interface LogoProps {
 }
 
 const Logo: React.FC<LogoProps> = ({
-  variant = 'square',
+  variant = 'symbol',
   size = 'medium',
-  showText = true,
+  showText = false,
   onClick,
   sx = {},
   textColor = 'inherit',
@@ -35,27 +32,33 @@ const Logo: React.FC<LogoProps> = ({
   let sizeInPx: number;
   switch (size) {
     case 'small':
-      sizeInPx = variant === 'with-text' ? 50 : 30;
+      sizeInPx = 40;
       break;
     case 'medium':
-      sizeInPx = variant === 'with-text' ? 100 : 60;
+      sizeInPx = 60;
       break;
     case 'large':
-      sizeInPx = variant === 'with-text' ? 180 : 80;
+      sizeInPx = 100;
       break;
     default:
-      sizeInPx = typeof size === 'number' ? size : 40;
-  } // Escolher a imagem com base na variante, tema e se é header
+      sizeInPx = typeof size === 'number' ? size : 60;
+  }
+
+  // Escolher o logo baseado na variante e tema
   let logoSrc;
-  if (variant === 'with-text') {
-    // Se for header, usa sempre a imagem original, caso contrário usa a imagem baseada no tema
-    if (isHeader) {
-      logoSrc = logoWithText;
-    } else {
-      logoSrc = isDarkMode ? logoWithText : logoWithTextLight;
-    }
+  
+  if (['green', 'pink', 'beige', 'white', 'black'].includes(variant)) {
+    // Se for uma cor específica, usar a variante correspondente
+    const colorVariant = variant as keyof typeof LOGO_ASSETS.variants;
+    logoSrc = variant === 'full' ? 
+      LOGO_ASSETS.variants[colorVariant].full : 
+      LOGO_ASSETS.variants[colorVariant].symbol;
+  } else if (variant === 'full') {
+    // Logo completo baseado no tema
+    logoSrc = getLogo(isDarkMode ? 'dark' : 'light', 'full');
   } else {
-    logoSrc = variant === 'square' ? logoSquare : logoRound;
+    // Logo símbolo baseado no tema (padrão)
+    logoSrc = getLogo(isDarkMode ? 'dark' : 'light', 'symbol');
   }
 
   const logoComponent = (
@@ -63,7 +66,7 @@ const Logo: React.FC<LogoProps> = ({
       sx={{
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: isHeader ? 'flex-start' : 'center', // Se for header, alinha à esquerda
         textDecoration: 'none',
         ...sx,
       }}
@@ -85,7 +88,7 @@ const Logo: React.FC<LogoProps> = ({
           },
         }}
       />
-      {showText && variant !== 'with-text' && (
+      {showText && variant !== 'full' && (
         <Typography
           variant={size === 'large' ? 'h4' : size === 'small' ? 'body1' : 'h6'}
           component="span"
@@ -98,7 +101,7 @@ const Logo: React.FC<LogoProps> = ({
             textShadow: isDarkMode ? '0px 1px 2px rgba(0, 0, 0, 0.3)' : 'none',
           }}
         >
-          Sheila Garcia tetse
+          Sheila Garcia
         </Typography>
       )}
     </Box>

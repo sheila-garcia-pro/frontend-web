@@ -20,7 +20,7 @@ const Footer: React.FC = () => {
       <Container maxWidth="lg">
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <Logo 
-            variant="round" 
+            variant="symbol" 
             size="small" 
             showText={false}
             sx={{ mb: 1 }}

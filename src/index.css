@@ -1,10 +1,25 @@
+/* ======================================
+   🎨 IMPORTAÇÃO DA TIPOGRAFIA GOTHAM
+   ====================================== */
+@import './styles/fonts.css';
+
 body {
   margin: 0;
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
-    'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-family: 'Gotham', 'Helvetica Neue', 'Arial', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Garantir que o body ocupe toda a altura */
+  min-height: 100vh;
+}
+
+html {
+  /* Garantir que o html também ocupe toda a altura */
+  height: 100%;
+}
+
+#root {
+  /* Garantir que o root também ocupe toda a altura */
+  min-height: 100vh;
 }
 
 code {

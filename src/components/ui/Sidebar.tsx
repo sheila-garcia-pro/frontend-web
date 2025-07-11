@@ -82,7 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
           }}
         >
           <Logo
-            variant="round"
+            variant="symbol"
             size="medium"
             showText={false}
             sx={{

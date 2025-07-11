@@ -1,122 +1,236 @@
-import { createTheme, Theme, ThemeOptions, PaletteMode } from '@mui/material';
+import { createTheme, Theme, type ThemeOptions, PaletteMode } from '@mui/material';
+import {
+  LIGHT_THEME_COLORS,
+  DARK_THEME_COLORS,
+  FUNCTIONAL_COLORS,
+  TEXT_COLORS,
+  withOpacity,
+} from './colors';
 
-// Tema personalizado compartilhado entre light e dark
-const getDesignTokens = (mode: PaletteMode) => {
-  const palette = {
-    mode,
-    ...(mode === 'light'
-      ? {
-          // Paleta moderna e limpa para o tema light
-          primary: {
-            main: '#059669', // Verde moderno e profissional
-            light: '#34D399', // Verde claro
-            dark: '#047857', // Verde escuro
-            contrastText: '#FFFFFF', // Branco puro para contraste
-          },
-          secondary: {
-            main: '#DDE19E', // Amarelo claro esverdeado (cor secundária solicitada)
-            light: '#F5F3E7', // Bege areia
-            dark: '#C1C8B1', // Verde pastel
-            contrastText: '#3A4534', // Verde oliva escuro
-          },
-          background: {
-            default: '#FFFFFF', // Branco puro
-            paper: '#FAFAFA', // Branco levemente acinzentado
-          },
-          text: {
-            primary: '#1A1A1A', // Preto suave (não puro para não cansar)
-            secondary: '#666666', // Cinza médio
-          },
-          success: {
-            main: '#22C55E', // Verde moderno
-            light: '#4ADE80', // Verde claro
-            dark: '#16A34A', // Verde escuro
-          },
-          error: {
-            main: '#EF4444', // Vermelho moderno
-            light: '#F87171', // Vermelho claro
-            dark: '#DC2626', // Vermelho escuro
-          },
-          warning: {
-            main: '#F59E0B', // Amarelo/laranja moderno
-            light: '#FBBF24', // Amarelo claro
-            dark: '#D97706', // Amarelo escuro
-          },
-          info: {
-            main: '#06B6D4', // Ciano moderno
-            light: '#22D3EE', // Ciano claro
-            dark: '#0891B2', // Ciano escuro
-          },
-          divider: 'rgba(0, 0, 0, 0.08)', // Divisor sutil
-        }
-      : {
-          // Paleta moderna e limpa para o tema dark
-          primary: {
-            main: '#10B981', // Verde mais claro para contraste no dark
-            light: '#34D399', // Verde claro
-            dark: '#059669', // Verde escuro
-            contrastText: '#FFFFFF', // Branco puro
-          },
-          secondary: {
-            main: '#94A3B8', // Cinza azulado claro
-            light: '#CBD5E1', // Cinza muito claro
-            dark: '#64748B', // Cinza médio
-            contrastText: '#1A1A1A', // Preto suave
-          },
-          background: {
-            default: '#0F0F0F', // Preto profundo mas não puro
-            paper: '#1A1A1A', // Preto suave para cards
-          },
-          text: {
-            primary: '#FFFFFF', // Branco puro
-            secondary: '#A1A1AA', // Cinza claro
-          },
-          success: {
-            main: '#16A34A', // Verde para dark mode
-            light: '#22C55E', // Verde claro
-            dark: '#15803D', // Verde escuro
-          },
-          error: {
-            main: '#DC2626', // Vermelho para dark mode
-            light: '#EF4444', // Vermelho claro
-            dark: '#B91C1C', // Vermelho escuro
-          },
-          warning: {
-            main: '#D97706', // Amarelo para dark mode
-            light: '#F59E0B', // Amarelo claro
-            dark: '#B45309', // Amarelo escuro
-          },
-          info: {
-            main: '#0891B2', // Ciano para dark mode
-            light: '#06B6D4', // Ciano claro
-            dark: '#0E7490', // Ciano escuro
-          },
-          divider: 'rgba(255, 255, 255, 0.08)', // Divisor sutil para dark
-        }),
-  };
+// Tema personalizado baseado na nova identidade visual
+const getDesignTokens = (mode: PaletteMode): ThemeOptions => {
+  const isLight = mode === 'light';
+  const themeColors = isLight ? LIGHT_THEME_COLORS : DARK_THEME_COLORS;
+  const textColors = isLight ? TEXT_COLORS.light : TEXT_COLORS.dark;
 
   return {
-    palette,
+    palette: {
+      mode,
+      ...(isLight
+        ? {
+            // ==================== TEMA LIGHT ====================
+            primary: {
+              main: themeColors.primary.main,
+              light: themeColors.primary.light,
+              dark: themeColors.primary.dark,
+              contrastText: themeColors.primary.contrastText,
+            },
+            secondary: {
+              main: themeColors.secondary.main,
+              light: themeColors.secondary.light,
+              dark: themeColors.secondary.dark,
+              contrastText: themeColors.secondary.contrastText,
+            },
+            background: {
+              default: themeColors.background.default,
+              paper: themeColors.background.paper,
+            },
+            text: {
+              primary: textColors.primary,
+              secondary: textColors.secondary,
+              disabled: withOpacity(textColors.muted, 0.6),
+            },
+            success: {
+              main: FUNCTIONAL_COLORS.success.main,
+              light: FUNCTIONAL_COLORS.success.light,
+              dark: FUNCTIONAL_COLORS.success.dark,
+              contrastText: '#FFFFFF',
+            },
+            error: {
+              main: FUNCTIONAL_COLORS.error.main,
+              light: FUNCTIONAL_COLORS.error.light,
+              dark: FUNCTIONAL_COLORS.error.dark,
+              contrastText: '#FFFFFF',
+            },
+            warning: {
+              main: FUNCTIONAL_COLORS.warning.main,
+              light: FUNCTIONAL_COLORS.warning.light,
+              dark: FUNCTIONAL_COLORS.warning.dark,
+              contrastText: textColors.primary,
+            },
+            info: {
+              main: FUNCTIONAL_COLORS.info.main,
+              light: FUNCTIONAL_COLORS.info.light,
+              dark: FUNCTIONAL_COLORS.info.dark,
+              contrastText: '#FFFFFF',
+            },
+            divider: withOpacity(textColors.primary, 0.12),
+          }
+        : {
+            // ==================== TEMA DARK ====================
+            primary: {
+              main: themeColors.primary.main,
+              light: themeColors.primary.light,
+              dark: themeColors.primary.dark,
+              contrastText: themeColors.primary.contrastText,
+            },
+            secondary: {
+              main: themeColors.secondary.main,
+              light: themeColors.secondary.light,
+              dark: themeColors.secondary.dark,
+              contrastText: themeColors.secondary.contrastText,
+            },
+            background: {
+              default: themeColors.background.default,
+              paper: themeColors.background.paper,
+            },
+            text: {
+              primary: textColors.primary,
+              secondary: textColors.secondary,
+              disabled: withOpacity(textColors.secondary, 0.6),
+            },
+            success: {
+              main: FUNCTIONAL_COLORS.success.light,
+              light: FUNCTIONAL_COLORS.success.main,
+              dark: FUNCTIONAL_COLORS.success.dark,
+              contrastText: '#FFFFFF',
+            },
+            error: {
+              main: FUNCTIONAL_COLORS.error.light,
+              light: FUNCTIONAL_COLORS.error.main,
+              dark: FUNCTIONAL_COLORS.error.dark,
+              contrastText: '#FFFFFF',
+            },
+            warning: {
+              main: FUNCTIONAL_COLORS.warning.light,
+              light: FUNCTIONAL_COLORS.warning.main,
+              dark: FUNCTIONAL_COLORS.warning.dark,
+              contrastText: themeColors.background.default,
+            },
+            info: {
+              main: FUNCTIONAL_COLORS.info.light,
+              light: FUNCTIONAL_COLORS.info.main,
+              dark: FUNCTIONAL_COLORS.info.dark,
+              contrastText: '#FFFFFF',
+            },
+            divider: withOpacity(textColors.primary, 0.12),
+          }),
+    },
     typography: {
-      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+      fontFamily: '"Gotham", "Helvetica Neue", "Arial", sans-serif',
       fontSize: 14,
-      fontWeightLight: 300,
-      fontWeightRegular: 400,
-      fontWeightMedium: 500,
-      fontWeightBold: 700,
+      fontWeightLight: 300, // Gotham Light
+      fontWeightRegular: 400, // Gotham Book
+      fontWeightMedium: 500, // Gotham Medium
+      fontWeightBold: 700, // Gotham Bold
+
+      // ==================== HIERARQUIA TIPOGRÁFICA ====================
       h1: {
-        fontSize: '2.5rem',
-        fontWeight: 500,
+        fontFamily: '"Gotham", "Helvetica Neue", "Arial", sans-serif',
+        fontSize: '2.75rem',
+        fontWeight: 900, // Gotham Black - Para títulos principais
+        lineHeight: 1.2,
+        letterSpacing: '-0.02em',
         '@media (max-width:600px)': {
-          fontSize: '2rem',
+          fontSize: '2.25rem',
         },
       },
       h2: {
-        fontSize: '2rem',
-        fontWeight: 500,
+        fontFamily: '"Gotham", "Helvetica Neue", "Arial", sans-serif',
+        fontSize: '2.25rem',
+        fontWeight: 700, // Gotham Bold - Para subtítulos importantes
+        lineHeight: 1.3,
+        letterSpacing: '-0.01em',
         '@media (max-width:600px)': {
-          fontSize: '1.75rem',
+          fontSize: '1.875rem',
         },
+      },
+      h3: {
+        fontFamily: '"Gotham", "Helvetica Neue", "Arial", sans-serif',
+        fontSize: '1.875rem',
+        fontWeight: 500, // Gotham Medium - Para seções
+        lineHeight: 1.4,
+        letterSpacing: '0em',
+      },
+      h4: {
+        fontFamily: '"Gotham", "Helvetica Neue", "Arial", sans-serif',
+        fontSize: '1.5rem',
+        fontWeight: 500, // Gotham Medium - Para subseções
+        lineHeight: 1.4,
+        letterSpacing: '0.01em',
+      },
+      h5: {
+        fontFamily: '"Gotham", "Helvetica Neue", "Arial", sans-serif',
+        fontSize: '1.25rem',
+        fontWeight: 500, // Gotham Medium - Para pequenos títulos
+        lineHeight: 1.5,
+        letterSpacing: '0.01em',
+      },
+      h6: {
+        fontFamily: '"Gotham", "Helvetica Neue", "Arial", sans-serif',
+        fontSize: '1.125rem',
+        fontWeight: 500, // Gotham Medium - Para cabeçalhos menores
+        lineHeight: 1.5,
+        letterSpacing: '0.02em',
+      },
+
+      // ==================== TEXTOS CORPORAIS ====================
+      body1: {
+        fontFamily: '"Gotham", "Helvetica Neue", "Arial", sans-serif',
+        fontSize: '1rem',
+        fontWeight: 400, // Gotham Book - Para textos principais
+        lineHeight: 1.6,
+        letterSpacing: '0.01em',
+      },
+      body2: {
+        fontFamily: '"Gotham", "Helvetica Neue", "Arial", sans-serif',
+        fontSize: '0.875rem',
+        fontWeight: 400, // Gotham Book - Para textos secundários
+        lineHeight: 1.5,
+        letterSpacing: '0.01em',
+      },
+
+      // ==================== SUBTÍTULOS ====================
+      subtitle1: {
+        fontFamily: '"Gotham", "Helvetica Neue", "Arial", sans-serif',
+        fontSize: '1rem',
+        fontWeight: 500, // Gotham Medium - Para subtítulos destacados
+        lineHeight: 1.5,
+        letterSpacing: '0.01em',
+      },
+      subtitle2: {
+        fontFamily: '"Gotham", "Helvetica Neue", "Arial", sans-serif',
+        fontSize: '0.875rem',
+        fontWeight: 500, // Gotham Medium - Para subtítulos menores
+        lineHeight: 1.4,
+        letterSpacing: '0.02em',
+      },
+
+      // ==================== TEXTOS ESPECIAIS ====================
+      caption: {
+        fontFamily: '"Gotham", "Helvetica Neue", "Arial", sans-serif',
+        fontSize: '0.75rem',
+        fontWeight: 400, // Gotham Book - Para legendas
+        lineHeight: 1.4,
+        letterSpacing: '0.03em',
+      },
+      overline: {
+        fontFamily: '"Gotham", "Helvetica Neue", "Arial", sans-serif',
+        fontSize: '0.75rem',
+        fontWeight: 500, // Gotham Medium - Para textos sobrescritos
+        lineHeight: 1.4,
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+      },
+
+      // ==================== BOTÕES ====================
+      button: {
+        fontFamily: '"Gotham", "Helvetica Neue", "Arial", sans-serif',
+        fontSize: '0.875rem',
+        fontWeight: 500, // Gotham Medium - Para botões
+        lineHeight: 1.4,
+        letterSpacing: '0.02em',
+        textTransform: 'none', // Sem transformação automática
       },
     },
     breakpoints: {
@@ -129,233 +243,207 @@ const getDesignTokens = (mode: PaletteMode) => {
       },
     },
     shape: {
-      borderRadius: 6, // Bordas mais modernas e sutis
+      borderRadius: 8,
     },
+    spacing: 8,
     components: {
+      // ==================== COMPONENTES BUTTON ====================
       MuiButton: {
         styleOverrides: {
           root: {
             textTransform: 'none',
             fontWeight: 500,
             padding: '10px 20px',
-            borderRadius: '6px', // Bordas modernas
+            borderRadius: '8px',
             fontSize: '0.875rem',
+            transition: 'all 0.2s ease-in-out',
           },
           contained: {
             boxShadow: 'none',
             '&:hover': {
-              boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.15)',
+              boxShadow: `0px 4px 12px ${withOpacity(themeColors.primary.main, 0.3)}`,
+              transform: 'translateY(-1px)',
+            },
+            '&:active': {
+              transform: 'translateY(0)',
             },
           },
-        },
-        defaultProps: {
-          disableElevation: true,
-        },
-      },
-      MuiTextField: {
-        defaultProps: {
-          variant: 'outlined',
-          fullWidth: true,
-        },
-        styleOverrides: {
-          root: {
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '6px',
-              '& fieldset': {
-                borderColor: mode === 'light' ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.15)',
-              },
-              '&:hover fieldset': {
-                borderColor: mode === 'light' ? '#059669' : '#10B981',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: mode === 'light' ? '#059669' : '#10B981',
-                borderWidth: '2px',
-              },
+          outlined: {
+            borderWidth: '1.5px',
+            '&:hover': {
+              borderWidth: '1.5px',
+              backgroundColor: withOpacity(themeColors.primary.main, 0.08),
             },
           },
         },
       },
-      MuiAppBar: {
-        defaultProps: {
-          elevation: 0, // Remove sombra para visual mais limpo
-        },
-        styleOverrides: {
-          root: {
-            backgroundColor: mode === 'light' ? '#FFFFFF' : '#1A1A1A',
-            borderBottom:
-              mode === 'light'
-                ? '1px solid rgba(0, 0, 0, 0.08)'
-                : '1px solid rgba(255, 255, 255, 0.08)',
-            '& .MuiToolbar-root': {
-              height: '64px',
-              minHeight: '64px !important',
-            },
-            '& .MuiTypography-root': {
-              fontWeight: 600,
-              color: mode === 'light' ? '#1A1A1A' : '#FFFFFF',
-            },
-            // Garante que os ícones sejam visíveis no header
-            '& .MuiIconButton-root': {
-              color: mode === 'light' ? '#1A1A1A' : '#FFFFFF',
-              '&:hover': {
-                backgroundColor:
-                  mode === 'light' ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.08)',
-              },
-            },
-            '& .MuiSvgIcon-root': {
-              color: mode === 'light' ? '#1A1A1A' : '#FFFFFF',
-            },
-            '& .MuiButton-root': {
-              color: mode === 'light' ? '#1A1A1A' : '#FFFFFF',
-            },
-          },
-        },
-      },
-      MuiDrawer: {
-        styleOverrides: {
-          paper: {
-            backgroundColor: mode === 'light' ? '#FAFAFA' : '#1A1A1A',
-            borderRight: `1px solid ${
-              mode === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)'
-            }`,
-          },
-        },
-      },
+
+      // ==================== COMPONENTES CARD ====================
       MuiCard: {
         styleOverrides: {
           root: {
-            borderRadius: '8px',
-            boxShadow:
-              mode === 'light'
-                ? '0px 1px 3px rgba(0, 0, 0, 0.05), 0px 1px 2px rgba(0, 0, 0, 0.1)'
-                : '0px 1px 3px rgba(0, 0, 0, 0.3), 0px 1px 2px rgba(0, 0, 0, 0.2)',
+            boxShadow: isLight
+              ? `0px 2px 8px ${withOpacity(themeColors.primary.main, 0.1)}`
+              : `0px 2px 8px ${withOpacity('#000000', 0.3)}`,
+            borderRadius: '12px',
             '&:hover': {
-              boxShadow:
-                mode === 'light'
-                  ? '0px 4px 12px rgba(0, 0, 0, 0.1), 0px 2px 4px rgba(0, 0, 0, 0.1)'
-                  : '0px 4px 12px rgba(0, 0, 0, 0.4), 0px 2px 4px rgba(0, 0, 0, 0.3)',
+              transform: 'translateY(-2px)',
+              boxShadow: isLight
+                ? `0px 8px 24px ${withOpacity(themeColors.primary.main, 0.15)}`
+                : `0px 8px 24px ${withOpacity('#000000', 0.4)}`,
+              transition: 'all 0.3s ease-in-out',
             },
           },
         },
       },
-      MuiPaper: {
+
+      // ==================== COMPONENTES INPUT ====================
+      MuiTextField: {
         styleOverrides: {
           root: {
-            borderRadius: '8px',
-          },
-        },
-      },
-      MuiListItem: {
-        styleOverrides: {
-          root: {
-            borderRadius: '6px',
-            '&:hover': {
-              backgroundColor:
-                mode === 'light' ? 'rgba(5, 150, 105, 0.04)' : 'rgba(16, 185, 129, 0.08)',
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '8px',
+              '& fieldset': {
+                borderColor: withOpacity(themeColors.primary.main, 0.3),
+              },
+              '&:hover fieldset': {
+                borderColor: themeColors.primary.main,
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: themeColors.primary.main,
+                borderWidth: '2px',
+              },
+            },
+            '& .MuiInputLabel-root.Mui-focused': {
+              color: themeColors.primary.main,
             },
           },
         },
       },
-      // Personalização do Avatar
-      MuiAvatar: {
-        styleOverrides: {
-          root: {
-            backgroundColor: mode === 'light' ? '#059669' : '#10B981',
-            color: '#FFFFFF',
-            fontWeight: 500,
-          },
-          colorDefault: {
-            backgroundColor: mode === 'light' ? '#64748B' : '#94A3B8',
-            color: '#FFFFFF',
-          },
-        },
-      },
-      // Personalização do Badge
-      MuiBadge: {
-        styleOverrides: {
-          badge: {
-            backgroundColor: mode === 'light' ? '#EF4444' : '#DC2626',
-            color: '#FFFFFF',
-            fontWeight: 600,
-          },
-        },
-      },
-      // Personalização de ícones
-      MuiSvgIcon: {
-        styleOverrides: {
-          root: {
-            '&.MuiSvgIcon-colorPrimary': {
-              color: mode === 'light' ? '#059669' : '#10B981',
-            },
-            '&.MuiSvgIcon-colorSecondary': {
-              color: mode === 'light' ? '#64748B' : '#94A3B8',
-            },
-            '&.MuiSvgIcon-colorAction': {
-              color: mode === 'light' ? '#666666' : '#A1A1AA',
-            },
-          },
-        },
-      },
-      // Personalização de Tabs
-      MuiTab: {
-        styleOverrides: {
-          root: {
-            textTransform: 'none',
-            fontWeight: 500,
-            '&.Mui-selected': {
-              color: mode === 'light' ? '#059669' : '#10B981',
-            },
-          },
-        },
-      },
-      // Personalização para menus
-      MuiMenu: {
-        styleOverrides: {
-          paper: {
-            backgroundColor: mode === 'light' ? '#FFFFFF' : '#1A1A1A',
-            boxShadow:
-              mode === 'light'
-                ? '0px 4px 12px rgba(0, 0, 0, 0.1)'
-                : '0px 4px 12px rgba(0, 0, 0, 0.3)',
-            border: `1px solid ${
-              mode === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)'
-            }`,
-          },
-        },
-      },
-      // Personalização para Chip
+
+      // ==================== COMPONENTES CHIP ====================
       MuiChip: {
         styleOverrides: {
           root: {
-            backgroundColor:
-              mode === 'light' ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)',
-            borderRadius: '12px',
-            '&.MuiChip-colorPrimary': {
-              backgroundColor: mode === 'light' ? '#059669' : '#10B981',
-              color: '#FFFFFF',
-            },
-            '&.MuiChip-colorSecondary': {
-              backgroundColor: mode === 'light' ? '#64748B' : '#94A3B8',
-              color: '#FFFFFF',
+            borderRadius: '16px',
+            fontWeight: 500,
+          },
+          colorPrimary: {
+            backgroundColor: withOpacity(themeColors.primary.main, 0.1),
+            color: themeColors.primary.main,
+            '&:hover': {
+              backgroundColor: withOpacity(themeColors.primary.main, 0.2),
             },
           },
-          label: {
-            fontWeight: 500,
+          colorSecondary: {
+            backgroundColor: withOpacity(themeColors.secondary.main, 0.1),
+            color: themeColors.secondary.main,
+            '&:hover': {
+              backgroundColor: withOpacity(themeColors.secondary.main, 0.2),
+            },
+          },
+        },
+      },
+
+      // ==================== COMPONENTES PAPER ====================
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            backgroundImage: 'none',
+            borderRadius: '12px',
+          },
+          elevation1: {
+            boxShadow: isLight
+              ? `0px 1px 3px ${withOpacity(themeColors.primary.main, 0.1)}`
+              : `0px 1px 3px ${withOpacity('#000000', 0.3)}`,
+          },
+          elevation2: {
+            boxShadow: isLight
+              ? `0px 2px 6px ${withOpacity(themeColors.primary.main, 0.12)}`
+              : `0px 2px 6px ${withOpacity('#000000', 0.35)}`,
+          },
+        },
+      },
+
+      // ==================== COMPONENTES APPBAR ====================
+      MuiAppBar: {
+        styleOverrides: {
+          root: {
+            backgroundColor: isLight ? themeColors.background.paper : themeColors.background.paper,
+            color: textColors.primary,
+            boxShadow: 'none',
+            borderBottom: `1px solid ${withOpacity(themeColors.primary.main, 0.1)}`,
+          },
+        },
+      },
+
+      // ==================== COMPONENTES DRAWER ====================
+      MuiDrawer: {
+        styleOverrides: {
+          paper: {
+            backgroundColor: isLight ? themeColors.background.paper : themeColors.background.paper,
+            borderRight: `1px solid ${withOpacity(themeColors.primary.main, 0.1)}`,
           },
         },
       },
     },
-  } as ThemeOptions;
+  };
 };
 
-// Cria o tema light
-export const lightTheme: Theme = createTheme(getDesignTokens('light'));
+// Cache do tema para melhor performance
+let cachedTheme: { [key: string]: Theme } = {};
 
-// Cria o tema dark
-export const darkTheme: Theme = createTheme(getDesignTokens('dark'));
+export const getTheme = (mode: PaletteMode): Theme => {
+  if (!cachedTheme[mode]) {
+    cachedTheme[mode] = createTheme(getDesignTokens(mode));
+  }
+  return cachedTheme[mode];
+};
 
-// Exporta função para obter o tema com base no modo
-export const getTheme = (mode: PaletteMode): Theme => (mode === 'light' ? lightTheme : darkTheme);
+// Limpa o cache quando necessário (para desenvolvimento)
+export const clearThemeCache = (): void => {
+  cachedTheme = {};
+};
 
 // Exporta o tema padrão
-export default lightTheme;
+export default getTheme;
+
+// ==================== TIPOS PERSONALIZADOS ====================
+
+// Extend the Theme interface to include custom properties
+declare module '@mui/material/styles' {
+  interface Palette {
+    surface?: {
+      primary: string;
+      secondary: string;
+      accent: string;
+    };
+  }
+
+  interface PaletteOptions {
+    surface?: {
+      primary: string;
+      secondary: string;
+      accent: string;
+    };
+  }
+
+  interface TypeBackground {
+    accent?: string;
+  }
+
+  interface TypeText {
+    muted?: string;
+    accent?: string;
+  }
+}
+
+// Utilitário para obter cores do tema
+export const getThemeColors = (mode: PaletteMode) => {
+  return mode === 'light' ? LIGHT_THEME_COLORS : DARK_THEME_COLORS;
+};
+
+// Utilitário para obter cores de texto do tema
+export const getTextColors = (mode: PaletteMode) => {
+  return mode === 'light' ? TEXT_COLORS.light : TEXT_COLORS.dark;
+};

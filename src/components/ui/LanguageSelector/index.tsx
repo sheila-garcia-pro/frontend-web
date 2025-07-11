@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Box, Select, MenuItem, SelectChangeEvent } from '@mui/material';
+import { Box, Select, MenuItem, SelectChangeEvent, useTheme } from '@mui/material';
 
 interface Language {
   code: string;
@@ -14,6 +14,7 @@ const languages: Language[] = [
 
 export const LanguageSelector: React.FC = () => {
   const { i18n, t } = useTranslation();
+  const theme = useTheme();
 
   const handleLanguageChange = (event: SelectChangeEvent<string>) => {
     const lang = event.target.value;
@@ -23,17 +24,26 @@ export const LanguageSelector: React.FC = () => {
 
   return (
     <Box sx={{ minWidth: 120 }}>
-      {' '}
       <Select
         value={i18n.language?.substring(0, 2) || 'en'}
         onChange={handleLanguageChange}
         size="small"
         label={t('language')}
         sx={{
-          color: 'inherit',
-          '.MuiOutlinedInput-notchedOutline': { borderColor: 'inherit' },
-          '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'inherit' },
-          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'inherit' },
+          color: theme.palette.text.primary,
+          '.MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.divider,
+          },
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.primary.main,
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.primary.main,
+            borderWidth: '2px',
+          },
+          '& .MuiSelect-icon': {
+            color: theme.palette.text.primary,
+          },
         }}
       >
         {languages.map((lang) => (

@@ -104,10 +104,11 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
           <MenuIcon />
         </IconButton>
         {/* Logo */}
-        <Box sx={{ flexGrow: 1 }}>
-          {' '}
+        <Box
+          sx={{ flexGrow: 1, display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}
+        >
           <Logo
-            variant="with-text"
+            variant="full"
             size="medium"
             showText={false}
             to="/"
@@ -116,8 +117,9 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
             sx={{
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'flex-start', // Alinhar à esquerda sempre
               '& img': {
-                height: '140px', // Aumentado ainda mais o tamanho do logo no navbar
+                height: '80px', // Tamanho otimizado para o header
               },
               '& .MuiTypography-root': {
                 fontWeight: 600,

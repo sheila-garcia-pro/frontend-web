@@ -1,0 +1,145 @@
+/* ======================================
+   🎨 SISTEMA TIPOGRÁFICO GOTHAM
+   Implementação da identidade visual
+   ====================================== */
+
+/* Gotham Thin */
+@font-face {
+  font-family: 'Gotham';
+  src: url('../assets/TIPOGRAFIA/Gotham-Thin.otf') format('opentype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Gotham Light */
+@font-face {
+  font-family: 'Gotham';
+  src: url('../assets/TIPOGRAFIA/Gotham-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Gotham Book (Regular) */
+@font-face {
+  font-family: 'Gotham';
+  src: url('../assets/TIPOGRAFIA/Gotham Book.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Gotham Medium */
+@font-face {
+  font-family: 'Gotham';
+  src: url('../assets/TIPOGRAFIA/Gotham-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Gotham Medium Italic */
+@font-face {
+  font-family: 'Gotham';
+  src: url('../assets/TIPOGRAFIA/Gotham-MediumItalic.otf') format('opentype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Gotham Bold */
+@font-face {
+  font-family: 'Gotham';
+  src: url('../assets/TIPOGRAFIA/Gotham-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Gotham Black */
+@font-face {
+  font-family: 'Gotham';
+  src: url('../assets/TIPOGRAFIA/Gotham-Black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Gotham Black Italic */
+@font-face {
+  font-family: 'Gotham';
+  src: url('../assets/TIPOGRAFIA/Gotham-BlackItalic.otf') format('opentype');
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Gotham Ultra */
+@font-face {
+  font-family: 'Gotham';
+  src: url('../assets/TIPOGRAFIA/Gotham-Ultra.otf') format('opentype');
+  font-weight: 950;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Vigosamine (Fonte adicional) */
+@font-face {
+  font-family: 'Vigosamine';
+  src: url('../assets/TIPOGRAFIA/Vigosamine.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ======================================
+   🎯 CLASSES UTILITÁRIAS
+   ====================================== */
+
+.font-gotham {
+  font-family: 'Gotham', 'Helvetica Neue', 'Arial', sans-serif !important;
+}
+
+.font-vigosamine {
+  font-family: 'Vigosamine', 'Gotham', 'Helvetica Neue', 'Arial', sans-serif !important;
+}
+
+/* Pesos específicos para fácil aplicação */
+.font-thin {
+  font-weight: 100 !important;
+}
+.font-light {
+  font-weight: 300 !important;
+}
+.font-regular {
+  font-weight: 400 !important;
+}
+.font-medium {
+  font-weight: 500 !important;
+}
+.font-bold {
+  font-weight: 700 !important;
+}
+.font-black {
+  font-weight: 900 !important;
+}
+.font-ultra {
+  font-weight: 950 !important;
+}
+
+/* ======================================
+   📝 RESET E OTIMIZAÇÕES
+   ====================================== */
+
+/* Melhora a renderização de fontes */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Garante carregamento suave das fontes */
+.fonts-loaded body {
+  font-family: 'Gotham', 'Helvetica Neue', 'Arial', sans-serif;
+}

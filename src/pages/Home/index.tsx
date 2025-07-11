@@ -103,7 +103,7 @@ const HomePage: React.FC = () => {
           }}
         >
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
-            <Logo variant="with-text" size="large" showText={false} sx={{ mb: 2 }} />
+            <Logo variant="full" size="large" showText={false} sx={{ mb: 2 }} />
           </Box>
           <Typography
             variant="h6"
