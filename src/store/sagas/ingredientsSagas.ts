@@ -32,8 +32,8 @@ function* reloadIngredientsList(showLoading = true): SagaIterator {
 
     const currentState = yield select((state) => state.ingredients);
     const searchParams: SearchParams = {
-      page: 1,
-      itemPerPage: 1000,
+      page: currentState.page || 1,
+      itemPerPage: currentState.itemPerPage || 10,
       category: currentState.filter.category || undefined,
       search: currentState.filter.search || undefined,
     };

@@ -83,11 +83,11 @@ const IngredientsPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [editedPrices, setEditedPrices] = useState<EditedPrices>({});
-  const [itemsPerPage, setItemsPerPage] = useState(100);
+  const [itemsPerPage] = useState(10); // Fixo em 10 itens por página
 
   // Redux
   const dispatch = useDispatch();
-  const { items: allIngredients, loading: ingredientsLoading } = useSelector(
+  const { items: allIngredients, loading: ingredientsLoading, total, page } = useSelector(
     (state: RootState) => state.ingredients,
   );
 
@@ -115,32 +115,22 @@ const IngredientsPage: React.FC = () => {
 
     dispatch(
       fetchIngredientsRequest({
-        page: 1,
-        itemPerPage: 1000, // Buscar todos os ingredientes
+        page: currentPage,
+        itemPerPage: itemsPerPage,
+        search: debouncedSearchTerm,
+        category: selectedCategories.length > 0 ? selectedCategories[0] : undefined,
       }),
     );
-  }, [dispatch]);
+  }, [dispatch, currentPage, itemsPerPage, debouncedSearchTerm, selectedCategories]);
 
   // Reset página quando itens por página mudar
   useEffect(() => {
     setCurrentPage(1);
-  }, [itemsPerPage]);
+  }, [selectedCategories, debouncedSearchTerm, currentTab]);
 
-  // Filtragem dos ingredientes
+  // Filtragem dos ingredientes (agora apenas para tab de utilizados, pois a API faz o resto)
   const filteredAndSortedIngredients = useMemo(() => {
     let filtered = [...allIngredients];
-
-    // Aplicar filtro de busca
-    if (debouncedSearchTerm) {
-      filtered = filtered.filter((ingredient) =>
-        ingredient.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()),
-      );
-    }
-
-    // Aplicar filtro de categorias selecionadas
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter((ingredient) => selectedCategories.includes(ingredient.category));
-    }
 
     // Aplicar filtro de tab (utilizado/geral)
     if (currentTab === 'used') {
@@ -148,7 +138,7 @@ const IngredientsPage: React.FC = () => {
       filtered = [];
     }
 
-    // Aplicar ordenação
+    // Aplicar ordenação local
     filtered.sort((a, b) => {
       switch (sortOption) {
         case 'name_desc':
@@ -160,19 +150,12 @@ const IngredientsPage: React.FC = () => {
     });
 
     return filtered;
-  }, [allIngredients, debouncedSearchTerm, selectedCategories, currentTab, sortOption]);
+  }, [allIngredients, currentTab, sortOption]);
 
-  // Paginação
-  const totalFilteredItems = filteredAndSortedIngredients.length;
-  const showAllItems = itemsPerPage === -1; // -1 significa "Todos"
-  const effectiveItemsPerPage = showAllItems ? totalFilteredItems : itemsPerPage;
-  const totalPages = showAllItems ? 1 : Math.ceil(totalFilteredItems / effectiveItemsPerPage);
-  const paginatedIngredients = showAllItems
-    ? filteredAndSortedIngredients
-    : filteredAndSortedIngredients.slice(
-        (currentPage - 1) * effectiveItemsPerPage,
-        currentPage * effectiveItemsPerPage,
-      );
+  // Paginação - agora usa os dados da API
+  const totalFilteredItems = total || 0;
+  const totalPages = Math.ceil(totalFilteredItems / itemsPerPage);
+  const paginatedIngredients = filteredAndSortedIngredients;
 
   // Manipuladores de eventos
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
@@ -201,12 +184,6 @@ const IngredientsPage: React.FC = () => {
 
   const handleSortChange = (event: SelectChangeEvent) => {
     setSortOption(event.target.value);
-  };
-
-  const handleItemsPerPageChange = (event: SelectChangeEvent) => {
-    const newItemsPerPage = parseInt(event.target.value);
-    setItemsPerPage(newItemsPerPage);
-    setCurrentPage(1); // Reset para primeira página
   };
 
   const handleOpenModal = () => setModalOpen(true);
@@ -291,8 +268,8 @@ const IngredientsPage: React.FC = () => {
   const handleRefreshList = () => {
     dispatch(
       fetchIngredientsRequest({
-        page: 1,
-        itemPerPage: 1000, // Buscar todos os ingredientes
+        page: currentPage,
+        itemPerPage: itemsPerPage,
         search: debouncedSearchTerm,
         category: selectedCategories.length > 0 ? selectedCategories[0] : undefined,
         forceRefresh: true, // Adiciona flag para forçar atualização
@@ -301,7 +278,7 @@ const IngredientsPage: React.FC = () => {
   };
 
   const renderSkeletons = () => {
-    const skeletonCount = showAllItems ? 20 : effectiveItemsPerPage;
+    const skeletonCount = itemsPerPage;
     return Array.from({ length: skeletonCount }).map((_, index) => (
       <TableRow key={`skeleton-${index}`}>
         <TableCell padding="checkbox">
@@ -455,22 +432,6 @@ const IngredientsPage: React.FC = () => {
                     {option.label}
                   </MenuItem>
                 ))}
-              </Select>
-            </FormControl>
-
-            <FormControl sx={{ minWidth: 150 }}>
-              <Select
-                value={itemsPerPage.toString()}
-                onChange={handleItemsPerPageChange}
-                displayEmpty
-                size="small"
-                sx={{ borderRadius: 3 }}
-              >
-                <MenuItem value="20">20 itens</MenuItem>
-                <MenuItem value="50">50 itens</MenuItem>
-                <MenuItem value="100">100 itens</MenuItem>
-                <MenuItem value="200">200 itens</MenuItem>
-                <MenuItem value="-1">Todos</MenuItem>
               </Select>
             </FormControl>
           </Box>

@@ -31,7 +31,7 @@ import {
   deleteIngredientRequest,
 } from '../../../store/slices/ingredientsSlice';
 import IngredientEditModal from '../IngredientEditModal';
-import { updateIngredientPriceMeasure } from '../../../services/api/ingredients/updatePriceMeasure';
+// Removida a importação específica, usaremos a função do ingredientsService
 import { Check, Close as CloseIcon } from '@mui/icons-material';
 import { getUnitMeasures } from '../../../services/api/unitMeasure';
 import { UnitMeasure } from '../../../types/unitMeasure';
@@ -187,12 +187,12 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
     };
 
     try {
-      await updateIngredientPriceMeasure(ingredient._id, updateData);
+      await ingredientsService.updateIngredientPriceMeasure(ingredient._id, updateData);
       await loadIngredient(ingredient._id);
       dispatch(
         fetchIngredientsRequest({
           page: 1,
-          itemPerPage: 1000,
+          itemPerPage: 10,
           search: '',
         }),
       );

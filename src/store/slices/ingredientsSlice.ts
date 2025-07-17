@@ -11,6 +11,9 @@ export interface IngredientsState {
   items: Ingredient[];
   loading: boolean;
   error: string | null;
+  total: number;
+  page: number;
+  itemPerPage: number;
   filter: {
     category: string | null;
     search: string;
@@ -23,6 +26,9 @@ const initialState: IngredientsState = {
   items: [],
   loading: false,
   error: null,
+  total: 0,
+  page: 1,
+  itemPerPage: 10,
   filter: {
     category: null,
     search: '',
@@ -44,6 +50,9 @@ const ingredientsSlice = createSlice({
       state.loading = false;
       state.error = null;
       state.items = action.payload.data;
+      state.total = action.payload.total;
+      state.page = action.payload.page;
+      state.itemPerPage = action.payload.itemPerPage;
     },
     fetchIngredientsFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
