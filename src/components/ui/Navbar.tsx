@@ -108,26 +108,19 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
           sx={{ flexGrow: 1, display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}
         >
           <Logo
-            variant="full"
-            size="medium"
+            variant="symbol"
+            size={60}
             showText={false}
             to="/"
             isHeader={true}
-            textColor={mode === 'light' ? '#F5F3E7' : '#FFFFFF'}
             sx={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'flex-start', // Alinhar à esquerda sempre
+              justifyContent: 'flex-start',
               '& img': {
-                height: '80px', // Tamanho otimizado para o header
-              },
-              '& .MuiTypography-root': {
-                fontWeight: 600,
-                letterSpacing: '0.5px',
-                textShadow:
-                  mode === 'light'
-                    ? '0px 1px 1px rgba(0, 0, 0, 0.2)'
-                    : '0px 1px 2px rgba(0, 0, 0, 0.3)',
+                height: '60px',
+                width: 'auto',
+                objectFit: 'contain',
               },
             }}
           />

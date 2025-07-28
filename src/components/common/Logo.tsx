@@ -5,8 +5,8 @@ import { useTheme } from '@mui/material/styles';
 import { getLogo, LOGO_ASSETS } from '../../assets/logoAssets';
 
 interface LogoProps {
-  variant?: 'symbol' | 'full' | 'green' | 'pink' | 'beige' | 'white' | 'black';
-  size?: 'small' | 'medium' | 'large' | number;
+  variant?: 'symbol' | 'full' | 'original' | 'green' | 'pink' | 'beige' | 'white' | 'black';
+  size?: 'tiny' | 'small' | 'medium' | 'large' | number;
   showText?: boolean;
   onClick?: () => void;
   sx?: SxProps<Theme>;
@@ -31,6 +31,9 @@ const Logo: React.FC<LogoProps> = ({
   // Definir tamanho baseado na prop size
   let sizeInPx: number;
   switch (size) {
+    case 'tiny':
+      sizeInPx = 24;
+      break;
     case 'small':
       sizeInPx = 40;
       break;
@@ -41,21 +44,26 @@ const Logo: React.FC<LogoProps> = ({
       sizeInPx = 100;
       break;
     default:
+      // Aceitar qualquer valor numérico, mesmo muito pequeno
       sizeInPx = typeof size === 'number' ? size : 60;
   }
 
   // Escolher o logo baseado na variante e tema
   let logoSrc;
-  
+
   if (['green', 'pink', 'beige', 'white', 'black'].includes(variant)) {
     // Se for uma cor específica, usar a variante correspondente
     const colorVariant = variant as keyof typeof LOGO_ASSETS.variants;
-    logoSrc = variant === 'full' ? 
-      LOGO_ASSETS.variants[colorVariant].full : 
-      LOGO_ASSETS.variants[colorVariant].symbol;
+    logoSrc =
+      variant === 'full'
+        ? LOGO_ASSETS.variants[colorVariant].full
+        : LOGO_ASSETS.variants[colorVariant].symbol;
   } else if (variant === 'full') {
     // Logo completo baseado no tema
     logoSrc = getLogo(isDarkMode ? 'dark' : 'light', 'full');
+  } else if (variant === 'original') {
+    // Logo original baseado no tema
+    logoSrc = getLogo(isDarkMode ? 'dark' : 'light', 'original');
   } else {
     // Logo símbolo baseado no tema (padrão)
     logoSrc = getLogo(isDarkMode ? 'dark' : 'light', 'symbol');
@@ -81,6 +89,7 @@ const Logo: React.FC<LogoProps> = ({
         sx={{
           height: sizeInPx,
           width: 'auto',
+          objectFit: 'contain',
           transition: 'transform 0.3s ease-in-out',
           filter: isDarkMode ? 'drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.3))' : 'none',
           '&:hover': {

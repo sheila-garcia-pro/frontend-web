@@ -91,7 +91,7 @@ const HomePage: React.FC = () => {
   return (
     <Container maxWidth="xl">
       <Box sx={{ py: 4 }}>
-        {/* Título de boas-vindas */}
+        {/* Seção de Boas-vindas com Logo */}
         <Box
           sx={{
             textAlign: 'center',
@@ -102,17 +102,16 @@ const HomePage: React.FC = () => {
               `linear-gradient(135deg, ${theme.palette.primary.light}20, ${theme.palette.primary.main}10)`,
           }}
         >
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
-            <Logo variant="full" size="large" showText={false} sx={{ mb: 2 }} />
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
+            <Logo
+              variant="original"
+              size={300}
+              showText={false}
+              sx={{
+                mb: 2,
+              }}
+            />
           </Box>
-          <Typography
-            variant="h6"
-            color="text.secondary"
-            sx={{ maxWidth: '800px', mx: 'auto', mb: 2 }}
-          >
-            {' '}
-            {t('welcome')}
-          </Typography>
         </Box>
         {/* Seção de Ingredientes
         <Box

@@ -1,42 +1,48 @@
 /**
  * 🎨 MAPEAMENTO DOS NOVOS ASSETS DA IDENTIDADE VISUAL
- * 
+ *
  * Baseado nas MARCAS D'ÁGUA fornecidas na nova identidade visual
  */
 
 // ==================== LOGOS PRINCIPAIS ====================
 
 // Logo apenas símbolo (SG) - Versões coloridas
-import logoSymbolGreen from './logos/logo-symbol-green.png';      // Verde
-import logoSymbolPink from './logos/logo-symbol-pink.png';       // Rosa
-import logoSymbolBeige from './logos/logo-symbol-beige.png';      // Bege
-import logoSymbolWhite from './logos/logo-symbol-white.png';      // Branco
-import logoSymbolBlack from './logos/logo-symbol-black.png';      // Preto/Cinza
+import logoSymbolGreen from './logos/logo_green.png'; // Verde
+import logoSymbolPink from './logos/logo-symbol-pink.png'; // Rosa
+import logoSymbolBeige from './logos/logo-symbol-beige.png'; // Bege
+import logoSymbolWhite from './logos/logo_white.png'; // Branco
+import logoSymbolBlack from './logos/logo-symbol-black.png'; // Preto/Cinza
 
-// Logo completo com texto - Versões coloridas  
-import logoFullGreen from './logos/logo-full-green.png';        // Verde
-import logoFullPink from './logos/logo-full-pink.png';         // Rosa
-import logoFullBeige from './logos/logo-full-beige.png';        // Bege
-import logoFullBlack from './logos/logo-full-black.png';        // Preto
-import logoFullWhite from './logos/logo-full-white.png';        // Branco
+// Logo completo com texto - Versões coloridas
+import logoFullGreen from './logos/logo-full-green.png'; // Verde
+import logoFullPink from './logos/logo-full-pink.png'; // Rosa
+import logoFullBeige from './logos/logo-full-beige.png'; // Bege
+import logoFullBlack from './logos/logo-full-black.png'; // Preto
+import logoFullWhite from './logos/logo-full-white.png'; // Branco
+
+// Logo original completo - Versões para welcome
+import logoOriginalGreen from './logo_original_green.png'; // Verde original
+import logoOriginalWhite from './logo_original_white.png'; // Branco original
 
 // ==================== CONFIGURAÇÕES POR TEMA ====================
 
 export const LOGO_ASSETS = {
   // Para temas claros (light mode)
   light: {
-    symbol: logoSymbolGreen,        // Símbolo verde para light mode
-    full: logoFullGreen,           // Logo completo verde para light mode
-    fallback: logoSymbolGreen,     // Fallback
+    symbol: logoSymbolGreen, // Símbolo verde para light mode (logo_green.png)
+    full: logoFullGreen, // Logo completo verde para light mode
+    original: logoOriginalGreen, // Logo original verde para light mode
+    fallback: logoSymbolGreen, // Fallback
   },
-  
+
   // Para temas escuros (dark mode)
   dark: {
-    symbol: logoSymbolWhite,       // Símbolo branco para dark mode
-    full: logoFullWhite,          // Logo completo branco para dark mode  
-    fallback: logoSymbolWhite,    // Fallback
+    symbol: logoSymbolWhite, // Símbolo branco para dark mode (logo_white.png)
+    full: logoFullWhite, // Logo completo branco para dark mode
+    original: logoOriginalWhite, // Logo original branco para dark mode
+    fallback: logoSymbolWhite, // Fallback
   },
-  
+
   // Variações especiais
   variants: {
     green: {
@@ -58,18 +64,18 @@ export const LOGO_ASSETS = {
     black: {
       symbol: logoSymbolBlack,
       full: logoFullBlack,
-    }
-  }
+    },
+  },
 };
 
 // ==================== FAVICON E META TAGS ====================
 
 export const FAVICON_ASSETS = {
   // Ícones para diferentes tamanhos
-  small: logoSymbolGreen,         // 16x16, 32x32
-  medium: logoSymbolGreen,        // 48x48, 96x96  
-  large: logoSymbolGreen,         // 192x192, 512x512
-  apple: logoSymbolGreen,         // Apple touch icon
+  small: logoSymbolWhite, // 16x16, 32x32
+  medium: logoSymbolWhite, // 48x48, 96x96
+  large: logoSymbolWhite, // 192x192, 512x512
+  apple: logoSymbolWhite, // Apple touch icon
 };
 
 // ==================== UTILITÁRIOS ====================
@@ -79,14 +85,14 @@ export const FAVICON_ASSETS = {
  */
 export const getLogo = (
   theme: 'light' | 'dark',
-  type: 'symbol' | 'full' = 'symbol',
-  variant?: keyof typeof LOGO_ASSETS.variants
+  type: 'symbol' | 'full' | 'original' = 'symbol',
+  variant?: keyof typeof LOGO_ASSETS.variants,
 ) => {
   if (variant && LOGO_ASSETS.variants[variant]) {
-    return LOGO_ASSETS.variants[variant][type];
+    return LOGO_ASSETS.variants[variant][type as 'symbol' | 'full'];
   }
-  
-  return LOGO_ASSETS[theme][type];
+
+  return LOGO_ASSETS[theme][type as keyof typeof LOGO_ASSETS.light];
 };
 
 /**

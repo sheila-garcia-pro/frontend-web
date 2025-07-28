@@ -76,19 +76,11 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
           sx={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
+            justifyContent: 'flex-end',
             width: '100%',
             px: 1,
           }}
         >
-          <Logo
-            variant="symbol"
-            size="medium"
-            showText={false}
-            sx={{
-              justifyContent: 'flex-start',
-            }}
-          />
           <IconButton onClick={handleDrawerToggle}>
             <ChevronLeftIcon />
           </IconButton>
