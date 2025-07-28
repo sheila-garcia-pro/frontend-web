@@ -19,6 +19,7 @@ import {
   TextField,
   DialogActions,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { Close, Edit, Category, Delete, ShoppingCart, Info } from '@mui/icons-material';
 import { Ingredient } from '../../../types/ingredients';
 import { getNutritionalTable } from '../../../services/api/nutritionalTable';
@@ -49,6 +50,7 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
+  const theme = useTheme();
   const [loading, setLoading] = useState(false);
   const [ingredient, setIngredient] = useState<Ingredient | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -125,6 +127,38 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
       );
     }
   }, [dispatch]);
+
+  // Função utilitária para verificar se um valor nutricional é válido
+  const isValidNutritionalValue = (value: any): boolean => {
+    if (value === null || value === undefined) return false;
+    const stringValue = value.toString().trim();
+    return (
+      stringValue !== '' &&
+      stringValue !== '0' &&
+      stringValue !== '0.0' &&
+      stringValue !== 'null' &&
+      stringValue !== 'undefined' &&
+      !isNaN(parseFloat(stringValue)) &&
+      parseFloat(stringValue) > 0
+    );
+  };
+
+  // Função utilitária para formatar valor nutricional
+  const formatNutritionalValue = (value: any): string => {
+    if (!isValidNutritionalValue(value)) return '0';
+    const numericValue = parseFloat(value.toString());
+    return numericValue.toFixed(2);
+  };
+
+  // Função para obter cores adaptáveis ao tema
+  const getThemeAwareColors = (theme: any) => ({
+    energy: theme.palette.mode === 'dark' ? '#FF8A65' : '#D84315', // Laranja mais contrastante
+    carbs: theme.palette.mode === 'dark' ? '#4DD0E1' : '#0097A7', // Ciano mais contrastante
+    totalSugar: theme.palette.mode === 'dark' ? '#64B5F6' : '#1976D2', // Azul mais contrastante
+    addSugar: theme.palette.mode === 'dark' ? '#81C784' : '#388E3C', // Verde mais contrastante
+    protein: theme.palette.mode === 'dark' ? '#FFB74D' : '#F57C00', // Âmbar mais contrastante
+    fats: theme.palette.mode === 'dark' ? '#CE93D8' : '#7B1FA2', // Roxo mais contrastante
+  });
 
   useEffect(() => {
     if (open && ingredientId) {
@@ -569,197 +603,352 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                               p: 1,
                             }}
                           >
-                            {[
-                              {
-                                label: t('ingredients.nutrition.fields.energy'),
-                                value: selectedTable.energyKcal,
-                                unit: t('ingredients.nutrition.units.kcal'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.carbs'),
-                                value: selectedTable.carbohydrateG,
-                                unit: t('ingredients.nutrition.units.g'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.totalSugar'),
-                                value: selectedTable.totalSugarG || '0',
-                                unit: t('ingredients.nutrition.units.g'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.addSugar'),
-                                value: selectedTable.addSugarG || '0',
-                                unit: t('ingredients.nutrition.units.g'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.protein'),
-                                value: selectedTable.proteinG,
-                                unit: t('ingredients.nutrition.units.g'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.totalFats'),
-                                value: selectedTable.totalFatsG,
-                                unit: t('ingredients.nutrition.units.g'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.saturatedFats'),
-                                value: selectedTable.saturatedFatsG || '0',
-                                unit: t('ingredients.nutrition.units.g'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.transFats'),
-                                value: selectedTable.transFatsG || '0',
-                                unit: t('ingredients.nutrition.units.g'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.monounsaturated'),
-                                value: selectedTable.monounsaturatedG || '0',
-                                unit: t('ingredients.nutrition.units.g'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.polyunsaturated'),
-                                value: selectedTable.polyunsaturatedG || '0',
-                                unit: t('ingredients.nutrition.units.g'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.fiber'),
-                                value: selectedTable.dietaryFiberG,
-                                unit: t('ingredients.nutrition.units.g'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.cholesterol'),
-                                value: selectedTable.cholesterolMG || '0',
-                                unit: t('ingredients.nutrition.units.mg'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.sodium'),
-                                value: selectedTable.sodiumMG,
-                                unit: t('ingredients.nutrition.units.mg'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.potassium'),
-                                value: selectedTable.potassiumMG || '0',
-                                unit: t('ingredients.nutrition.units.mg'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.calcium'),
-                                value: selectedTable.calciumMG,
-                                unit: t('ingredients.nutrition.units.mg'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.magnesium'),
-                                value: selectedTable.magnesiumMG || '0',
-                                unit: t('ingredients.nutrition.units.mg'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.phosphorus'),
-                                value: selectedTable.phosphorusMG || '0',
-                                unit: t('ingredients.nutrition.units.mg'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.iron'),
-                                value: selectedTable.ironMG,
-                                unit: t('ingredients.nutrition.units.mg'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.copper'),
-                                value: selectedTable.copperMG || '0',
-                                unit: t('ingredients.nutrition.units.mg'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.zinc'),
-                                value: selectedTable.zincMG || '0',
-                                unit: t('ingredients.nutrition.units.mg'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.manganese'),
-                                value: selectedTable.manganeseMG || '0',
-                                unit: t('ingredients.nutrition.units.mg'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.retinol'),
-                                value: selectedTable.retinolMCG || '0',
-                                unit: t('ingredients.nutrition.units.mcg'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.rae'),
-                                value: selectedTable.raeMCG || '0',
-                                unit: t('ingredients.nutrition.units.mcg'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.vitaminD'),
-                                value: selectedTable.vitaminDMCG || '0',
-                                unit: t('ingredients.nutrition.units.mcg'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.thiamine'),
-                                value: selectedTable.thiamineMG || '0',
-                                unit: t('ingredients.nutrition.units.mg'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.riboflavin'),
-                                value: selectedTable.riboflavinMG || '0',
-                                unit: t('ingredients.nutrition.units.mg'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.niacin'),
-                                value: selectedTable.niacinMG || '0',
-                                unit: t('ingredients.nutrition.units.mg'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.vitaminB6'),
-                                value: selectedTable.vitaminB6PiridoxinaMG || '0',
-                                unit: t('ingredients.nutrition.units.mg'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.vitaminB12'),
-                                value: selectedTable.vitaminB12MG || '0',
-                                unit: t('ingredients.nutrition.units.mg'),
-                              },
-                              {
-                                label: t('ingredients.nutrition.fields.vitaminC'),
-                                value: selectedTable.vitaminCMCG || '0',
-                                unit: t('ingredients.nutrition.units.mcg'),
-                              },
-                            ].map((item) => (
-                              <Box
-                                key={item.label}
-                                sx={{
-                                  flex: {
-                                    xs: '1 0 100%',
-                                    sm: '1 0 calc(50% - 8px)',
-                                    md: '1 0 calc(25% - 12px)',
-                                  },
-                                  minWidth: { xs: '100%', sm: '200px' },
-                                }}
-                              >
-                                <Paper
-                                  variant="outlined"
-                                  sx={{
-                                    p: 1.5,
-                                    height: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    bgcolor: 'background.default',
-                                    transition: 'all 0.2s ease-in-out',
-                                    '&:hover': {
-                                      transform: 'translateY(-2px)',
-                                      boxShadow: 1,
-                                    },
-                                  }}
-                                >
-                                  <Typography variant="body2" color="text.secondary">
-                                    {item.label}
+                            {(() => {
+                              const themeColors = getThemeAwareColors(theme);
+                              const validItems = [
+                                {
+                                  label: t('ingredients.nutrition.fields.energy'),
+                                  value: selectedTable.energyKcal,
+                                  unit: t('ingredients.nutrition.units.kcal'),
+                                  color: themeColors.energy,
+                                  maxValue: 900,
+                                },
+                                {
+                                  label: t('ingredients.nutrition.fields.carbs'),
+                                  value: selectedTable.carbohydrateG,
+                                  unit: t('ingredients.nutrition.units.g'),
+                                  color: themeColors.carbs,
+                                  maxValue: 100,
+                                },
+                                {
+                                  label: t('ingredients.nutrition.fields.totalSugar'),
+                                  value: selectedTable.totalSugarG,
+                                  unit: t('ingredients.nutrition.units.g'),
+                                  color: themeColors.totalSugar,
+                                  maxValue: 50,
+                                },
+                                {
+                                  label: t('ingredients.nutrition.fields.addSugar'),
+                                  value: selectedTable.addSugarG,
+                                  unit: t('ingredients.nutrition.units.g'),
+                                  color: themeColors.addSugar,
+                                  maxValue: 25,
+                                },
+                                {
+                                  label: t('ingredients.nutrition.fields.protein'),
+                                  value: selectedTable.proteinG,
+                                  unit: t('ingredients.nutrition.units.g'),
+                                  color: themeColors.protein,
+                                  maxValue: 50,
+                                },
+                                {
+                                  label: t('ingredients.nutrition.fields.totalFats'),
+                                  value: selectedTable.totalFatsG,
+                                  unit: t('ingredients.nutrition.units.g'),
+                                  color: themeColors.fats,
+                                  maxValue: 50,
+                                },
+                              ].filter((item) => isValidNutritionalValue(item.value));
+
+                              if (validItems.length === 0) {
+                                return (
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                    sx={{ textAlign: 'center', py: 3, width: '100%' }}
+                                  >
+                                    Não há informações nutricionais válidas na API para este
+                                    ingrediente.
                                   </Typography>
-                                  <Typography variant="body1" fontWeight="bold">
-                                    {(() => {
-                                      const value = parseFloat(item.value || '0');
-                                      return isNaN(value) ? '0' : value.toFixed(1);
-                                    })()}{' '}
-                                    {item.unit}
-                                  </Typography>
-                                </Paper>
-                              </Box>
-                            ))}
+                                );
+                              }
+
+                              return (
+                                <>
+                                  {/* Grid de cards nutricionais */}
+                                  <Box
+                                    sx={{
+                                      display: 'grid',
+                                      gridTemplateColumns: {
+                                        xs: '1fr',
+                                        sm: 'repeat(2, 1fr)',
+                                        md: 'repeat(3, 1fr)',
+                                      },
+                                      gap: 2,
+                                      width: '100%',
+                                      mb: 3,
+                                    }}
+                                  >
+                                    {validItems.map((item) => {
+                                      const numericValue = parseFloat(item.value) || 0;
+                                      const percentage = Math.min(
+                                        (numericValue / item.maxValue) * 100,
+                                        100,
+                                      );
+
+                                      return (
+                                        <Box
+                                          key={item.label}
+                                          sx={{
+                                            p: 2,
+                                            border: '1px solid',
+                                            borderColor: 'divider',
+                                            borderRadius: 2,
+                                            bgcolor: 'background.default',
+                                            position: 'relative',
+                                            overflow: 'hidden',
+                                            transition: 'all 0.2s ease-in-out',
+                                            '&:hover': {
+                                              transform: 'translateY(-2px)',
+                                              boxShadow: 2,
+                                            },
+                                          }}
+                                        >
+                                          {/* Barra de progresso no fundo */}
+                                          <Box
+                                            sx={{
+                                              position: 'absolute',
+                                              top: 0,
+                                              left: 0,
+                                              height: '100%',
+                                              width: `${percentage}%`,
+                                              bgcolor: item.color,
+                                              opacity: 0.1,
+                                              transition: 'width 0.3s ease',
+                                            }}
+                                          />
+
+                                          {/* Conteúdo */}
+                                          <Box sx={{ position: 'relative', zIndex: 1 }}>
+                                            <Typography
+                                              variant="caption"
+                                              color="text.secondary"
+                                              display="block"
+                                              sx={{ fontSize: '0.75rem', mb: 0.5 }}
+                                            >
+                                              {item.label}
+                                            </Typography>
+                                            <Typography
+                                              variant="h6"
+                                              sx={{
+                                                fontWeight: 700,
+                                                color: item.color,
+                                                fontSize: '1.1rem',
+                                              }}
+                                            >
+                                              {formatNutritionalValue(item.value)} {item.unit}
+                                            </Typography>
+
+                                            {/* Mini indicador visual */}
+                                            <Box sx={{ mt: 1 }}>
+                                              <Box
+                                                sx={{
+                                                  width: '100%',
+                                                  height: 4,
+                                                  bgcolor: (theme) =>
+                                                    theme.palette.mode === 'dark'
+                                                      ? 'grey.700'
+                                                      : 'grey.300',
+                                                  borderRadius: 2,
+                                                  overflow: 'hidden',
+                                                  border: '1px solid',
+                                                  borderColor: (theme) =>
+                                                    theme.palette.mode === 'dark'
+                                                      ? 'grey.600'
+                                                      : 'grey.400',
+                                                }}
+                                              >
+                                                <Box
+                                                  sx={{
+                                                    width: `${percentage}%`,
+                                                    height: '100%',
+                                                    bgcolor: item.color,
+                                                    transition: 'width 0.3s ease',
+                                                  }}
+                                                />
+                                              </Box>
+                                            </Box>
+                                          </Box>
+                                        </Box>
+                                      );
+                                    })}
+                                  </Box>
+
+                                  {/* Gráfico de distribuição de macronutrientes */}
+                                  {(() => {
+                                    const carbs = parseFloat(selectedTable.carbohydrateG) || 0;
+                                    const proteins = parseFloat(selectedTable.proteinG) || 0;
+                                    const fats = parseFloat(selectedTable.totalFatsG) || 0;
+
+                                    const hasValidCarbs = isValidNutritionalValue(
+                                      selectedTable.carbohydrateG,
+                                    );
+                                    const hasValidProteins = isValidNutritionalValue(
+                                      selectedTable.proteinG,
+                                    );
+                                    const hasValidFats = isValidNutritionalValue(
+                                      selectedTable.totalFatsG,
+                                    );
+
+                                    const total =
+                                      (hasValidCarbs ? carbs : 0) +
+                                      (hasValidProteins ? proteins : 0) +
+                                      (hasValidFats ? fats : 0);
+
+                                    if (
+                                      total > 0 &&
+                                      (hasValidCarbs || hasValidProteins || hasValidFats)
+                                    ) {
+                                      const validMacros = [];
+                                      if (hasValidCarbs)
+                                        validMacros.push({
+                                          name: 'Carboidratos',
+                                          value: carbs,
+                                          color: themeColors.carbs,
+                                        });
+                                      if (hasValidProteins)
+                                        validMacros.push({
+                                          name: 'Proteínas',
+                                          value: proteins,
+                                          color: themeColors.protein,
+                                        });
+                                      if (hasValidFats)
+                                        validMacros.push({
+                                          name: 'Gorduras',
+                                          value: fats,
+                                          color: themeColors.fats,
+                                        });
+
+                                      return (
+                                        <Box
+                                          sx={{
+                                            mt: 2,
+                                            p: 2,
+                                            bgcolor: (theme) =>
+                                              theme.palette.mode === 'dark'
+                                                ? 'grey.800'
+                                                : 'grey.50',
+                                            borderRadius: 2,
+                                            border: '1px solid',
+                                            borderColor: 'divider',
+                                            boxShadow: 1,
+                                          }}
+                                        >
+                                          <Typography
+                                            variant="subtitle2"
+                                            sx={{
+                                              mb: 2,
+                                              fontWeight: 600,
+                                              color: (theme) =>
+                                                theme.palette.mode === 'dark'
+                                                  ? 'grey.100'
+                                                  : 'grey.800',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              gap: 1,
+                                              fontSize: '0.9rem',
+                                            }}
+                                          >
+                                            📊 Distribuição de Macronutrientes
+                                          </Typography>
+
+                                          {/* Barra de progresso principal */}
+                                          <Box sx={{ mb: 2 }}>
+                                            <Box
+                                              sx={{
+                                                display: 'flex',
+                                                height: 16,
+                                                borderRadius: 8,
+                                                overflow: 'hidden',
+                                                border: '1px solid',
+                                                borderColor: (theme) =>
+                                                  theme.palette.mode === 'dark'
+                                                    ? 'grey.600'
+                                                    : 'grey.300',
+                                                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)',
+                                              }}
+                                            >
+                                              {validMacros.map((macro) => (
+                                                <Box
+                                                  key={macro.name}
+                                                  sx={{
+                                                    width: `${(macro.value / total) * 100}%`,
+                                                    bgcolor: macro.color,
+                                                    transition: 'all 0.3s ease',
+                                                    position: 'relative',
+                                                    '&:hover': {
+                                                      filter: 'brightness(1.1)',
+                                                    },
+                                                  }}
+                                                />
+                                              ))}
+                                            </Box>
+                                          </Box>
+
+                                          {/* Legenda compacta */}
+                                          <Box
+                                            sx={{
+                                              display: 'flex',
+                                              gap: 1.5,
+                                              flexWrap: 'wrap',
+                                              justifyContent: 'center',
+                                            }}
+                                          >
+                                            {validMacros.map((macro) => (
+                                              <Box
+                                                key={macro.name}
+                                                sx={{
+                                                  display: 'flex',
+                                                  alignItems: 'center',
+                                                  gap: 0.5,
+                                                  p: 1,
+                                                  borderRadius: 1,
+                                                  bgcolor: (theme) =>
+                                                    theme.palette.mode === 'dark'
+                                                      ? 'grey.700'
+                                                      : 'white',
+                                                  border: '1px solid',
+                                                  borderColor: 'divider',
+                                                  minWidth: 80,
+                                                }}
+                                              >
+                                                {/* Indicador de cor */}
+                                                <Box
+                                                  sx={{
+                                                    width: 8,
+                                                    height: 8,
+                                                    borderRadius: '50%',
+                                                    bgcolor: macro.color,
+                                                    flexShrink: 0,
+                                                  }}
+                                                />
+
+                                                {/* Texto compacto */}
+                                                <Typography
+                                                  variant="caption"
+                                                  sx={{
+                                                    fontSize: '0.65rem',
+                                                    fontWeight: 600,
+                                                    color: (theme) =>
+                                                      theme.palette.mode === 'dark'
+                                                        ? 'grey.200'
+                                                        : 'grey.700',
+                                                  }}
+                                                >
+                                                  {macro.name}{' '}
+                                                  {((macro.value / total) * 100).toFixed(0)}%
+                                                </Typography>
+                                              </Box>
+                                            ))}
+                                          </Box>
+                                        </Box>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
+                                </>
+                              );
+                            })()}
                           </Box>
                         </Paper>
                       </Box>

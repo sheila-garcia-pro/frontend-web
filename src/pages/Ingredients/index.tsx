@@ -78,7 +78,7 @@ const IngredientsPage: React.FC = () => {
   const [selectedIngredientId, setSelectedIngredientId] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [currentTab, setCurrentTab] = useState<'used' | 'all'>('all');
   const [isEditing, setIsEditing] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -87,9 +87,12 @@ const IngredientsPage: React.FC = () => {
 
   // Redux
   const dispatch = useDispatch();
-  const { items: allIngredients, loading: ingredientsLoading, total, page } = useSelector(
-    (state: RootState) => state.ingredients,
-  );
+  const {
+    items: allIngredients,
+    loading: ingredientsLoading,
+    total,
+    page,
+  } = useSelector((state: RootState) => state.ingredients);
 
   const { items: categories, loading: categoriesLoading } = useSelector(
     (state: RootState) => state.categories,
@@ -118,15 +121,15 @@ const IngredientsPage: React.FC = () => {
         page: currentPage,
         itemPerPage: itemsPerPage,
         search: debouncedSearchTerm,
-        category: selectedCategories.length > 0 ? selectedCategories[0] : undefined,
+        category: selectedCategory || undefined,
       }),
     );
-  }, [dispatch, currentPage, itemsPerPage, debouncedSearchTerm, selectedCategories]);
+  }, [dispatch, currentPage, itemsPerPage, debouncedSearchTerm, selectedCategory]);
 
   // Reset página quando itens por página mudar
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCategories, debouncedSearchTerm, currentTab]);
+  }, [selectedCategory, debouncedSearchTerm, currentTab]);
 
   // Filtragem dos ingredientes (agora apenas para tab de utilizados, pois a API faz o resto)
   const filteredAndSortedIngredients = useMemo(() => {
@@ -169,11 +172,13 @@ const IngredientsPage: React.FC = () => {
   };
 
   const handleCategoryToggle = (categoryName: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(categoryName)
-        ? prev.filter((cat) => cat !== categoryName)
-        : [...prev, categoryName],
-    );
+    // Se a categoria já está selecionada, desseleciona
+    if (selectedCategory === categoryName) {
+      setSelectedCategory('');
+    } else {
+      // Seleciona a nova categoria
+      setSelectedCategory(categoryName);
+    }
     setCurrentPage(1);
   };
 
@@ -271,7 +276,7 @@ const IngredientsPage: React.FC = () => {
         page: currentPage,
         itemPerPage: itemsPerPage,
         search: debouncedSearchTerm,
-        category: selectedCategories.length > 0 ? selectedCategories[0] : undefined,
+        category: selectedCategory || undefined,
         forceRefresh: true, // Adiciona flag para forçar atualização
       }),
     );
@@ -450,7 +455,7 @@ const IngredientsPage: React.FC = () => {
                   key={category._id}
                   label={category.name}
                   onClick={() => handleCategoryToggle(category.name)}
-                  color={selectedCategories.includes(category.name) ? 'primary' : 'default'}
+                  color={selectedCategory === category.name ? 'primary' : 'default'}
                   sx={{ borderRadius: 2 }}
                 />
               ))}

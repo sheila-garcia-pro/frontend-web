@@ -42,6 +42,7 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
     name: '',
     category: '',
     image: '',
+    correctionFactor: 1.0,
     price: {
       price: '',
       quantity: '',
@@ -80,6 +81,7 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
         name: '',
         category: '',
         image: '',
+        correctionFactor: 1.0,
         price: {
           price: '',
           quantity: '',
@@ -98,6 +100,7 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
         name: '',
         category: '',
         image: '',
+        correctionFactor: 1.0,
         price: {
           price: '',
           quantity: '',
@@ -305,7 +308,22 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
                   {errors.category}
                 </Typography>
               )}
-            </FormControl>{' '}
+            </FormControl>
+
+            <TextField
+              label="Fator de Correção"
+              name="correctionFactor"
+              type="number"
+              value={formData.correctionFactor || 1.0}
+              onChange={handleChange}
+              fullWidth
+              InputProps={{
+                inputProps: { min: 0.1, max: 3.0, step: 0.01 },
+              }}
+              helperText="Fator para ajuste de perdas e desperdício (padrão: 1.0)"
+              disabled={ingredientLoading}
+            />
+
             <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
               Preço de Compra
             </Typography>
@@ -368,6 +386,33 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
                 )}
               </FormControl>
             </Box>
+
+            {/* Campo calculado para mostrar preço por porção */}
+            {formData.price?.price && formData.price?.quantity && (
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 2,
+                  bgcolor: 'secondary.50',
+                  borderRadius: 1,
+                  border: '1px solid',
+                  borderColor: 'secondary.200',
+                }}
+              >
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Preço por porção (100g):
+                </Typography>
+                <Typography variant="h6" color="secondary.main" sx={{ fontWeight: 600 }}>
+                  R${' '}
+                  {(
+                    (parseFloat(formData.price.price.toString()) /
+                      parseFloat(formData.price.quantity.toString())) *
+                    100
+                  ).toFixed(2)}
+                </Typography>
+              </Box>
+            )}
+
             <FormControl fullWidth error={!!errors.image}>
               <Button
                 variant="outlined"

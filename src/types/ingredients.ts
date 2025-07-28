@@ -5,10 +5,12 @@ export interface Ingredient {
   category: string;
   image: string;
   isEdit?: boolean;
+  correctionFactor?: number; // Fator de correção para perdas e desperdício
   price?: {
     price: number;
     quantity: number;
     unitMeasure: string;
+    pricePerPortion?: number; // Preço por porção calculado
   };
 }
 
@@ -17,10 +19,12 @@ export interface CreateIngredientParams {
   name: string;
   category: string;
   image: string;
+  correctionFactor?: number; // Fator de correção para perdas e desperdício
   price?: {
     price: string | number;
     quantity: string | number;
     unitMeasure: string;
+    pricePerPortion?: string | number; // Preço por porção
   };
 }
 

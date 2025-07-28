@@ -133,6 +133,54 @@ export const updateIngredientPriceMeasure = async (
   return response.data;
 };
 
+// Atualizar fator de correção de um ingrediente
+export const updateIngredientCorrectionFactor = async (
+  id: string,
+  correctionFactor: number,
+): Promise<Ingredient> => {
+  const response = await api.patch<Ingredient>(`/v1/users/me/ingredient/${id}`, {
+    correctionFactor,
+  });
+  // Limpa o cache de ingredientes e do ingrediente específico
+  clearCache('/v1/users/me/ingredient');
+  clearCache(`/v1/users/me/ingredient/${id}`);
+  return response.data;
+};
+
+// Calcular preço por porção de um ingrediente
+export const calculatePricePerPortion = (
+  price: number,
+  quantity: number,
+  portionSize: number = 100, // tamanho padrão da porção em gramas
+): number => {
+  if (quantity <= 0 || price <= 0) return 0;
+  const pricePerGram = price / quantity;
+  return pricePerGram * portionSize;
+};
+
+// Atualizar ingrediente com preço por porção calculado
+export const updateIngredientWithPricePerPortion = async (
+  id: string,
+  ingredientData: Partial<CreateIngredientParams>,
+  portionSize: number = 100,
+): Promise<Ingredient> => {
+  // Calcular preço por porção se os dados de preço estão disponíveis
+  if (ingredientData.price && ingredientData.price.price && ingredientData.price.quantity) {
+    const price =
+      typeof ingredientData.price.price === 'string'
+        ? parseFloat(ingredientData.price.price)
+        : ingredientData.price.price;
+    const quantity =
+      typeof ingredientData.price.quantity === 'string'
+        ? parseFloat(ingredientData.price.quantity)
+        : ingredientData.price.quantity;
+
+    ingredientData.price.pricePerPortion = calculatePricePerPortion(price, quantity, portionSize);
+  }
+
+  return updateIngredient(id, ingredientData);
+};
+
 // Obter preço e medida de um ingrediente
 export const getIngredientPriceMeasure = async (id: string): Promise<Ingredient> => {
   const response = await api.get<Ingredient>(`/v1/users/me/ingredient/${id}/price-measure`);

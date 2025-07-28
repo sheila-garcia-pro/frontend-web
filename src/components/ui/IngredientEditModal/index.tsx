@@ -49,6 +49,7 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
     name: ingredient.name,
     category: ingredient.category,
     image: ingredient.image,
+    correctionFactor: ingredient.correctionFactor || 1.0,
     price: ingredient.price || {
       price: 0,
       quantity: 0,
@@ -68,6 +69,7 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
       name: ingredient.name,
       category: ingredient.category,
       image: ingredient.image,
+      correctionFactor: ingredient.correctionFactor || 1.0,
       price: ingredient.price || {
         price: 0,
         quantity: 0,
@@ -296,6 +298,19 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
             </Select>
           </FormControl>
 
+          <TextField
+            fullWidth
+            label="Fator de Correção"
+            name="correctionFactor"
+            type="number"
+            value={formData.correctionFactor || 1.0}
+            onChange={handleChange}
+            InputProps={{
+              inputProps: { min: 0.1, max: 3.0, step: 0.01 },
+            }}
+            helperText="Fator para ajuste de perdas e desperdício (padrão: 1.0)"
+          />
+
           <Box
             sx={{
               border: '1px solid',
@@ -361,6 +376,31 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
                 )}
               </TextField>
             </Box>
+            {/* Campo calculado para mostrar preço por porção */}
+            {formData.price?.price && formData.price?.quantity && (
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 2,
+                  bgcolor: 'secondary.50',
+                  borderRadius: 1,
+                  border: '1px solid',
+                  borderColor: 'secondary.200',
+                }}
+              >
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Preço por porção (100g):
+                </Typography>
+                <Typography variant="h6" color="secondary.main" sx={{ fontWeight: 600 }}>
+                  R${' '}
+                  {(
+                    (parseFloat(formData.price.price.toString()) /
+                      parseFloat(formData.price.quantity.toString())) *
+                    100
+                  ).toFixed(2)}
+                </Typography>
+              </Box>
+            )}
           </Box>
 
           {/* Campo de upload de imagem */}

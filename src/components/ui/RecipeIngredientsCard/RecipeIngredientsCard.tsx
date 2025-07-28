@@ -24,7 +24,7 @@ import {
 } from '@mui/material';
 import { Search, Delete, Edit, Save, Cancel, Restaurant, AttachMoney } from '@mui/icons-material';
 import { useDebounce } from '../../../hooks/useDebounce';
-import { getCachedIngredients } from '../../../services/api/ingredients';
+import { getCachedIngredients, updateIngredient } from '../../../services/api/ingredients';
 import { getCachedUnitMeasures } from '../../../services/api/unitMeasure';
 import { UnitMeasure } from '../../../types/unitMeasure';
 import { Ingredient } from '../../../types/ingredients';
@@ -119,7 +119,11 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
   const totals = useMemo(() => {
     const totalCost = selectedIngredients.reduce((sum, item) => sum + item.totalCost, 0);
     const totalWeight = selectedIngredients.reduce((sum, item) => sum + item.totalWeight, 0);
-    return { totalCost, totalWeight };
+    const totalCostPerPortion = selectedIngredients.reduce(
+      (sum, item) => sum + (item.costPerPortion || 0),
+      0,
+    );
+    return { totalCost, totalWeight, totalCostPerPortion };
   }, [selectedIngredients]);
 
   // Função para calcular o custo total de um ingrediente
@@ -155,13 +159,14 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
   };
 
   // Confirmar adição/edição do ingrediente
-  const handleConfirmAdd = (data: {
+  const handleConfirmAdd = async (data: {
     quantity: number;
     unitMeasure: string;
     correctionFactor: number;
     purchasePrice: number;
     purchaseQuantity: number;
     purchaseUnit: string;
+    pricePerPortion: number;
   }) => {
     if (!selectedIngredient) return;
 
@@ -169,15 +174,38 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
     const pricePerUnit = data.purchasePrice / data.purchaseQuantity;
     const totalCost = pricePerUnit * data.quantity * data.correctionFactor;
 
-    // Atualizar o ingrediente com novos dados de preço
+    // Calcular custo por porção para este ingrediente na receita
+    const costPerPortion = (data.pricePerPortion * data.quantity) / 100; // ajustado para a quantidade usada
+
+    // Atualizar o ingrediente com novos dados de preço, fator de correção e preço por porção
     const updatedIngredient = {
       ...selectedIngredient,
+      correctionFactor: data.correctionFactor, // Salvar fator de correção no ingrediente
       price: {
         price: data.purchasePrice,
         quantity: data.purchaseQuantity,
         unitMeasure: data.purchaseUnit,
+        pricePerPortion: data.pricePerPortion,
       },
     };
+
+    // Atualizar o ingrediente na API para salvar o fator de correção e preço por porção
+    try {
+      await updateIngredient(selectedIngredient._id, {
+        correctionFactor: data.correctionFactor,
+        price: {
+          price: data.purchasePrice,
+          quantity: data.purchaseQuantity,
+          unitMeasure: data.purchaseUnit,
+          pricePerPortion: data.pricePerPortion,
+        },
+      });
+    } catch (error) {
+      console.error(
+        'Erro ao atualizar ingrediente com fator de correção e preço por porção:',
+        error,
+      );
+    }
 
     const newRecipeIngredient: RecipeIngredient = {
       ingredient: updatedIngredient,
@@ -185,6 +213,8 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
       unitMeasure: data.unitMeasure,
       totalWeight: data.quantity * data.correctionFactor,
       totalCost,
+      costPerPortion,
+      correctionFactor: data.correctionFactor, // Manter por compatibilidade
     };
 
     let updatedIngredients: RecipeIngredient[];
@@ -424,6 +454,11 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
                           <Typography variant="body2" color="success.main" sx={{ fontWeight: 500 }}>
                             R$ {recipeIngredient.totalCost.toFixed(2)}
                           </Typography>
+                          {recipeIngredient.costPerPortion && (
+                            <Typography variant="caption" color="text.secondary">
+                              R$ {recipeIngredient.costPerPortion.toFixed(2)}/porção
+                            </Typography>
+                          )}
                         </Box>
                       )
                     }
@@ -480,6 +515,11 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
                 <Typography variant="body2" color="primary.dark">
                   {totals.totalWeight.toFixed(2)}g total
                 </Typography>
+                {totals.totalCostPerPortion > 0 && (
+                  <Typography variant="body2" color="secondary.dark" sx={{ fontWeight: 600 }}>
+                    R$ {totals.totalCostPerPortion.toFixed(2)} por porção
+                  </Typography>
+                )}
               </Box>
             </Box>
           </>

@@ -35,10 +35,12 @@ export interface RecipeIngredient {
     name: string;
     category: string;
     image: string;
+    correctionFactor?: number; // fator de correção do ingrediente
     price?: {
       price: number;
       quantity: number;
       unitMeasure: string;
+      pricePerPortion?: number; // Preço por porção
     };
     nutritionalInfo?: NutritionalInfo;
   };
@@ -46,7 +48,8 @@ export interface RecipeIngredient {
   unitMeasure: string;
   totalWeight: number; // peso total usado na receita
   totalCost: number; // custo total deste ingrediente na receita
-  correctionFactor?: number; // fator de correção aplicado
+  costPerPortion?: number; // custo por porção deste ingrediente
+  correctionFactor?: number; // fator de correção aplicado (mantido por compatibilidade)
   priceHistory?: IngredientPriceHistory[]; // histórico de preços
 }
 
@@ -96,18 +99,25 @@ export const convertAPIIngredientsToRecipeIngredients = async (
         };
       }
 
-      // Calcular custo total
+      // Calcular custo total usando o fator de correção do ingrediente
+      const correctionFactor = ingredient.correctionFactor || 1.0;
       const pricePerUnit = ingredientWithPrice.price
         ? ingredientWithPrice.price.price / ingredientWithPrice.price.quantity
         : 0;
-      const totalCost = pricePerUnit * quantity;
+      const totalCost = pricePerUnit * quantity * correctionFactor;
+
+      // Calcular custo por porção
+      const pricePerPortion = ingredientWithPrice.price?.pricePerPortion || 0;
+      const costPerPortion = (pricePerPortion * quantity) / 100; // ajustado para a quantidade usada
 
       convertedIngredients.push({
         ingredient: ingredientWithPrice,
         quantity,
         unitMeasure: apiIngredient.unitAmountUseIngredient,
-        totalWeight: quantity,
+        totalWeight: quantity * correctionFactor,
         totalCost,
+        costPerPortion,
+        correctionFactor, // Manter para compatibilidade
       });
     } catch (error) {
       console.error(`Erro ao converter ingrediente ${apiIngredient.idIngredient}:`, error);

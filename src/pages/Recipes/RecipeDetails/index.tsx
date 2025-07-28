@@ -592,22 +592,15 @@ const RecipeDetailsPage: FC = () => {
                   </Tooltip>
                 </Box>
 
-                {/* Título e SKU centralizados */}
+                {/* Título centralizado */}
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography
                     variant="h4"
                     component="h2"
                     gutterBottom
-                    sx={{ fontWeight: 600, color: 'primary.main', mb: 1 }}
+                    sx={{ fontWeight: 600, color: 'primary.main', mb: 3 }}
                   >
                     {recipe.name}
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    color="text.secondary"
-                    sx={{ fontWeight: 500, mb: 2 }}
-                  >
-                    SKU: {recipe.sku}
                   </Typography>
                 </Box>
               </Box>
