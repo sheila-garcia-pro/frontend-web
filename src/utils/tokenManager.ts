@@ -5,6 +5,7 @@
 const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token';
 const REFRESH_TOKEN_KEY =
   import.meta.env.VITE_REFRESH_TOKEN_KEY || '@sheila-garcia-pro-refresh-token';
+const TOKEN_EXPIRY_KEY = import.meta.env.VITE_TOKEN_EXPIRY_KEY || '@sheila-garcia-pro-token-expiry';
 
 export const tokenManager = {
   /**
@@ -25,6 +26,21 @@ export const tokenManager = {
   setToken(token: string): void {
     try {
       localStorage.setItem(TOKEN_KEY, token);
+
+      // Tentar extrair e salvar o tempo de expiração do JWT
+      try {
+        if (token.includes('.')) {
+          const parts = token.split('.');
+          if (parts.length === 3) {
+            const payload = JSON.parse(atob(parts[1]));
+            if (payload.exp) {
+              localStorage.setItem(TOKEN_EXPIRY_KEY, payload.exp.toString());
+            }
+          }
+        }
+      } catch (jwtError) {
+        console.warn('Não foi possível extrair expiração do token:', jwtError);
+      }
     } catch (error) {
       console.error('Erro ao salvar token:', error);
     }
@@ -35,15 +51,26 @@ export const tokenManager = {
   removeToken(): void {
     try {
       localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(TOKEN_EXPIRY_KEY);
       sessionStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(TOKEN_EXPIRY_KEY);
     } catch (error) {
       console.error('Erro ao remover token:', error);
     }
   },
 
   /**
-   * Obtém o refresh token do localStorage
+   * Obtém o tempo de expiração do token
    */
+  getTokenExpiry(): number | null {
+    try {
+      const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
+      return expiry ? parseInt(expiry, 10) : null;
+    } catch (error) {
+      console.error('Erro ao obter expiração do token:', error);
+      return null;
+    }
+  },
   getRefreshToken(): string | null {
     try {
       return localStorage.getItem(REFRESH_TOKEN_KEY);
@@ -104,6 +131,7 @@ export const tokenManager = {
         '@sheila-garcia-pro-user',
         '@sheila-garcia-pro-preferences',
         '@sheila-garcia-pro-cache',
+        TOKEN_EXPIRY_KEY,
       ];
 
       userDataKeys.forEach((key) => {
@@ -114,15 +142,30 @@ export const tokenManager = {
       console.error('Erro ao limpar dados de autenticação:', error);
     }
   } /**
-   * Verifica se o token está expirado (se possível)
-   * Esta função pode ser expandida para decodificar JWT e verificar expiração
+   * Verifica se o token está expirado
+   * Primeiro tenta usar o tempo de expiração salvo, depois decodifica o JWT
    */,
   isTokenExpired(): boolean {
     const token = this.getToken();
     if (!token) return true;
 
     try {
-      // Se for um JWT, podemos decodificar e verificar a expiração
+      // Primeiro, tentar usar o tempo de expiração salvo
+      const savedExpiry = this.getTokenExpiry();
+      if (savedExpiry) {
+        const currentTime = Math.floor(Date.now() / 1000);
+        const isExpired = savedExpiry < currentTime;
+
+        console.log('🕐 Token expiration check (saved):', {
+          exp: savedExpiry,
+          current: currentTime,
+          isExpired,
+        });
+
+        return isExpired;
+      }
+
+      // Se não tem expiração salva, tentar decodificar o JWT
       if (token.includes('.')) {
         const parts = token.split('.');
         if (parts.length === 3) {
@@ -131,17 +174,24 @@ export const tokenManager = {
 
           if (payload.exp) {
             const isExpired = payload.exp < currentTime;
-            console.log('🕐 Token expiration check:', {
+
+            // Salvar a expiração para uso futuro
+            localStorage.setItem(TOKEN_EXPIRY_KEY, payload.exp.toString());
+
+            console.log('🕐 Token expiration check (decoded):', {
               exp: payload.exp,
               current: currentTime,
               isExpired,
             });
+
             return isExpired;
           }
         }
       }
 
-      // Se não conseguir decodificar ou não tiver exp, assumir que não está expirado
+      // Se não conseguir determinar a expiração, assumir que não está expirado
+      // (mas isso pode indicar que o token não é um JWT válido)
+      console.warn('⚠️ Não foi possível verificar expiração do token');
       return false;
     } catch (error) {
       console.error('❌ Erro ao verificar expiração do token:', error);

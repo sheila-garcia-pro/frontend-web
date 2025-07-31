@@ -79,25 +79,14 @@ export const setupInterceptors = (api: AxiosInstance): void => {
             });
         }
 
-        // Marcar como tentativa de renovação e verificar se há refresh token
+        // Marcar como tentativa de renovação
         originalRequest._retry = true;
         isRefreshing = true;
-
-        const refreshTokenValue = tokenManager.getRefreshToken();
-
-        if (!refreshTokenValue || tokenManager.isRefreshTokenExpired()) {
-          console.log('❌ Refresh token não encontrado ou expirado - fazendo logout');
-          tokenManager.clearAuthData();
-          isRefreshing = false;
-          processQueue(error, null);
-          redirectToLogin();
-          return Promise.reject(error);
-        }
 
         try {
           console.log('🔄 Tentando renovar token...');
 
-          // Tentar renovar o token
+          // Tentar renovar o token usando cookies
           const response = await refreshToken();
           const newToken = response.token;
           const newRefreshToken = response.refreshToken;

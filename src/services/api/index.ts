@@ -1,8 +1,10 @@
 import axios from 'axios';
-import { setupInterceptors } from '@services/interceptors/index_with_refresh';
+import { setupTokenRefreshInterceptor } from '@services/interceptors/tokenRefreshInterceptor';
 
 // Constantes
-const API_URL = import.meta.env.VITE_API_URL || 'https://sgpro-api.squareweb.app';
+const API_URL = import.meta.env.DEV
+  ? 'http://localhost:5173' // Usar proxy do Vite em desenvolvimento
+  : import.meta.env.VITE_API_URL || 'https://sgpro-api.squareweb.app';
 const TIMEOUT = 30000; // 30 segundos
 
 // Cria uma instância do axios com configurações personalizadas
@@ -18,7 +20,7 @@ const api = axios.create({
 });
 
 // Configura os interceptors
-setupInterceptors(api);
+setupTokenRefreshInterceptor(api);
 
 // Cache simples para armazenar resultados de requisições GET
 const apiCache = new Map<string, { data: any; timestamp: number }>();

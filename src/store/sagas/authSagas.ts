@@ -40,9 +40,9 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
   try {
     yield put(setGlobalLoading(true));
 
-    // Adaptar credenciais para o formato da API
+    // Usar credenciais no formato correto para a API
     const credentials = {
-      login: action.payload.email,
+      email: action.payload.email,
       password: action.payload.password,
     };
 
@@ -51,7 +51,7 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
     if (!response || !response.token) {
       throw new Error('Não foi possível realizar o login. Por favor, tente novamente.');
     }
-    const { token, refreshToken } = response;
+    const { token, refreshToken, user, expiresIn } = response;
 
     // Salva o token no localStorage usando tokenManager
     tokenManager.setToken(token);
@@ -61,25 +61,30 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
       tokenManager.setRefreshToken(refreshToken);
     }
 
-    try {
-      // Busca os dados do usuário atual
-      const user = yield call(usersService.getCurrentUser);
+    // Se a resposta já inclui os dados do usuário, usar eles
+    let userData = user;
 
-      // Despacha a ação de sucesso
-      yield put(loginSuccess({ user, token }));
-
-      // Notificação de sucesso
-      yield put(
-        addNotification({
-          message: 'Login realizado com sucesso!',
-          type: 'success',
-        }),
-      );
-    } catch (userError) {
-      // Se falhar ao buscar dados do usuário, considera o login falho
-      localStorage.removeItem(import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token');
-      throw new Error('Falha ao obter dados do usuário');
+    // Se não tem dados do usuário na resposta, buscar separadamente
+    if (!userData) {
+      try {
+        userData = yield call(usersService.getCurrentUser);
+      } catch (userError) {
+        // Se falhar ao buscar dados do usuário, considera o login falho
+        tokenManager.clearAuthData();
+        throw new Error('Falha ao obter dados do usuário');
+      }
     }
+
+    // Despacha a ação de sucesso
+    yield put(loginSuccess({ user: userData, token }));
+
+    // Notificação de sucesso
+    yield put(
+      addNotification({
+        message: 'Login realizado com sucesso!',
+        type: 'success',
+      }),
+    );
   } catch (error) {
     // Despacha a ação de falha
     yield put(
@@ -112,16 +117,16 @@ function* registerSaga(action: PayloadAction<RegisterPayload>): SagaIterator {
 
     // Após registro, fazer login automaticamente
     const loginCredentials = {
-      login: action.payload.email,
+      email: action.payload.email,
       password: action.payload.password,
     }; // Obter token de login
-    const { token } = yield call(authService.login, loginCredentials);
+    const response = yield call(authService.login, loginCredentials);
 
     // Salva o token no localStorage usando tokenManager
-    tokenManager.setToken(token);
+    tokenManager.setToken(response.token);
 
     // Despacha a ação de sucesso
-    yield put(registerSuccess({ user, token }));
+    yield put(registerSuccess({ user, token: response.token }));
 
     // Notificação de sucesso
     yield put(
