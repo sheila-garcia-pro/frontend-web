@@ -22,6 +22,7 @@ import {
   Kitchen as KitchenIcon,
   Home as HomeIcon,
   LocalShipping as SuppliersIcon,
+  MenuBook as MenuBookIcon,
 } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@store/index';
@@ -113,6 +114,15 @@ const Sidebar: React.FC<SidebarProps> = ({ open, drawerWidth, handleDrawerToggle
               <RestaurantIcon />
             </ListItemIcon>
             <ListItemText primary={t('menu.recipes')} />
+          </ListItemButton>
+        </ListItem>
+
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => handleNavigation('/menu')}>
+            <ListItemIcon>
+              <MenuBookIcon />
+            </ListItemIcon>
+            <ListItemText primary={t('menu.menu')} />
           </ListItemButton>
         </ListItem>
 

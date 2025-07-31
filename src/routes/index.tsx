@@ -21,6 +21,8 @@ import RecipesPage from '@pages/Recipes';
 import RecipeDetailsPage from '@pages/Recipes/RecipeDetails';
 import SuppliersPage from '@pages/Suppliers';
 import ProfilePage from '@pages/Profile';
+import MenuPage from '@pages/Menu';
+import MenuDetailsPage from '@pages/Menu/MenuDetails';
 
 // Interface para definir propriedades do componente PrivateRoute
 interface PrivateRouteProps {
@@ -115,6 +117,8 @@ const AppRoutesContent: React.FC = () => {
         <Route path="ingredients" element={<IngredientsPage />} />
         <Route path="recipes" element={<RecipesPage />} />
         <Route path="recipes/:id" element={<RecipeDetailsPage />} />
+        <Route path="menu" element={<MenuPage />} />
+        <Route path="menu/:id" element={<MenuDetailsPage />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="suppliers" element={<SuppliersPage />} />
         <Route path="profile" element={<ProfilePage />} />
