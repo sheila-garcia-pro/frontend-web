@@ -4,7 +4,7 @@ import tokenManager from '@utils/tokenManager';
 
 // Interfaces
 interface LoginCredentials {
-  login: string;
+  email: string;
   password: string;
 }
 
@@ -16,8 +16,10 @@ interface RegisterCredentials {
 }
 
 interface AuthResponse {
+  user: User;
   token: string;
   refreshToken?: string;
+  expiresIn?: number;
   status?: number;
   message?: string;
 }
@@ -25,6 +27,7 @@ interface AuthResponse {
 interface RefreshTokenResponse {
   token: string;
   refreshToken?: string;
+  expiresIn?: number;
 }
 
 interface UserUpdateInput {
@@ -38,7 +41,13 @@ interface UserUpdateInput {
 
 // Login
 export const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
-  const response = await api.post<AuthResponse>('/v1/auth/login', credentials);
+  // Mapear email para login conforme esperado pela API
+  const apiCredentials = {
+    login: credentials.email,
+    password: credentials.password,
+  };
+
+  const response = await api.post<AuthResponse>('/v1/auth/login', apiCredentials);
   return response.data;
 };
 
@@ -104,17 +113,11 @@ export const logout = (): void => {
   tokenManager.clearAuthData();
 };
 
-// Refresh Token - renovar token de acesso usando refresh token
+// Refresh Token - renovar token de acesso usando cookies
 export const refreshToken = async (): Promise<RefreshTokenResponse> => {
-  const refreshTokenValue = tokenManager.getRefreshToken();
-
-  if (!refreshTokenValue) {
-    throw new Error('Refresh token não encontrado');
-  }
-
-  const response = await api.post<RefreshTokenResponse>('/v1/auth/refresh', {
-    refreshToken: refreshTokenValue,
-  });
+  // A API /v1/auth/refresh usa cookies para verificar o refresh token
+  // O withCredentials será configurado automaticamente pelo interceptor
+  const response = await api.post<RefreshTokenResponse>('/v1/auth/refresh', {});
 
   return response.data;
 };

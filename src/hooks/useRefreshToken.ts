@@ -12,19 +12,13 @@ export const useRefreshToken = () => {
   const dispatch = useDispatch();
 
   /**
-   * Tenta renovar o token usando o refresh token
+   * Tenta renovar o token usando o refresh token (que está nos cookies)
    */
   const attemptRefresh = useCallback(async (): Promise<boolean> => {
     try {
-      const refreshTokenValue = tokenManager.getRefreshToken();
-
-      if (!refreshTokenValue || tokenManager.isRefreshTokenExpired()) {
-        console.log('❌ Refresh token não encontrado ou expirado');
-        return false;
-      }
-
       console.log('🔄 Tentando renovar token automaticamente...');
 
+      // A API de refresh agora usa cookies, não precisamos do refresh token do localStorage
       const response = await authService.refreshToken();
 
       // Salvar os novos tokens
@@ -58,14 +52,15 @@ export const useRefreshToken = () => {
 
   /**
    * Verifica se deve tentar o refresh do token
+   * Agora só verifica se o token atual está expirado,
+   * pois o refresh token está nos cookies gerenciados pelo servidor
    */
   const shouldRefresh = useCallback((): boolean => {
     const hasToken = tokenManager.hasToken();
-    const hasRefreshToken = tokenManager.hasRefreshToken();
     const isTokenExpired = tokenManager.isTokenExpired();
-    const isRefreshTokenExpired = tokenManager.isRefreshTokenExpired();
 
-    return hasToken && hasRefreshToken && isTokenExpired && !isRefreshTokenExpired;
+    // Deve tentar refresh se tem token mas ele está expirado
+    return hasToken && isTokenExpired;
   }, []);
 
   return {
