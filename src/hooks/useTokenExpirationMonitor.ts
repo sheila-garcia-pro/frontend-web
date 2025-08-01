@@ -12,6 +12,7 @@ export const useTokenExpirationMonitor = (isAuthenticated: boolean) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
+    // Só executar se estiver autenticado e tiver token válido
     if (!isAuthenticated) {
       return;
     }
@@ -21,7 +22,14 @@ export const useTokenExpirationMonitor = (isAuthenticated: boolean) => {
       try {
         const token = tokenManager.getToken();
 
+        // Se não há token, não fazer nada
         if (!token) {
+          return;
+        }
+
+        // Se o token já está expirado, não tentar renovar preventivamente
+        if (tokenManager.isTokenExpired()) {
+          console.log('⚠️ Token já expirado, aguardando interceptor lidar com isso');
           return;
         }
 
@@ -43,9 +51,9 @@ export const useTokenExpirationMonitor = (isAuthenticated: boolean) => {
           } catch (error) {
             console.error('❌ Erro ao renovar token preventivamente:', error);
 
-            // Se falhar ao renovar, fazer logout
-            tokenManager.clearAuthData();
-            dispatch(logout());
+            // Não fazer logout aqui, deixar o interceptor lidar com isso
+            // tokenManager.clearAuthData();
+            // dispatch(logout());
           }
         }
       } catch (error) {

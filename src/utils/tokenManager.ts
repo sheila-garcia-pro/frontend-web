@@ -141,15 +141,17 @@ export const tokenManager = {
     } catch (error) {
       console.error('Erro ao limpar dados de autenticação:', error);
     }
-  } /**
+  },
+
+  /**
    * Verifica se o token está expirado
    * Primeiro tenta usar o tempo de expiração salvo, depois decodifica o JWT
-   */,
+   */
   isTokenExpired(): boolean {
-    const token = this.getToken();
-    if (!token) return true;
-
     try {
+      const token = this.getToken();
+      if (!token) return true;
+
       // Primeiro, tentar usar o tempo de expiração salvo
       const savedExpiry = this.getTokenExpiry();
       if (savedExpiry) {
@@ -198,12 +200,10 @@ export const tokenManager = {
       // Em caso de erro, assumir que está expirado por segurança
       return true;
     }
-  },
-
-  /**
+  } /**
    * Verifica se o refresh token está expirado
    * Considera um prazo de 7 dias para o refresh token
-   */
+   */,
   isRefreshTokenExpired(): boolean {
     const refreshToken = this.getRefreshToken();
     if (!refreshToken) return true;

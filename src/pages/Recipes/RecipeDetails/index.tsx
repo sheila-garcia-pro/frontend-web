@@ -35,6 +35,7 @@ import { getCachedIngredientById } from '../../../services/api/ingredients';
 import RecipeEditModal from '../../../components/ui/RecipeEditModal/RecipeEditModal';
 import RecipeDeleteModal from '../../../components/ui/RecipeDeleteModal';
 import { RecipeIngredientsCard } from '../../../components/ui';
+import RecipeFinancialCard from '../../../components/ui/RecipeFinancialCard';
 import {
   RecipeIngredient,
   convertAPIIngredientsToRecipeIngredients,
@@ -58,7 +59,6 @@ const RecipeDetailsPage: FC = () => {
   // Log dos ingredientes para debug
   useEffect(() => {
     if (recipe?.ingredients && recipe.ingredients.length > 0) {
-      console.log('Ingredientes da receita carregados:', recipe.ingredients.length);
     }
   }, [recipe?.ingredients]);
 
@@ -76,13 +76,11 @@ const RecipeDetailsPage: FC = () => {
     const loadRecipeIngredients = async () => {
       if (recipe?.ingredients && recipe.ingredients.length > 0) {
         try {
-          console.log('🔄 Convertendo ingredientes da API para o formato do componente...');
           const convertedIngredients = await convertAPIIngredientsToRecipeIngredients(
             recipe.ingredients,
             getCachedIngredientById,
           );
           setRecipeIngredients(convertedIngredients);
-          console.log('✅ Ingredientes convertidos:', convertedIngredients);
         } catch (error) {
           console.error('❌ Erro ao converter ingredientes:', error);
           setRecipeIngredients([]);
@@ -109,7 +107,6 @@ const RecipeDetailsPage: FC = () => {
         // Garantir que ingredients seja sempre um array
         if (!foundRecipe.ingredients) {
           foundRecipe.ingredients = [];
-          console.log('⚠️ Warning - ingredients field was missing, initialized as empty array');
         }
 
         setRecipe(foundRecipe);
@@ -214,11 +211,6 @@ const RecipeDetailsPage: FC = () => {
     // Usar o ID original como fallback caso o updatedRecipe._id seja undefined
     const recipeIdToUse = updatedRecipe._id || recipe?._id || id;
 
-    console.log('🔄 Debug - updatedRecipe._id:', updatedRecipe._id);
-    console.log('🔄 Debug - original recipe._id:', recipe?._id);
-    console.log('🔄 Debug - URL param id:', id);
-    console.log('🔄 Debug - Final ID to use:', recipeIdToUse);
-
     if (!recipeIdToUse) {
       console.error('❌ Nenhum ID disponível para refresh da receita');
       dispatch(
@@ -233,9 +225,7 @@ const RecipeDetailsPage: FC = () => {
     }
 
     try {
-      console.log('🔄 Debug - Refreshing recipe with ID:', recipeIdToUse);
       const refreshedRecipe = await getFreshRecipeById(recipeIdToUse);
-      console.log('🔄 Debug - Refreshed recipe:', refreshedRecipe);
       setRecipe(refreshedRecipe); // Navegar de volta para a lista com estado para forçar reload
       navigate('/recipes', {
         state: {
@@ -243,8 +233,6 @@ const RecipeDetailsPage: FC = () => {
           editedRecipeName: updatedRecipe.name,
         },
       });
-
-      console.log('🔄 Dados da receita atualizados via API (dados frescos)');
     } catch (error) {
       console.error('Erro ao recarregar dados da receita:', error);
 
@@ -262,7 +250,6 @@ const RecipeDetailsPage: FC = () => {
     }
   };
   const handleRecipeDeleted = () => {
-    console.log('🔄 Navegando de volta para /recipes com state de reload');
     navigate('/recipes', {
       state: {
         reloadList: true,
@@ -274,22 +261,18 @@ const RecipeDetailsPage: FC = () => {
   // Função para atualizar ingredientes da receita
   const handleIngredientsUpdate = (ingredients: RecipeIngredient[]) => {
     setRecipeIngredients(ingredients);
-    console.log('🔄 Ingredientes atualizados:', ingredients);
 
     // Mostrar total dos ingredientes no log para debug
     const total = ingredients.reduce((sum, item) => sum + item.totalCost, 0);
-    console.log('💰 Total dos ingredientes: R$', total.toFixed(2));
   };
 
   // Função para atualizar passos da receita
   const handleStepsUpdate = (steps: string[]) => {
     setRecipeSteps(steps);
-    console.log('🔄 Passos atualizados:', steps);
   };
 
   // Função para quando a receita for salva com sucesso
   const handleRecipeSaved = (updatedRecipe: Recipe) => {
-    console.log('✅ Receita salva com sucesso:', updatedRecipe);
     handleRecipeUpdated(updatedRecipe);
   };
 
@@ -796,6 +779,19 @@ const RecipeDetailsPage: FC = () => {
             recipeId={recipe._id}
             initialSteps={recipeSteps}
             onStepsUpdate={handleStepsUpdate}
+          />
+        </Box>
+
+        {/* Card de Análise Financeira */}
+        <Box sx={{ mt: 3 }}>
+          <RecipeFinancialCard
+            recipeId={recipe._id}
+            recipeIngredients={recipeIngredients}
+            totalYield={parseFloat(recipe.yieldRecipe) || 1}
+            unitYield={1}
+            onFinancialDataChange={(data) => {
+              // Aqui você pode implementar a lógica para salvar os dados financeiros
+            }}
           />
         </Box>
 

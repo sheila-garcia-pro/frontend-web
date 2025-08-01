@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { setupTokenRefreshInterceptor } from '@services/interceptors/tokenRefreshInterceptor';
+import { setupSimpleInterceptor } from '@services/interceptors/simpleInterceptor';
 
 // Constantes
 const API_URL = import.meta.env.DEV
@@ -20,7 +20,7 @@ const api = axios.create({
 });
 
 // Configura os interceptors
-setupTokenRefreshInterceptor(api);
+setupSimpleInterceptor(api);
 
 // Cache simples para armazenar resultados de requisições GET
 const apiCache = new Map<string, { data: any; timestamp: number }>();
