@@ -24,6 +24,7 @@ export interface UIState {
   notifications: Notification[];
   theme: 'light' | 'dark';
   sidebarOpen: boolean;
+  sidebarCollapsed: boolean;
 }
 
 // Estado inicial
@@ -33,7 +34,8 @@ const initialState: UIState = {
   },
   notifications: [],
   theme: 'light',
-  sidebarOpen: false,
+  sidebarOpen: true,
+  sidebarCollapsed: false,
 };
 
 // Slice da UI
@@ -50,9 +52,14 @@ const uiSlice = createSlice({
     },
 
     // Notificações
-    addNotification: (state, action: PayloadAction<Omit<Notification, 'id' | 'priority'> & { priority?: NotificationPriority }>) => {
+    addNotification: (
+      state,
+      action: PayloadAction<
+        Omit<Notification, 'id' | 'priority'> & { priority?: NotificationPriority }
+      >,
+    ) => {
       const id = Date.now().toString();
-      
+
       // Definir prioridade baseada no tipo, se não fornecida
       let priority = action.payload.priority;
       if (!priority) {
@@ -67,12 +74,12 @@ const uiSlice = createSlice({
             priority = 'low';
         }
       }
-      
+
       // Verificar se já existe uma notificação similar (mesma mensagem e tipo)
       const hasSimilar = state.notifications.some(
-        (n) => n.message === action.payload.message && n.type === action.payload.type
+        (n) => n.message === action.payload.message && n.type === action.payload.type,
       );
-      
+
       // Não adicionar se já existir uma notificação similar
       if (!hasSimilar) {
         // Limitar a quantidade de notificações na fila (máximo 5)
@@ -86,7 +93,7 @@ const uiSlice = createSlice({
             state.notifications.shift();
           }
         }
-        
+
         // Adicionar a nova notificação
         state.notifications.push({
           id,
@@ -119,6 +126,12 @@ const uiSlice = createSlice({
     toggleSidebar: (state) => {
       state.sidebarOpen = !state.sidebarOpen;
     },
+    setSidebarCollapsed: (state, action: PayloadAction<boolean>) => {
+      state.sidebarCollapsed = action.payload;
+    },
+    toggleSidebarCollapsed: (state) => {
+      state.sidebarCollapsed = !state.sidebarCollapsed;
+    },
   },
 });
 
@@ -133,6 +146,8 @@ export const {
   toggleTheme,
   setSidebarOpen,
   toggleSidebar,
+  setSidebarCollapsed,
+  toggleSidebarCollapsed,
 } = uiSlice.actions;
 
 // Exporta reducer

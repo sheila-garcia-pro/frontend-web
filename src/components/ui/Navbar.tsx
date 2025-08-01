@@ -35,11 +35,12 @@ import { useTranslation } from 'react-i18next';
 interface NavbarProps {
   drawerWidth: number;
   open: boolean;
+  collapsed: boolean;
   handleDrawerToggle: () => void;
 }
 
 // Componente Navbar
-const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }) => {
+const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDrawerToggle }) => {
   const { mode, toggleTheme } = useTheme();
   const muiTheme = useMuiTheme();
   const { user } = useSelector((state: RootState) => state.auth);
@@ -85,46 +86,10 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, handleDrawerToggle }
     >
       <Toolbar sx={{ height: '120px' }}>
         {' '}
-        {/* Altura aumentada para melhor aparência */}
-        {/* Botão de menu */}
-        <IconButton
-          color="inherit"
-          aria-label="open drawer"
-          edge="start"
-          onClick={handleDrawerToggle}
-          sx={{
-            mr: 2,
-            borderRadius: '8px', // Borda mais arredondada
-            '&:hover': {
-              backgroundColor:
-                mode === 'light' ? 'rgba(245, 243, 231, 0.2)' : 'rgba(232, 237, 170, 0.2)',
-            },
-          }}
-        >
-          <MenuIcon />
-        </IconButton>
         {/* Logo */}
         <Box
           sx={{ flexGrow: 1, display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}
-        >
-          <Logo
-            variant="symbol"
-            size={60}
-            showText={false}
-            to="/"
-            isHeader={true}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-start',
-              '& img': {
-                height: '60px',
-                width: 'auto',
-                objectFit: 'contain',
-              },
-            }}
-          />
-        </Box>
+        ></Box>
         {/* Ações da direita */}
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           {' '}
