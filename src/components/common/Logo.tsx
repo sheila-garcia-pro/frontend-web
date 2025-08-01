@@ -54,10 +54,7 @@ const Logo: React.FC<LogoProps> = ({
   if (['green', 'pink', 'beige', 'white', 'black'].includes(variant)) {
     // Se for uma cor específica, usar a variante correspondente
     const colorVariant = variant as keyof typeof LOGO_ASSETS.variants;
-    logoSrc =
-      variant === 'full'
-        ? LOGO_ASSETS.variants[colorVariant].full
-        : LOGO_ASSETS.variants[colorVariant].symbol;
+    logoSrc = LOGO_ASSETS.variants[colorVariant].symbol; // Usar sempre o symbol para variantes de cor
   } else if (variant === 'full') {
     // Logo completo baseado no tema
     logoSrc = getLogo(isDarkMode ? 'dark' : 'light', 'full');

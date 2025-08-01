@@ -144,10 +144,6 @@ const LoginPage: React.FC = () => {
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
-      <Typography variant="h5" component="h1" gutterBottom align="center">
-        Entrar
-      </Typography>
-
       {/* Mensagem de erro do Redux */}
       {error && (
         <Typography color="error" align="center" sx={{ mt: 2, mb: 2 }}>

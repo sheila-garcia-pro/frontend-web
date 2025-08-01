@@ -48,13 +48,13 @@ const AuthLayout: React.FC = () => {
         >
           {/* Logo */}
           <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
-            <Logo 
-              variant="full" 
-              size="large" 
+            <Logo
+              variant="white"
+              size="large"
               showText={false}
               textColor={isDarkMode ? '#E8EDAA' : 'primary.main'}
               to="/"
-              sx={{ 
+              sx={{
                 justifyContent: 'center',
                 flexDirection: 'column',
                 alignItems: 'center',
