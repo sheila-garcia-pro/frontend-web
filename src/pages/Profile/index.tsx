@@ -49,11 +49,27 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  // Função para formatar a data de nascimento
+  const formatDateOfBirth = (value: string): string => {
+    // Remove tudo que não é número
+    const numeric = value.replace(/\D/g, '');
+
+    // Aplica a máscara DD/MM/YYYY
+    if (numeric.length <= 2) {
+      return numeric;
+    } else if (numeric.length <= 4) {
+      return numeric.replace(/(\d{2})(\d+)/, '$1/$2');
+    } else {
+      return numeric.replace(/(\d{2})(\d{2})(\d+)/, '$1/$2/$3').slice(0, 10);
+    }
+  };
+
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
     phone: user?.phone ? applyPhoneMask(user.phone) : '',
     image: user?.image === undefined ? '' : user.image,
+    dateOfBirth: user?.dateOfBirth || '',
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -69,6 +85,7 @@ const ProfilePage: React.FC = () => {
     password: '',
     newPassword: '',
     confirmPassword: '',
+    dateOfBirth: '',
   });
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -78,6 +95,11 @@ const ProfilePage: React.FC = () => {
     // Aplica máscara de telefone automaticamente
     if (name === 'phone') {
       processedValue = applyPhoneMask(value);
+    }
+
+    // Aplica formatação de data de nascimento automaticamente
+    if (name === 'dateOfBirth') {
+      processedValue = formatDateOfBirth(value);
     }
 
     setFormData((prev) => ({
@@ -118,6 +140,43 @@ const ProfilePage: React.FC = () => {
           const numericPhone = value.replace(/\D/g, '');
           if (numericPhone.length < 10 || numericPhone.length > 11) {
             error = t('profile.validation.phoneInvalid');
+          }
+        }
+        break;
+
+      case 'dateOfBirth':
+        if (value) {
+          // Validar formato DD/MM/YYYY
+          const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+          const match = value.match(dateRegex);
+
+          if (!match) {
+            error = 'Use o formato DD/MM/YYYY';
+          } else {
+            const [, day, month, year] = match;
+            const dayNum = parseInt(day, 10);
+            const monthNum = parseInt(month, 10);
+            const yearNum = parseInt(year, 10);
+            const currentYear = new Date().getFullYear();
+
+            // Validar valores válidos
+            if (monthNum < 1 || monthNum > 12) {
+              error = 'Mês inválido';
+            } else if (dayNum < 1 || dayNum > 31) {
+              error = 'Dia inválido';
+            } else if (yearNum < 1900 || yearNum > currentYear) {
+              error = `Ano deve estar entre 1900 e ${currentYear}`;
+            } else {
+              // Validar data específica
+              const date = new Date(yearNum, monthNum - 1, dayNum);
+              if (
+                date.getDate() !== dayNum ||
+                date.getMonth() !== monthNum - 1 ||
+                date.getFullYear() !== yearNum
+              ) {
+                error = 'Data inválida';
+              }
+            }
           }
         }
         break;
@@ -163,7 +222,7 @@ const ProfilePage: React.FC = () => {
     try {
       if (!user?.id) return;
 
-      const isValid = ['name', 'email', 'phone'].every((field) =>
+      const isValid = ['name', 'email', 'phone', 'dateOfBirth'].every((field) =>
         validateField(field, formData[field as keyof typeof formData]),
       );
       if (!isValid) {
@@ -185,6 +244,7 @@ const ProfilePage: React.FC = () => {
         name: formData.name,
         email: formData.email,
         phone: formData.phone ? formData.phone.replace(/\D/g, '') : '', // Remove formatação antes de enviar
+        dateOfBirth: formData.dateOfBirth,
       };
 
       // Lógica para imagem:
@@ -369,6 +429,20 @@ const ProfilePage: React.FC = () => {
                 maxLength: 15, // Máximo para formato (99) 99999-9999
               }}
             />
+            <TextField
+              fullWidth
+              label="Data de Nascimento"
+              name="dateOfBirth"
+              value={formData.dateOfBirth}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              error={!!formErrors.dateOfBirth}
+              helperText={formErrors.dateOfBirth}
+              placeholder="DD/MM/YYYY"
+              inputProps={{
+                maxLength: 10, // Máximo para formato DD/MM/YYYY
+              }}
+            />
             {isEditing && isChangingPassword ? (
               <>
                 {' '}
@@ -421,6 +495,7 @@ const ProfilePage: React.FC = () => {
                       email: user?.email || '',
                       phone: user?.phone ? applyPhoneMask(user.phone) : '',
                       image: user?.image === undefined ? '' : user.image,
+                      dateOfBirth: user?.dateOfBirth || '',
                     });
                   }}
                   sx={{ flex: 1 }}

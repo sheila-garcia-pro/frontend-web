@@ -9,6 +9,7 @@ export interface User {
   phone?: string;
   role: string;
   image?: string;
+  dateOfBirth?: string;
 }
 
 export interface AuthState {

@@ -22,6 +22,7 @@ interface RegisterCredentials {
   email: string;
   password: string;
   phone: string;
+  dateOfBirth: string;
 }
 
 interface UseAuthReturn {

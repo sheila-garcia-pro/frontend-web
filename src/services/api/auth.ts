@@ -13,6 +13,7 @@ interface RegisterCredentials {
   email: string;
   password: string;
   phone: string;
+  dateOfBirth: string;
 }
 
 interface AuthResponse {
@@ -37,6 +38,7 @@ interface UserUpdateInput {
   image?: string | null;
   password?: string;
   newPassword?: string;
+  dateOfBirth?: string;
 }
 
 // Login
