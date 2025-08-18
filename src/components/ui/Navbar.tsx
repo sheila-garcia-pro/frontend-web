@@ -71,6 +71,7 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
       sx={{
         width: { sm: `calc(100% - ${open ? drawerWidth : 0}px)` },
         ml: { sm: `${open ? drawerWidth : 0}px` },
+        borderRadius: 0,
         transition: muiTheme.transitions.create(['margin', 'width'], {
           easing: muiTheme.transitions.easing.sharp,
           duration: muiTheme.transitions.duration.leavingScreen,
@@ -84,7 +85,7 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
             : '1px solid rgba(232, 237, 170, 0.2)',
       }}
     >
-      <Toolbar sx={{ height: '120px' }}>
+      <Toolbar sx={{ height: '64px' }}>
         {' '}
         {/* Logo */}
         <Box
@@ -101,7 +102,7 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
               color="inherit"
               onClick={toggleTheme}
               sx={{
-                borderRadius: '8px', // Borda mais arredondada
+                borderRadius: 0,
                 '&:hover': {
                   backgroundColor:
                     mode === 'light' ? 'rgba(245, 243, 231, 0.2)' : 'rgba(232, 237, 170, 0.2)',
@@ -116,7 +117,7 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
             <IconButton
               color="inherit"
               sx={{
-                borderRadius: '8px', // Borda mais arredondada
+                borderRadius: 0,
                 '&:hover': {
                   backgroundColor:
                     mode === 'light' ? 'rgba(245, 243, 231, 0.2)' : 'rgba(232, 237, 170, 0.2)',
@@ -147,6 +148,7 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
                 sx={{
                   p: 0,
                   ml: 1,
+                  borderRadius: 0,
                   border:
                     mode === 'light'
                       ? '2px solid rgba(245, 243, 231, 0.6)'
@@ -171,6 +173,7 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
                       bgcolor: mode === 'light' ? '#3A4534' : '#E8EDAA',
                       color: mode === 'light' ? '#F5F3E7' : '#23291C',
                       fontWeight: 'bold',
+                      borderRadius: 0,
                       border:
                         mode === 'light'
                           ? '2px solid rgba(245, 243, 231, 0.6)'
@@ -200,7 +203,7 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
               onClose={handleCloseMenu}
               PaperProps={{
                 sx: {
-                  borderRadius: '12px', // Menu com bordas mais arredondadas
+                  borderRadius: 0,
                   mt: 1.5,
                   boxShadow:
                     mode === 'light'

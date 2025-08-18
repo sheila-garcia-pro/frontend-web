@@ -47,7 +47,7 @@ const DrawerHeader = styled('div')(({ theme }: { theme: Theme }) => ({
 }));
 
 const StyledListItemButton = styled(ListItemButton)(({ theme }: { theme: Theme }) => ({
-  borderRadius: theme.spacing(0.75),
+  borderRadius: 0,
   margin: theme.spacing(0.25, 1),
   paddingTop: theme.spacing(1),
   paddingBottom: theme.spacing(1),
@@ -157,6 +157,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         '& .MuiDrawer-paper': {
           width: drawerWidth,
           boxSizing: 'border-box',
+          borderRadius: 0,
           backgroundColor: theme.palette.background.paper,
           borderRight: `1px solid ${theme.palette.divider}`,
           transition: theme.transitions.create('width', {

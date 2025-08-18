@@ -33,9 +33,7 @@ const Main = styled('main', {
   marginLeft: isMobile
     ? 0
     : open
-      ? collapsed
-        ? `-${DRAWER_WIDTH - DRAWER_WIDTH_COLLAPSED}px`
-        : 0
+      ? 0  // Sempre 0 quando o sidebar está aberto, independente se está colapsado ou não
       : `-${DRAWER_WIDTH}px`,
   ...(open && {
     transition: theme.transitions.create('margin', {
