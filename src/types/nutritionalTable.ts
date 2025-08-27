@@ -38,3 +38,46 @@ export interface NutritionalTable {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface UserNutritionalTable
+  extends Omit<NutritionalTable, '_id' | 'active' | 'createdAt' | 'updatedAt'> {
+  id?: string;
+  isUserCreated?: boolean;
+}
+
+export interface CreateUserNutritionalTableRequest {
+  tableName: string;
+  description: string;
+  carbohydrateG?: string;
+  energyKcal?: string;
+  proteinG?: string;
+  totalFatsG?: string;
+  totalSugarG?: string;
+  addSugarG?: string;
+  saturatedFatsG?: string;
+  transFatsG?: string;
+  dietaryFiberG?: string;
+  sodiumMG?: string;
+  monounsaturatedG?: string;
+  polyunsaturatedG?: string;
+  cholesterolMG?: string;
+  calciumMG?: string;
+  magnesiumMG?: string;
+  phosphorusMG?: string;
+  ironMG?: string;
+  potassiumMG?: string;
+  copperMG?: string;
+  zincMG?: string;
+  retinolMCG?: string;
+  raeMCG?: string;
+  vitaminDMCG?: string;
+  thiamineMG?: string;
+  riboflavinMG?: string;
+  niacinMG?: string;
+  vitaminB6PiridoxinaMG?: string;
+  vitaminB12MG?: string;
+  vitaminCMCG?: string;
+  lipidsG?: string;
+  iodinG?: string;
+  manganeseMG?: string;
+}

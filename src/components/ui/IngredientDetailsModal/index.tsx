@@ -18,12 +18,33 @@ import {
   Paper,
   TextField,
   DialogActions,
+  ListSubheader,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { Close, Edit, Category, Delete, ShoppingCart, Info } from '@mui/icons-material';
+import {
+  Close,
+  Edit,
+  Category,
+  Delete,
+  ShoppingCart,
+  Info,
+  Settings,
+  Add,
+} from '@mui/icons-material';
 import { Ingredient } from '../../../types/ingredients';
-import { getNutritionalTable } from '../../../services/api/nutritionalTable';
-import { NutritionalTable } from '../../../types/nutritionalTable';
+import {
+  getNutritionalTable,
+  getNutritionalTablesWithUserTables,
+  getUserNutritionalTables,
+  createUserNutritionalTable,
+  updateUserNutritionalTable,
+  deleteUserNutritionalTable,
+} from '../../../services/api/nutritionalTable';
+import {
+  NutritionalTable,
+  UserNutritionalTable,
+  CreateUserNutritionalTableRequest,
+} from '../../../types/nutritionalTable';
 import { useDispatch } from 'react-redux';
 import * as ingredientsService from '../../../services/api/ingredients';
 import { addNotification } from '../../../store/slices/uiSlice';
@@ -32,6 +53,8 @@ import {
   deleteIngredientRequest,
 } from '../../../store/slices/ingredientsSlice';
 import IngredientEditModal from '../IngredientEditModal';
+import UserNutritionalTableModal from '../UserNutritionalTableModal';
+import UserNutritionalTablesManager from '../UserNutritionalTablesManager';
 // Removida a importação específica, usaremos a função do ingredientsService
 import { Check, Close as CloseIcon } from '@mui/icons-material';
 import { getUnitMeasures } from '../../../services/api/unitMeasure';
@@ -55,8 +78,12 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
   const [ingredient, setIngredient] = useState<Ingredient | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [nutritionalTables, setNutritionalTables] = useState<NutritionalTable[]>([]);
-  const [selectedTable, setSelectedTable] = useState<NutritionalTable | null>(null);
+  const [userTables, setUserTables] = useState<UserNutritionalTable[]>([]);
+  const [selectedTable, setSelectedTable] = useState<
+    NutritionalTable | UserNutritionalTable | null
+  >(null);
   const [loadingTables, setLoadingTables] = useState(false);
+  const [loadingUserTables, setLoadingUserTables] = useState(false);
   const [editingPrice, setEditingPrice] = useState(false);
   const [editingQuantity, setEditingQuantity] = useState(false);
   const [editingUnit, setEditingUnit] = useState(false);
@@ -65,14 +92,33 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
   const [newUnit, setNewUnit] = useState<string>('');
   const [unitMeasures, setUnitMeasures] = useState<UnitMeasure[]>([]);
 
+  // User nutritional tables management
+  const [userTableModalOpen, setUserTableModalOpen] = useState(false);
+  const [tablesManagerOpen, setTablesManagerOpen] = useState(false);
+  const [editingUserTable, setEditingUserTable] = useState<UserNutritionalTable | null>(null);
+  const [savingUserTable, setSavingUserTable] = useState(false);
+
   const loadNutritionalTables = useCallback(
     async (name: string) => {
+      // Don't load tables if name is empty or undefined
+      if (!name || !name.trim()) {
+        setNutritionalTables([]);
+        setUserTables([]);
+        setSelectedTable(null);
+        return;
+      }
+
       setLoadingTables(true);
       try {
-        const data = await getNutritionalTable(name);
-        setNutritionalTables(data);
-        if (data.length > 0) {
-          setSelectedTable(data[0]);
+        // Use the new API that returns both system and user tables
+        const { systemTables, userTables } = await getNutritionalTablesWithUserTables(name);
+        setNutritionalTables(systemTables);
+        setUserTables(userTables);
+
+        // Don't auto-select any table - let user choose explicitly
+        // This prevents interference with manual selection
+        if (!selectedTable && systemTables.length === 0 && userTables.length === 0) {
+          setSelectedTable(null);
         }
       } catch (error) {
         dispatch(
@@ -86,8 +132,123 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
         setLoadingTables(false);
       }
     },
-    [dispatch, t],
+    [dispatch, t, selectedTable],
   );
+
+  const loadUserNutritionalTables = useCallback(async () => {
+    setLoadingUserTables(true);
+    try {
+      const data = await getUserNutritionalTables();
+      setUserTables(data);
+    } catch (error) {
+      dispatch(
+        addNotification({
+          message: 'Erro ao carregar suas tabelas nutricionais.',
+          type: 'error',
+          duration: 5000,
+        }),
+      );
+    } finally {
+      setLoadingUserTables(false);
+    }
+  }, [dispatch]);
+
+  const handleSaveUserTable = async (data: CreateUserNutritionalTableRequest) => {
+    setSavingUserTable(true);
+    try {
+      if (editingUserTable?.id) {
+        // Update existing table
+        await updateUserNutritionalTable(editingUserTable.id, data);
+        dispatch(
+          addNotification({
+            message: 'Tabela nutricional atualizada com sucesso!',
+            type: 'success',
+            duration: 3000,
+          }),
+        );
+      } else {
+        // Create new table
+        await createUserNutritionalTable(data);
+        dispatch(
+          addNotification({
+            message: 'Tabela nutricional criada com sucesso!',
+            type: 'success',
+            duration: 3000,
+          }),
+        );
+      }
+
+      // Reload tables for current ingredient
+      if (ingredient) {
+        await loadNutritionalTables(ingredient.name);
+      }
+
+      // Also reload user tables for management
+      await loadUserNutritionalTables();
+
+      setUserTableModalOpen(false);
+      setEditingUserTable(null);
+    } catch (error) {
+      dispatch(
+        addNotification({
+          message: 'Erro ao salvar tabela nutricional.',
+          type: 'error',
+          duration: 5000,
+        }),
+      );
+    } finally {
+      setSavingUserTable(false);
+    }
+  };
+
+  const handleDeleteUserTable = async (tableId: string) => {
+    try {
+      await deleteUserNutritionalTable(tableId);
+      dispatch(
+        addNotification({
+          message: 'Tabela nutricional excluída com sucesso!',
+          type: 'success',
+          duration: 3000,
+        }),
+      );
+
+      // If the deleted table was selected, clear selection
+      if (
+        selectedTable &&
+        (selectedTable as UserNutritionalTable).isUserCreated &&
+        (selectedTable as UserNutritionalTable).id === tableId
+      ) {
+        setSelectedTable(null);
+      }
+
+      // Reload tables for current ingredient
+      if (ingredient) {
+        await loadNutritionalTables(ingredient.name);
+      }
+
+      // Also reload user tables for management
+      await loadUserNutritionalTables();
+    } catch (error) {
+      dispatch(
+        addNotification({
+          message: 'Erro ao excluir tabela nutricional.',
+          type: 'error',
+          duration: 5000,
+        }),
+      );
+    }
+  };
+
+  const handleCreateUserTable = () => {
+    setEditingUserTable(null);
+    setUserTableModalOpen(true);
+  };
+
+  const handleEditUserTable = (table: UserNutritionalTable) => {
+    setEditingUserTable(table);
+    setUserTableModalOpen(true);
+    setTablesManagerOpen(false);
+  };
 
   const loadIngredient = useCallback(
     async (id: string) => {
@@ -95,7 +256,7 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
       try {
         const data = await ingredientsService.getIngredientById(id);
         setIngredient(data);
-        if (data) {
+        if (data && data.name && data.name.trim()) {
           await loadNutritionalTables(data.name);
         }
       } catch (error) {
@@ -163,9 +324,14 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
   useEffect(() => {
     if (open && ingredientId) {
       loadIngredient(ingredientId);
+      // User tables will be loaded together with ingredient tables in loadNutritionalTables
     } else if (!open) {
       setIngredient(null);
       setEditModalOpen(false);
+      setUserTableModalOpen(false);
+      setTablesManagerOpen(false);
+      setEditingUserTable(null);
+      setSelectedTable(null); // Clear selection when closing
     }
   }, [open, ingredientId, loadIngredient]);
 
@@ -553,29 +719,133 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                 ) : (
                   <>
                     <Box sx={{ mt: 4, mb: 3 }}>
-                      <FormControl fullWidth>
-                        {' '}
-                        <InputLabel id="nutritional-table-label">
-                          {t('ingredients.nutrition.title')}
-                        </InputLabel>
-                        <Select
-                          labelId="nutritional-table-label"
-                          value={selectedTable?.description || ''}
-                          label={t('ingredients.nutrition.title')}
-                          onChange={(e) => {
-                            const table = nutritionalTables.find(
-                              (t) => t.description === e.target.value,
-                            );
-                            setSelectedTable(table || null);
-                          }}
-                        >
-                          {nutritionalTables.map((table) => (
-                            <MenuItem key={table.description} value={table.description}>
-                              {table.description} ({table.tableName})
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                        <FormControl fullWidth sx={{ minWidth: 200 }}>
+                          <InputLabel
+                            id="nutritional-table-label"
+                            sx={{
+                              whiteSpace: 'nowrap',
+                              overflow: 'visible',
+                              textOverflow: 'clip',
+                            }}
+                          >
+                            {selectedTable
+                              ? t('ingredients.nutrition.title')
+                              : 'Selecionar tabela nutricional'}
+                          </InputLabel>
+                          <Select
+                            labelId="nutritional-table-label"
+                            value={(() => {
+                              if (!selectedTable) return '';
+
+                              // Check if it's a user table by looking for id property
+                              if ('id' in selectedTable && selectedTable.id) {
+                                return `user_${selectedTable.id}`;
+                              }
+
+                              // Otherwise it's a system table
+                              return `system_${(selectedTable as NutritionalTable).description.trim()}`;
+                            })()}
+                            label={
+                              selectedTable
+                                ? t('ingredients.nutrition.title')
+                                : 'Selecionar tabela nutricional'
+                            }
+                            onChange={(e) => {
+                              const value = e.target.value as string;
+
+                              if (value === '__create_new__') {
+                                // Handle create new table
+                                handleCreateUserTable();
+                                return;
+                              } else if (value.startsWith('user_')) {
+                                // User table selected
+                                const tableId = value.replace('user_', '');
+                                const userTable = userTables.find((t) => t.id === tableId);
+                                setSelectedTable(userTable || null);
+                              } else if (value.startsWith('system_')) {
+                                // System table selected
+                                const description = value.replace('system_', '').trim();
+                                const systemTable = nutritionalTables.find(
+                                  (t) => t.description.trim() === description,
+                                );
+                                setSelectedTable(systemTable || null);
+                              }
+                            }}
+                          >
+                            {/* System Tables */}
+                            {nutritionalTables.length > 0 && [
+                              <ListSubheader key="system-header">Tabelas do Sistema</ListSubheader>,
+                              ...nutritionalTables.map((table, index) => (
+                                <MenuItem
+                                  key={`system_${table.description.trim()}_${index}`}
+                                  value={`system_${table.description.trim()}`}
+                                >
+                                  {table.description} ({table.tableName})
+                                </MenuItem>
+                              )),
+                            ]}
+
+                            {/* User Tables */}
+                            {userTables.length > 0 && [
+                              <ListSubheader key="user-header">
+                                Minhas Tabelas Personalizadas
+                              </ListSubheader>,
+                              ...userTables.map((table, index) => (
+                                <MenuItem
+                                  key={`user_${table.id}_${index}`}
+                                  value={`user_${table.id}`}
+                                >
+                                  <Box
+                                    sx={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: 1,
+                                      width: '100%',
+                                    }}
+                                  >
+                                    <Typography sx={{ flex: 1 }}>{table.description}</Typography>
+                                  </Box>
+                                </MenuItem>
+                              )),
+                            ]}
+
+                            {/* Create new table option */}
+                            <Divider sx={{ my: 1 }} />
+                            <MenuItem
+                              value="__create_new__"
+                              sx={{
+                                color: 'primary.main',
+                                fontWeight: 600,
+                                '&:hover': {
+                                  bgcolor: 'primary.light',
+                                  color: 'primary.contrastText',
+                                },
+                              }}
+                            >
+                              <Add sx={{ mr: 1 }} />
+                              Criar Nova Tabela Personalizada
                             </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
+                          </Select>
+                        </FormControl>
+
+                        {/* Settings button for user tables management */}
+                        <Tooltip title="Gerenciar Minhas Tabelas">
+                          <IconButton
+                            onClick={() => setTablesManagerOpen(true)}
+                            sx={{
+                              bgcolor: 'primary.light',
+                              color: 'primary.main',
+                              '&:hover': {
+                                bgcolor: 'primary.main',
+                                color: 'primary.contrastText',
+                              },
+                            }}
+                          >
+                            <Settings />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     </Box>
 
                     {selectedTable && (
@@ -987,6 +1257,29 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
           onEditSuccess={handleEditSuccess}
         />
       )}
+
+      {/* User Nutritional Table Modal */}
+      <UserNutritionalTableModal
+        open={userTableModalOpen}
+        onClose={() => {
+          setUserTableModalOpen(false);
+          setEditingUserTable(null);
+        }}
+        onSave={handleSaveUserTable}
+        table={editingUserTable}
+        loading={savingUserTable}
+      />
+
+      {/* User Tables Manager Modal */}
+      <UserNutritionalTablesManager
+        open={tablesManagerOpen}
+        onClose={() => setTablesManagerOpen(false)}
+        tables={userTables}
+        loading={loadingUserTables}
+        onCreateNew={handleCreateUserTable}
+        onEdit={handleEditUserTable}
+        onDelete={handleDeleteUserTable}
+      />
     </Dialog>
   );
 };
