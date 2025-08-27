@@ -98,15 +98,11 @@ const MenuDetailsPage: React.FC = () => {
   // Calcular dados financeiros
   const calculateFinancialData = () => {
     if (!menu) {
-      console.log('Menu não carregado ainda');
       return;
     }
 
-    console.log('Calculando dados financeiros para menu:', menu);
-
     // Por ora, usando valores simulados - idealmente viriam da API ou cálculo real dos itens
     const itemsCost = menu.totalCost || 5.27; // Custo real dos ingredientes/receitas
-    console.log('itemsCost:', itemsCost);
 
     const calculated = calculateMenuFinancials({
       totalItems: menu.menuItems.length || 2,
@@ -116,7 +112,6 @@ const MenuDetailsPage: React.FC = () => {
       sellPrice: menu.sellPrice || 0,
     });
 
-    console.log('Dados calculados:', calculated);
     setFinancialData(calculated);
 
     // Validar os cálculos e exibir erros se houver

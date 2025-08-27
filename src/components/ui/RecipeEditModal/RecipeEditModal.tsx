@@ -149,9 +149,6 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
       return;
     }
 
-    console.log('🔍 Debug - Recipe ID:', recipe._id);
-    console.log('🔍 Debug - Recipe object:', recipe);
-
     // Validação básica
     if (!formData.name.trim()) {
       dispatch(
@@ -178,14 +175,10 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
 
     setLoading(true);
     try {
-      console.log('🚀 Calling updateRecipe with ID:', recipe._id);
-
       // Etapa 1: Atualizar ingredientes individuais
       if (recipeIngredients.length > 0) {
-        console.log('🔄 Atualizando ingredientes individuais...');
         try {
           await syncIngredientsWithAPI(recipeIngredients);
-          console.log('✅ Todos os ingredientes foram atualizados');
         } catch (error) {
           console.error('❌ Erro ao atualizar alguns ingredientes:', error);
           // Continua com a receita mesmo se houver erro nos ingredientes
@@ -206,7 +199,6 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
       };
 
       // Etapa 3: Atualizar a receita
-      console.log('🔄 Atualizando receita...');
       const updatedRecipe = await updateRecipe(recipe._id, recipeData);
 
       // Não mostrar notificação aqui, será mostrada na página pai após recarregar

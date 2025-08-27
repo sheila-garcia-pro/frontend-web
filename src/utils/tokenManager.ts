@@ -158,12 +158,6 @@ export const tokenManager = {
         const currentTime = Math.floor(Date.now() / 1000);
         const isExpired = savedExpiry < currentTime;
 
-        console.log('🕐 Token expiration check (saved):', {
-          exp: savedExpiry,
-          current: currentTime,
-          isExpired,
-        });
-
         return isExpired;
       }
 
@@ -179,12 +173,6 @@ export const tokenManager = {
 
             // Salvar a expiração para uso futuro
             localStorage.setItem(TOKEN_EXPIRY_KEY, payload.exp.toString());
-
-            console.log('🕐 Token expiration check (decoded):', {
-              exp: payload.exp,
-              current: currentTime,
-              isExpired,
-            });
 
             return isExpired;
           }
@@ -218,11 +206,6 @@ export const tokenManager = {
 
           if (payload.exp) {
             const isExpired = payload.exp < currentTime;
-            console.log('🕐 Refresh token expiration check:', {
-              exp: payload.exp,
-              current: currentTime,
-              isExpired,
-            });
             return isExpired;
           }
         }

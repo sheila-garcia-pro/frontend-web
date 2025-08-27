@@ -71,8 +71,6 @@ const RecipesPage: FC = () => {
 
       setReceitas(response.data);
       setTotalPages(response.totalPages);
-
-      console.log('🔄 Lista recarregada com dados frescos da API');
     } catch (error) {
       console.error('Erro ao recarregar receitas:', error);
       dispatch(
@@ -95,8 +93,6 @@ const RecipesPage: FC = () => {
     } | null;
 
     if (state?.reloadList) {
-      console.log('🔄 Detectado reload após operação - usando refresh forçado');
-
       // Força o reload da lista SEM cache
       handleForceRefreshList();
 

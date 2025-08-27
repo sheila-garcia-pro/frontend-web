@@ -34,11 +34,9 @@ const RecipeDeleteModal: React.FC<RecipeDeleteModalProps> = ({
   const handleDelete = async () => {
     if (!recipe) return;
 
-    console.log('🗑️ Iniciando exclusão da receita:', recipe.name);
     setLoading(true);
     try {
       await deleteRecipe(recipe._id);
-      console.log('✅ Receita excluída com sucesso da API');
 
       dispatch(
         addNotification({
@@ -50,7 +48,6 @@ const RecipeDeleteModal: React.FC<RecipeDeleteModalProps> = ({
 
       // Pequeno delay para mostrar a notificação antes de fechar
       setTimeout(() => {
-        console.log('🔄 Chamando onRecipeDeleted...');
         onRecipeDeleted();
         onClose();
       }, 500);

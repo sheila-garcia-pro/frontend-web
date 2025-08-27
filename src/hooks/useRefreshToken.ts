@@ -16,8 +16,6 @@ export const useRefreshToken = () => {
    */
   const attemptRefresh = useCallback(async (): Promise<boolean> => {
     try {
-      console.log('🔄 Tentando renovar token automaticamente...');
-
       // A API de refresh agora usa cookies, não precisamos do refresh token do localStorage
       const response = await authService.refreshToken();
 
@@ -26,8 +24,6 @@ export const useRefreshToken = () => {
       if (response.refreshToken) {
         tokenManager.setRefreshToken(response.refreshToken);
       }
-
-      console.log('✅ Token renovado automaticamente');
 
       return true;
     } catch (error) {

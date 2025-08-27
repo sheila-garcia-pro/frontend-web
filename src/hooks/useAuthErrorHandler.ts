@@ -12,16 +12,11 @@ export const useAuthErrorHandler = () => {
   useEffect(() => {
     // Interceptar erros 401 de qualquer lugar da aplicação
     const handleUnauthorized = () => {
-      console.log('🔄 Token expirado detectado - fazendo logout...');
-
       // Limpar token
       tokenManager.clearAuthData();
 
       // Atualizar estado do Redux
       dispatch(logout());
-
-      // Log para debug
-      console.log('✅ Token limpo e usuário deslogado');
     };
 
     // Adicionar listener global para erros 401

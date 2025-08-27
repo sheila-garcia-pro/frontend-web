@@ -7,7 +7,6 @@ const DebugButton: React.FC = () => {
   const handleClearToken = () => {
     const tokenKey = import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token';
     localStorage.removeItem(tokenKey);
-    console.log('🧹 Token removido');
     window.location.reload();
   };
 

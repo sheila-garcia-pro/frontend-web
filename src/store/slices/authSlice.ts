@@ -25,7 +25,6 @@ const getInitialAuthState = (): AuthState => {
   const token = tokenManager.getToken();
 
   if (token) {
-    console.log('🔐 Token encontrado no localStorage - inicializando como autenticado');
     return {
       user: null, // Será preenchido quando checkAuth for executado
       token,
@@ -35,7 +34,6 @@ const getInitialAuthState = (): AuthState => {
     };
   }
 
-  console.log('❌ Nenhum token encontrado - inicializando como não autenticado');
   return {
     user: null,
     token: null,

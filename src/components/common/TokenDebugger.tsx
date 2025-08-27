@@ -14,9 +14,7 @@ const TokenDebugger: React.FC = () => {
   const location = useLocation();
 
   const handleClearToken = () => {
-    console.log('🧹 Limpando token manualmente...');
     tokenManager.clearAuthData();
-    console.log('✅ Token limpo');
     // Forçar reload da página para testar redirecionamento
     window.location.reload();
   };
@@ -24,17 +22,9 @@ const TokenDebugger: React.FC = () => {
   const handleCheckToken = () => {
     const token = tokenManager.getToken();
     const isExpired = token ? tokenManager.isTokenExpired() : null;
-    console.log('🔍 Status do Token:', {
-      hasToken: !!token,
-      isExpired,
-      reduxAuthenticated: isAuthenticated,
-      hasReduxToken: !!reduxToken,
-      currentPath: location.pathname,
-    });
   };
 
   const handleSimulate401 = () => {
-    console.log('🎭 Simulando erro 401...');
     window.dispatchEvent(new CustomEvent('auth:tokenExpired'));
   };
   // Só mostrar em desenvolvimento

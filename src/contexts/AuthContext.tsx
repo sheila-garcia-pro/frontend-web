@@ -14,18 +14,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const dispatch = useDispatch<AppDispatch>();
   const { isAuthenticated, loading, user } = useSelector((state: RootState) => state.auth);
 
-  useEffect(() => {
-    console.log('🔍 AuthProvider: Inicializando...');
-    // Por enquanto não vamos disparar nenhuma action para evitar erros
-  }, [dispatch]);
-
   const value: AuthContextType = {
     isAuthenticated,
     isLoading: loading,
     user,
   };
-
-  console.log('🔒 AuthProvider renderizando:', { isAuthenticated, loading });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

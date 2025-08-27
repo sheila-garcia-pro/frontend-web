@@ -102,14 +102,6 @@ export class SafeLogger {
    */
   static request(method: string, url: string, data?: any): void {
     if (!this.shouldLog()) return;
-
-    console.log(
-      `%c[REQUEST] %c${method.toUpperCase()} %c${url}`,
-      'color: #8855ff; font-weight: bold',
-      'color: #885599; font-weight: bold',
-      'color: inherit',
-      data ? this.sanitize(data) : '',
-    );
   }
 
   /**
@@ -119,14 +111,6 @@ export class SafeLogger {
     if (!this.shouldLog()) return;
 
     const statusColor = status < 300 ? '#00aa44' : status < 400 ? '#ff9900' : '#ff0044';
-
-    console.log(
-      `%c[RESPONSE] teste %c${status} %c${url}`,
-      'color: #8855ff; font-weight: bold',
-      `color: ${statusColor}; font-weight: bold`,
-      'color: inherit',
-      data ? this.sanitize(data) : '',
-    );
   }
 }
 

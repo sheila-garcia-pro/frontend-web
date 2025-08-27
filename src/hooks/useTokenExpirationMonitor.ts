@@ -29,7 +29,6 @@ export const useTokenExpirationMonitor = (isAuthenticated: boolean) => {
 
         // Se o token já está expirado, não tentar renovar preventivamente
         if (tokenManager.isTokenExpired()) {
-          console.log('⚠️ Token já expirado, aguardando interceptor lidar com isso');
           return;
         }
 
@@ -37,8 +36,6 @@ export const useTokenExpirationMonitor = (isAuthenticated: boolean) => {
         const isNearExpiry = isTokenNearExpiry();
 
         if (isNearExpiry) {
-          console.log('🔄 Token próximo da expiração, renovando preventivamente...');
-
           try {
             const response = await refreshToken();
             tokenManager.setToken(response.token);
@@ -46,8 +43,6 @@ export const useTokenExpirationMonitor = (isAuthenticated: boolean) => {
             if (response.refreshToken) {
               tokenManager.setRefreshToken(response.refreshToken);
             }
-
-            console.log('✅ Token renovado preventivamente');
           } catch (error) {
             console.error('❌ Erro ao renovar token preventivamente:', error);
 

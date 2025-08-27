@@ -19,24 +19,17 @@ const SimpleTokenCheck: React.FC<SimpleTokenCheckProps> = ({ children }) => {
       const token = localStorage.getItem(tokenKey);
       const currentPath = location.pathname;
 
-      console.log('🔍 Verificação simples de token:', {
-        hasToken: !!token,
-        currentPath,
-      });
-
       // Rotas públicas que não precisam de token
       const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
       const isPublicRoute = publicRoutes.includes(currentPath);
 
       // Se não tem token e não está em rota pública, redirecionar
       if (!token && !isPublicRoute) {
-        console.log('❌ Sem token - redirecionando para login');
         navigate('/login', { replace: true });
       }
 
       // Se tem token e está em rota pública, redirecionar para home
       if (token && isPublicRoute) {
-        console.log('✅ Token encontrado em rota pública - redirecionando para home');
         navigate('/', { replace: true });
       }
 

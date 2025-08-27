@@ -77,14 +77,11 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
   const [loadingYields, setLoadingYields] = useState(false);
   const [loadingUnitMeasures, setLoadingUnitMeasures] = useState(false);
 
-  console.log(userCategories, yields, unitMeasures); // Debug log to check initial state
-
   const loadUserCategories = useCallback(async () => {
     try {
       setLoadingUserCategories(true);
       const categories = await getUserRecipeCategories();
       setUserCategories(categories);
-      console.log('Categorias do usuário carregadas:', categories);
     } catch (error) {
       console.error('Erro ao carregar categorias do usuário:', error);
       dispatch(
@@ -103,9 +100,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
     try {
       setLoadingYields(true);
       const yieldsData = await getYieldsRecipes();
-      console.log('Yields carregados:', yieldsData); // Debug log
-      console.log('Tipo de dados dos yields:', typeof yieldsData, Array.isArray(yieldsData)); // Debug log
-
       // Map the API data to our local interface format
       const mappedYields: YieldItem[] = yieldsData.map((yieldItem) => ({
         _id: yieldItem._id,
@@ -132,7 +126,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
     try {
       setLoadingUnitMeasures(true);
       const unitMeasuresData = await getUnitMeasures();
-      console.log('Unidades de medida carregadas:', unitMeasuresData); // Debug log
       setUnitMeasures(unitMeasuresData);
     } catch (error) {
       console.error('Erro ao carregar unidades de medida:', error);
@@ -150,7 +143,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
 
   useEffect(() => {
     if (open) {
-      console.log('Modal aberto, carregando dados...'); // Debug log
       loadUserCategories();
       loadYields();
       loadUnitMeasures();
@@ -182,7 +174,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<string>,
   ) => {
     const { name, value } = e.target;
-    console.log('handleChange chamado:', { name, value }); // Debug log
     if (name) {
       // Ensure value is never undefined to prevent controlled/uncontrolled switch
       const safeValue = value === undefined ? '' : value;
@@ -236,7 +227,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
 
   const handleCategoryChange = (event: SelectChangeEvent<string>) => {
     const value = event.target.value;
-    console.log('handleCategoryChange chamado:', value); // Debug log
     // Ensure value is never undefined to prevent controlled/uncontrolled switch
     const safeValue = value === undefined ? '' : value;
     setFormData((prev) => ({ ...prev, category: safeValue }));
@@ -370,8 +360,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
         typeWeightRecipe: weightUnitName,
       };
 
-      console.log('Dados enviados para API:', submissionData); // Debug log
-
       await createRecipe(submissionData);
 
       dispatch(
@@ -402,11 +390,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
       setSubmitting(false);
     }
   };
-
-  // Debug: Monitor changes to yieldRecipe
-  useEffect(() => {
-    console.log('formData.yieldRecipe mudou para:', formData.yieldRecipe);
-  }, [formData.yieldRecipe]);
 
   const isLoadingCategories = loadingUserCategories;
 

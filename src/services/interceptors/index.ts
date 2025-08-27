@@ -51,8 +51,6 @@ export const setupInterceptors = (api: AxiosInstance): void => {
       const errorMessage = extractErrorMessage(error);
       // Se receber 401 Unauthorized, limpar token e redirecionar
       if (status === 401) {
-        console.log('❌ 401 Unauthorized detectado - limpando token e redirecionando...');
-
         // Limpar token imediatamente
         tokenManager.clearAuthData();
 
@@ -65,7 +63,6 @@ export const setupInterceptors = (api: AxiosInstance): void => {
 
         if (!authRoutes.includes(currentPath)) {
           // Redirecionar para login imediatamente
-          console.log('🔄 Redirecionando para /login...');
           window.location.replace('/login');
         }
 

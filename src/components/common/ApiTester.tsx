@@ -9,10 +9,8 @@ import api from '@services/api/index';
 const ApiTester: React.FC = () => {
   const handleTestUnauthorized = async () => {
     try {
-      console.log('🧪 Testando API que retorna 401...');
       // Esta rota deve retornar 401 se o token estiver inválido
       const response = await api.get('/v1/users/me');
-      console.log('📊 Resposta da API:', response.status);
     } catch (error) {
       console.log('❌ Erro capturado:', error);
     }

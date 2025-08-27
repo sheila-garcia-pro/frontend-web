@@ -48,8 +48,6 @@ export const setupSimpleInterceptor = (api: AxiosInstance): void => {
 
           // Não interferir no login inicial
           if (!originalRequest?.url?.includes('/v1/auth/login')) {
-            console.log('❌ 401 Unauthorized - limpando dados e redirecionando');
-
             try {
               tokenManager.clearAuthData();
             } catch (clearError) {
@@ -61,7 +59,6 @@ export const setupSimpleInterceptor = (api: AxiosInstance): void => {
             const authRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
 
             if (!authRoutes.includes(currentPath)) {
-              console.log('🔄 Redirecionando para /login...');
               window.location.replace('/login');
             }
           }

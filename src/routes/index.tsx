@@ -44,7 +44,6 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ element }) => {
   }
 
   if (!isAuthenticated) {
-    console.log('🚫 Usuário não autenticado - redirecionando para login');
     // Redireciona para a página de login se não estiver autenticado
     return <Navigate to="/login" replace />;
   }
@@ -64,7 +63,6 @@ const AuthRoute: React.FC<AuthRouteProps> = ({ element }) => {
 
   // Se estiver autenticado, redireciona para a página principal
   if (isAuthenticated) {
-    console.log('✅ Usuário já autenticado - redirecionando para home');
     return <Navigate to="/" replace />;
   }
 
@@ -79,7 +77,6 @@ const AppRoutesContent: React.FC = () => {
 
   // Verificar autenticação apenas uma vez na inicialização
   useEffect(() => {
-    console.log('🔄 Iniciando verificação de autenticação...');
     dispatch(checkAuthRequest());
   }, [dispatch]);
 

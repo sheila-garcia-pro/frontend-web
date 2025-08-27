@@ -20,7 +20,6 @@ export const useTokenWatcher = () => {
 
       // Se o token foi removido
       if (e.key === tokenKey && !e.newValue) {
-        console.log('📢 Token removido do localStorage - fazendo logout');
         dispatch(logout());
 
         // Verificar se não está em rota pública
@@ -40,7 +39,6 @@ export const useTokenWatcher = () => {
 
       // Se não tem token e não está em rota pública
       if (!token && !publicRoutes.includes(currentPath)) {
-        console.log('⏱️ Verificação periódica: sem token - redirecionando');
         dispatch(logout());
         navigate('/login', { replace: true });
         return;
@@ -48,19 +46,15 @@ export const useTokenWatcher = () => {
 
       // Se tem token mas está expirado
       if (token && tokenManager.isTokenExpired() && !publicRoutes.includes(currentPath)) {
-        console.log('⏱️ Verificação periódica: token expirado - tentando renovar...');
-
         // Tentar renovar o token se possível
         if (shouldRefresh()) {
           const refreshSuccess = await attemptRefresh();
 
           if (refreshSuccess) {
-            console.log('✅ Token renovado automaticamente durante verificação periódica');
             return;
           }
         }
 
-        console.log('❌ Não foi possível renovar o token - fazendo logout');
         tokenManager.clearAuthData();
         dispatch(logout());
         navigate('/login', { replace: true });

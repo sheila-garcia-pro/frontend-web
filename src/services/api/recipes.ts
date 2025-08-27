@@ -72,9 +72,7 @@ export const getFreshRecipeById = async (id: string): Promise<Recipe> => {
     throw new Error('ID da receita é obrigatório e não pode ser undefined');
   }
 
-  console.log('🔍 getFreshRecipeById - Making request with ID:', id);
   const response = await api.get<Recipe>(`/v1/users/me/recipe/${id}`);
-  console.log('🔍 getFreshRecipeById - API response:', response.data);
   return response.data;
 };
 
@@ -94,13 +92,7 @@ export const updateRecipe = async (
     throw new Error('ID da receita é obrigatório para atualização');
   }
 
-  console.log('🔍 updateRecipe - Making request with ID:', id);
-  console.log('🔍 updateRecipe - Request params:', params);
-
   const response = await api.patch<Recipe>(`/v1/users/me/recipe/${id}`, params);
-
-  console.log('🔍 updateRecipe - API response:', response.data);
-  console.log('🔍 updateRecipe - Response _id:', response.data?._id);
 
   clearCache('/v1/users/me/recipe');
   clearCache(`/v1/users/me/recipe/${id}`);

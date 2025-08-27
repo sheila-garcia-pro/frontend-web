@@ -32,8 +32,6 @@ const redirectToLogin = () => {
   const authRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
 
   if (!authRoutes.includes(currentPath)) {
-    console.log('🔄 Redirecionando para /login...');
-
     // Disparar evento para que hooks possam reagir
     window.dispatchEvent(new CustomEvent('auth:tokenExpired'));
 
@@ -108,7 +106,6 @@ export const setupTokenRefreshInterceptor = (api: AxiosInstance): void => {
 
       // Se a requisição que falhou for para o endpoint de refresh, fazer logout
       if (originalRequest.url?.includes('/v1/auth/refresh')) {
-        console.log('❌ Refresh token inválido ou expirado - fazendo logout');
         tokenManager.clearAuthData();
         redirectToLogin();
         return Promise.reject(error);
@@ -135,8 +132,6 @@ export const setupTokenRefreshInterceptor = (api: AxiosInstance): void => {
       isRefreshing = true;
 
       try {
-        console.log('🔄 Token expirado, tentando renovar...');
-
         // Tentar renovar o token usando cookies
         const response = await refreshToken();
         const newToken = response.token;
@@ -148,8 +143,6 @@ export const setupTokenRefreshInterceptor = (api: AxiosInstance): void => {
         if (response.refreshToken) {
           tokenManager.setRefreshToken(response.refreshToken);
         }
-
-        console.log('✅ Token renovado com sucesso');
 
         // Processar fila de requisições com o novo token
         processQueue(null, newToken);

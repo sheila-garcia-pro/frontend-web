@@ -28,7 +28,6 @@ export const syncIngredientsWithAPI = async (
         };
 
         await updateIngredient(recipeIngredient.ingredient._id, updateData);
-        console.log(`✅ Ingrediente ${recipeIngredient.ingredient.name} sincronizado com sucesso`);
       } catch (error) {
         console.error(
           `❌ Erro ao sincronizar ingrediente ${recipeIngredient.ingredient.name}:`,
@@ -53,7 +52,6 @@ export const syncSingleIngredientWithAPI = async (
 ): Promise<void> => {
   try {
     await updateIngredient(ingredientId, ingredientData);
-    console.log(`✅ Ingrediente ${ingredientData.name} sincronizado com sucesso`);
   } catch (error) {
     console.error(`❌ Erro ao sincronizar ingrediente ${ingredientData.name}:`, error);
     throw error;
