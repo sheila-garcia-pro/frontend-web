@@ -21,6 +21,10 @@ export interface Recipe {
   descripition: string;
   ingredients: RecipeIngredientAPI[];
   modePreparation?: string[];
+  // Campos financeiros
+  sellingPrice?: number; // Preço de venda
+  costPrice?: number; // Preço de custo
+  profit?: number; // Lucro
 }
 
 export interface RecipesResponse {
@@ -43,9 +47,9 @@ export interface SearchParams {
 
 export interface CreateRecipeParams {
   name: string;
-  sku: string;
+  sku?: string;
   category: string;
-  image: string | null;
+  image?: string | null;
   yieldRecipe: string;
   typeYield: string;
   preparationTime: string;
@@ -54,4 +58,8 @@ export interface CreateRecipeParams {
   descripition: string;
   ingredients?: RecipeIngredientAPI[];
   modePreparation?: string[];
+  // Campos financeiros
+  sellingPrice?: number; // Preço de venda
+  costPrice?: number; // Preço de custo
+  profit?: number; // Lucro
 }

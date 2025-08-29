@@ -523,10 +523,10 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
                       </Typography>
                     </Grid>
                     <Grid size={{ xs: 4 }}>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" color="primary.dark">
                         Preço por porção (100g):
                       </Typography>
-                      <Typography variant="h6" color="secondary.main" sx={{ fontWeight: 700 }}>
+                      <Typography variant="h6" color="error.dark" sx={{ fontWeight: 700 }}>
                         R$ {calculatePricePerPortion().toFixed(2)}
                       </Typography>
                     </Grid>

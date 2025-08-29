@@ -16,6 +16,7 @@ import {
   IconButton,
   Divider,
   SelectChangeEvent,
+  InputAdornment,
 } from '@mui/material';
 import { Close, Save, Cancel } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
@@ -60,6 +61,9 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
     weightRecipe: '',
     typeWeightRecipe: '',
     descripition: '',
+    sellingPrice: undefined,
+    costPrice: undefined,
+    profit: undefined,
   });
 
   // Preencher o formulário quando a receita for carregada
@@ -78,6 +82,9 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
         descripition: recipe.descripition,
         ingredients: recipe.ingredients,
         modePreparation: recipe.modePreparation,
+        sellingPrice: recipe.sellingPrice,
+        costPrice: recipe.costPrice,
+        profit: recipe.profit,
       });
 
       // Carregar passos da receita
@@ -374,7 +381,7 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
           <Grid size={{ xs: 12 }}>
             {' '}
             <ImageUploadComponent
-              value={formData.image}
+              value={formData.image || null}
               onChange={handleImageChange}
               disabled={loading}
               label="Imagem da Receita"
@@ -393,6 +400,91 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
               placeholder="Descreva a receita..."
               disabled={loading}
             />
+          </Grid>
+          {/* Seção de Informações Financeiras */}
+          <Grid size={{ xs: 12 }}>
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
+                💰 Informações Financeiras (Opcional)
+              </Typography>
+
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TextField
+                    fullWidth
+                    label="Preço de Venda"
+                    value={formData.sellingPrice || ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        sellingPrice: value ? parseFloat(value) : undefined,
+                      }));
+                    }}
+                    type="number"
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                    }}
+                    inputProps={{ min: 0, step: 0.01 }}
+                    placeholder="Ex: 25,00"
+                    disabled={loading}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TextField
+                    fullWidth
+                    label="Preço de Custo"
+                    value={formData.costPrice || ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        costPrice: value ? parseFloat(value) : undefined,
+                      }));
+                    }}
+                    type="number"
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                    }}
+                    inputProps={{ min: 0, step: 0.01 }}
+                    placeholder="Ex: 15,00"
+                    disabled={loading}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TextField
+                    fullWidth
+                    label="Lucro"
+                    value={formData.profit || ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        profit: value ? parseFloat(value) : undefined,
+                      }));
+                    }}
+                    type="number"
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                    }}
+                    inputProps={{ min: 0, step: 0.01 }}
+                    placeholder="Ex: 10,00"
+                    disabled={loading}
+                  />
+                </Grid>
+              </Grid>
+
+              {(formData.sellingPrice || formData.costPrice) && (
+                <Box sx={{ mt: 2, p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
+                  <Typography variant="caption" color="primary.dark">
+                    💡 Dica: O lucro será calculado automaticamente se você informar preço de venda
+                    e custo
+                  </Typography>
+                </Box>
+              )}
+            </Box>
           </Grid>
           {/* Ingredientes da Receita */}
           {recipe && (

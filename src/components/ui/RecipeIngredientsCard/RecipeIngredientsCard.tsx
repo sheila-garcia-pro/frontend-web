@@ -516,7 +516,7 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
                   {totals.totalWeight.toFixed(2)}g total
                 </Typography>
                 {totals.totalCostPerPortion > 0 && (
-                  <Typography variant="body2" color="secondary.dark" sx={{ fontWeight: 600 }}>
+                  <Typography variant="body2" color="error.dark" sx={{ fontWeight: 600 }}>
                     R$ {totals.totalCostPerPortion.toFixed(2)} por porção
                   </Typography>
                 )}

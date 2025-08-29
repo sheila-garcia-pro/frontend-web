@@ -52,7 +52,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
 
   const [formData, setFormData] = useState<CreateRecipeParams>({
     name: '',
-    sku: '',
     category: '',
     image: '',
     yieldRecipe: '',
@@ -61,6 +60,9 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
     weightRecipe: '',
     typeWeightRecipe: '',
     descripition: '',
+    sellingPrice: undefined,
+    costPrice: undefined,
+    profit: undefined,
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -153,7 +155,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
     if (!open) {
       setFormData({
         name: '',
-        sku: '',
         category: '',
         image: '',
         yieldRecipe: '',
@@ -293,16 +294,8 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
       newErrors.name = 'O nome é obrigatório';
     }
 
-    if (!formData.sku.trim()) {
-      newErrors.sku = 'O SKU é obrigatório';
-    }
-
     if (!formData.category) {
       newErrors.category = 'A categoria é obrigatória';
-    }
-
-    if (!formData.image) {
-      newErrors.image = 'A imagem é obrigatória';
     }
 
     if (!formData.yieldRecipe) {
@@ -419,18 +412,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
               error={!!errors.name}
               helperText={errors.name}
               autoFocus
-            />
-
-            <TextField
-              label="SKU"
-              name="sku"
-              value={formData.sku}
-              onChange={handleChange}
-              fullWidth
-              required
-              variant="outlined"
-              error={!!errors.sku}
-              helperText={errors.sku}
             />
 
             <FormControl fullWidth required error={!!errors.category}>
@@ -641,7 +622,91 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
               placeholder="Descreva os detalhes da receita..."
             />
 
-            <FormControl fullWidth error={!!errors.image}>
+            {/* Seção de Informações Financeiras */}
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
+                💰 Informações Financeiras (Opcional)
+              </Typography>
+
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  label="Preço de Venda"
+                  name="sellingPrice"
+                  value={formData.sellingPrice || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData((prev) => ({
+                      ...prev,
+                      sellingPrice: value ? parseFloat(value) : undefined,
+                    }));
+                  }}
+                  type="number"
+                  fullWidth
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                  }}
+                  inputProps={{ min: 0, step: 0.01 }}
+                  placeholder="Ex: 25,00"
+                  sx={{ flex: 1 }}
+                />
+
+                <TextField
+                  label="Preço de Custo"
+                  name="costPrice"
+                  value={formData.costPrice || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData((prev) => ({
+                      ...prev,
+                      costPrice: value ? parseFloat(value) : undefined,
+                    }));
+                  }}
+                  type="number"
+                  fullWidth
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                  }}
+                  inputProps={{ min: 0, step: 0.01 }}
+                  placeholder="Ex: 15,00"
+                  sx={{ flex: 1 }}
+                />
+
+                <TextField
+                  label="Lucro"
+                  name="profit"
+                  value={formData.profit || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData((prev) => ({
+                      ...prev,
+                      profit: value ? parseFloat(value) : undefined,
+                    }));
+                  }}
+                  type="number"
+                  fullWidth
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                  }}
+                  inputProps={{ min: 0, step: 0.01 }}
+                  placeholder="Ex: 10,00"
+                  sx={{ flex: 1 }}
+                />
+              </Box>
+
+              {(formData.sellingPrice || formData.costPrice) && (
+                <Box sx={{ mt: 1, p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
+                  <Typography variant="caption" color="primary.dark">
+                    💡 Dica: O lucro será calculado automaticamente se você informar preço de venda
+                    e custo
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+
+            <FormControl fullWidth>
               <Button
                 variant="outlined"
                 component="label"
@@ -649,7 +714,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
                 startIcon={uploading ? <CircularProgress size={20} /> : null}
                 sx={{ py: 1.5 }}
               >
-                {uploading ? 'Enviando...' : 'Escolher Imagem'}
+                {uploading ? 'Enviando...' : 'Escolher Imagem (Opcional)'}
                 <input
                   type="file"
                   hidden

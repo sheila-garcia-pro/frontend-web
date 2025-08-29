@@ -404,7 +404,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                       sx={{
                         fontSize: '1.3rem',
                         fontWeight: 700,
-                        color: '#e53e3e',
+                        color: '#c53030',
                         mr: 0.3,
                       }}
                     >
@@ -414,7 +414,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                       variant="h4"
                       sx={{
                         fontWeight: 700,
-                        color: '#e53e3e',
+                        color: '#c53030',
                         fontSize: '1.3rem',
                         lineHeight: 1,
                       }}
@@ -426,7 +426,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                     variant="caption"
                     sx={{
                       fontWeight: 600,
-                      color: '#e53e3e',
+                      color: '#c53030',
                       fontSize: '0.75rem',
                       lineHeight: 1,
                     }}
@@ -529,7 +529,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                   variant="h5"
                   sx={{
                     fontWeight: 700,
-                    color: '#e53e3e',
+                    color: '#c53030',
                     fontSize: '1.3rem',
                   }}
                 >
@@ -633,6 +633,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                     outerRadius={120}
                     paddingAngle={2}
                     dataKey="value"
+                    nameKey="label"
                     stroke="#fff"
                     strokeWidth={2}
                   >
@@ -818,7 +819,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                             </Typography>
                           </TableCell>
                           <TableCell align="right">
-                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#e53e3e' }}>
+                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#c53030' }}>
                               {formatCurrency(calculations.totalIngredientsCost)}
                             </Typography>
                           </TableCell>
@@ -903,7 +904,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                                 <IconButton
                                   size="small"
                                   onClick={() => removeDirectCost(cost.id, viewType === 'total')}
-                                  sx={{ color: '#e53e3e' }}
+                                  sx={{ color: '#c53030' }}
                                 >
                                   <Delete fontSize="small" />
                                 </IconButton>
@@ -997,7 +998,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                                 <IconButton
                                   size="small"
                                   onClick={() => removeIndirectCost(cost.id)}
-                                  sx={{ color: '#e53e3e' }}
+                                  sx={{ color: '#c53030' }}
                                 >
                                   <Delete fontSize="small" />
                                 </IconButton>
