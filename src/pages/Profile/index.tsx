@@ -388,9 +388,6 @@ const ProfilePage: React.FC = () => {
                 </Box>
               )}
             </Box>{' '}
-            <Typography variant="subtitle1" gutterBottom>
-              {t('profile.plan', { plan: t('profile.planFree') })}
-            </Typography>
           </Box>
 
           <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>

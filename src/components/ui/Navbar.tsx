@@ -7,7 +7,6 @@ import {
   Toolbar,
   IconButton,
   Typography,
-  Badge,
   MenuItem,
   Menu,
   Button,
@@ -16,7 +15,6 @@ import {
 } from '@mui/material';
 import {
   Menu as MenuIcon,
-  Notifications as NotificationsIcon,
   AccountCircle,
   Brightness4 as DarkModeIcon,
   Brightness7 as LightModeIcon,
@@ -112,55 +110,23 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
               {mode === 'light' ? <DarkModeIcon /> : <LightModeIcon />}
             </IconButton>
           </Tooltip>
-          {/* Botão de notificações */}
-          <Tooltip title="Notificações">
-            <IconButton
-              color="inherit"
-              sx={{
-                borderRadius: 0,
-                '&:hover': {
-                  backgroundColor:
-                    mode === 'light' ? 'rgba(245, 243, 231, 0.2)' : 'rgba(232, 237, 170, 0.2)',
-                },
-              }}
-            >
-              <Badge
-                badgeContent={4}
-                color="secondary" // Usa a cor secundária para o badge
-                sx={{
-                  '& .MuiBadge-badge': {
-                    fontWeight: 'bold',
-                    boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.2)',
-                  },
-                }}
-              >
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-          </Tooltip>
           {/* Menu de usuário */}
-          <Box sx={{ ml: 1 }}>
+          <Box sx={{ ml: 0.5 }}>
             <Tooltip title="Opções da conta">
               <IconButton
                 onClick={handleMenu}
                 color="inherit"
                 size="small"
                 sx={{
-                  p: 0,
-                  ml: 1,
-                  borderRadius: 0,
-                  border:
-                    mode === 'light'
-                      ? '2px solid rgba(245, 243, 231, 0.6)'
-                      : '2px solid rgba(232, 237, 170, 0.4)',
+                  p: 0.5,
+                  ml: 0,
+                  borderRadius: '50%',
+                  border: 'none',
                   boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.2)',
-                  transition: 'transform 0.2s ease-in-out, border 0.2s ease-in-out',
+                  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
                   '&:hover': {
                     transform: 'scale(1.05)',
-                    border:
-                      mode === 'light'
-                        ? '2px solid rgba(245, 243, 231, 0.9)'
-                        : '2px solid rgba(232, 237, 170, 0.7)',
+                    boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.3)',
                   },
                 }}
               >
@@ -173,11 +139,9 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
                       bgcolor: mode === 'light' ? '#3A4534' : '#E8EDAA',
                       color: mode === 'light' ? '#F5F3E7' : '#23291C',
                       fontWeight: 'bold',
-                      borderRadius: 0,
-                      border:
-                        mode === 'light'
-                          ? '2px solid rgba(245, 243, 231, 0.6)'
-                          : '2px solid rgba(232, 237, 170, 0.4)',
+                      borderRadius: '50%',
+                      width: 32,
+                      height: 32,
                     }}
                   >
                     {!user.image && user.name ? user.name.charAt(0) : null}
