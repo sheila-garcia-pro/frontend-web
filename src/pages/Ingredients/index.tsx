@@ -49,6 +49,9 @@ import { Ingredient } from '../../types/ingredients';
 
 // Hooks
 import { useDebounce } from '../../hooks/useDebounce';
+
+// RBAC
+import { SimpleIfPermission as IfPermission } from '@/components/security';
 import { useTranslation } from 'react-i18next';
 
 // Interface para as opções de ordenação
@@ -347,40 +350,46 @@ const IngredientsPage: React.FC = () => {
               </IconButton>
             </Tooltip>
 
-            <Button
-              variant={isEditing ? 'outlined' : 'contained'}
-              color={isEditing ? 'error' : 'primary'}
-              startIcon={isEditing ? <Save /> : <Edit />}
-              onClick={handleToggleEdit}
-              sx={{ borderRadius: 3, px: 3 }}
-            >
-              {isEditing ? t('ingredients.actions.cancel') : t('ingredients.actions.edit')}
-            </Button>
-
-            {isEditing && (
+            {/* Botões de edição - apenas com permissão */}
+            <IfPermission permission="update_ingredient">
               <Button
-                variant="contained"
-                color="primary"
-                startIcon={<Save />}
-                onClick={handleSaveChanges}
-                sx={{ borderRadius: 3, px: 3 }}
-                disabled={selectedItems.length === 0}
-              >
-                {t('ingredients.actions.save')}
-              </Button>
-            )}
-
-            {!isEditing && (
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<Add />}
-                onClick={handleOpenModal}
+                variant={isEditing ? 'outlined' : 'contained'}
+                color={isEditing ? 'error' : 'primary'}
+                startIcon={isEditing ? <Save /> : <Edit />}
+                onClick={handleToggleEdit}
                 sx={{ borderRadius: 3, px: 3 }}
               >
-                {t('ingredients.newIngredient')}
+                {isEditing ? t('ingredients.actions.cancel') : t('ingredients.actions.edit')}
               </Button>
-            )}
+
+              {isEditing && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<Save />}
+                  onClick={handleSaveChanges}
+                  sx={{ borderRadius: 3, px: 3 }}
+                  disabled={selectedItems.length === 0}
+                >
+                  {t('ingredients.actions.save')}
+                </Button>
+              )}
+            </IfPermission>
+
+            {/* Botão para adicionar novo ingrediente */}
+            <IfPermission permission="create_ingredient">
+              {!isEditing && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<Add />}
+                  onClick={handleOpenModal}
+                  sx={{ borderRadius: 3, px: 3 }}
+                >
+                  {t('ingredients.newIngredient')}
+                </Button>
+              )}
+            </IfPermission>
           </Box>
         </Box>
 

@@ -25,6 +25,9 @@ import { clearCache } from '../../services/api';
 import { Recipe } from '../../types/recipes';
 import RecipeModal from '../../components/ui/RecipeModal';
 
+// RBAC
+import { SimpleIfPermission as IfPermission } from '@/components/security';
+
 // Interface para as opções de ordenação
 interface SortOption {
   value: string;
@@ -280,15 +283,18 @@ const RecipesPage: FC = () => {
           <Box sx={{ display: 'flex', gap: 2 }}>
             <RecipeCategoryMenu onCategoryUpdated={handleForceRefreshList} />
 
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<Add />}
-              onClick={handleOpenModal}
-              sx={{ borderRadius: 3, px: 3 }}
-            >
-              Nova Receita
-            </Button>
+            {/* Botão para adicionar nova receita */}
+            <IfPermission permission="create_recipe">
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<Add />}
+                onClick={handleOpenModal}
+                sx={{ borderRadius: 3, px: 3 }}
+              >
+                Nova Receita
+              </Button>
+            </IfPermission>
           </Box>
         </Box>
         {/* Filtros e Busca - Padronizado */}

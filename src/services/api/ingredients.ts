@@ -54,6 +54,8 @@ export const getCachedIngredients = async (params: SearchParams): Promise<Ingred
   const cacheKey = createCacheKey(params);
 
   try {
+    console.log('🥕 [API] getCachedIngredients iniciado:', { params, cacheKey });
+
     // Remove parâmetros vazios ou nulos para a chamada à API
     const queryParams = Object.entries(params).reduce((acc, [key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
@@ -62,14 +64,21 @@ export const getCachedIngredients = async (params: SearchParams): Promise<Ingred
       return acc;
     }, {} as QueryParams);
 
+    console.log('🥕 [API] Fazendo requisição com queryParams:', queryParams);
+
     const response = await cachedGet<IngredientsResponse>(
       '/v1/users/me/ingredient',
       queryParams,
       cacheKey,
     );
+
+    console.log('🥕 [API] Resposta recebida com sucesso:', {
+      total: response.total,
+      dataLength: response.data.length,
+    });
     return response;
   } catch (error) {
-    console.error('getCachedIngredients - erro:', error);
+    console.error('🥕 [API] getCachedIngredients - ERRO:', error);
     throw error;
   }
 };

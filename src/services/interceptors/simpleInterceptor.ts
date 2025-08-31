@@ -1,5 +1,6 @@
 import { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import tokenManager from '@utils/tokenManager';
+import { getLoginInProgress } from '@utils/loginFlag';
 
 /**
  * Interceptor simples e seguro - sem refresh automático por enquanto
@@ -46,21 +47,30 @@ export const setupSimpleInterceptor = (api: AxiosInstance): void => {
         if (status === 401) {
           const originalRequest = error.config as InternalAxiosRequestConfig;
 
-          // Não interferir no login inicial
-          if (!originalRequest?.url?.includes('/v1/auth/login')) {
-            try {
-              tokenManager.clearAuthData();
-            } catch (clearError) {
-              console.error('❌ Erro ao limpar dados:', clearError);
-            }
+          // Não interferir durante login em progresso ou na rota de login
+          const isLoginRoute = originalRequest?.url?.includes('/v1/auth/login');
+          const isLoginActive = getLoginInProgress();
 
-            // Verificar se não está já em uma rota de autenticação
-            const currentPath = window.location.pathname;
-            const authRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+          if (!isLoginRoute && !isLoginActive) {
+            // Adicionar delay pequeno para evitar condições de corrida
+            setTimeout(() => {
+              // Verificar novamente se login ainda não está em progresso
+              if (!getLoginInProgress()) {
+                try {
+                  tokenManager.clearAuthData();
+                } catch (clearError) {
+                  console.error('❌ Erro ao limpar dados:', clearError);
+                }
 
-            if (!authRoutes.includes(currentPath)) {
-              window.location.replace('/login');
-            }
+                // Verificar se não está já em uma rota de autenticação
+                const currentPath = window.location.pathname;
+                const authRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+
+                if (!authRoutes.includes(currentPath)) {
+                  window.location.replace('/login');
+                }
+              }
+            }, 150); // 150ms de delay
           }
         }
       } catch (interceptorError) {

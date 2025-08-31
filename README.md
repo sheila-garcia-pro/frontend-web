@@ -19,6 +19,42 @@ Sheila Garcia Pro é uma aplicação web responsiva para visualização de recei
 - **ESLint + Prettier**: Para padronização de código
 - **Husky + Lint-staged**: Para hooks de pré-commit
 - **Jest + React Testing Library**: Para testes unitários e de integração
+- **JWT + RBAC**: Sistema de autenticação e controle de acesso baseado em roles
+
+## 🔐 Sistema RBAC (Role-Based Access Control)
+
+O projeto implementa um sistema robusto de controle de acesso baseado em roles e permissões:
+
+### Características
+
+- **2 Roles principais**: `admin` (acesso total) e `starter_user` (acesso limitado)
+- **40+ Permissões específicas**: Para ingredientes, receitas, cardápios, fornecedores
+- **Guards de rota**: Proteção automática de rotas sensíveis
+- **Guards de UI**: Componentes condicionais baseados em permissões
+- **Interceptors Axios**: Tratamento automático de 401/403
+- **Integração com Redux**: Compatibilidade com sistema existente
+
+### Uso Básico
+
+```tsx
+// Proteger rota
+<PermissionRoute required={['get_ingredient']}>
+  <IngredientsPage />
+</PermissionRoute>
+
+// Componente condicional
+<IfPermission permission="create_recipe">
+  <Button>Nova Receita</Button>
+</IfPermission>
+
+// Hook para verificações
+const auth = useIntegratedAuth();
+if (auth.hasPermission('update_menu')) {
+  // fazer algo
+}
+```
+
+📖 **[Ver Guia Completo de RBAC →](docs/RBAC_GUIDE.md)**
 
 ## Internacionalização (i18n)
 
@@ -48,7 +84,7 @@ import { useTranslation } from 'react-i18next';
 
 const MeuComponente = () => {
   const { t } = useTranslation();
-  
+
   return (
     <div>
       <h1>{t('secao.chave')}</h1>
@@ -59,36 +95,38 @@ const MeuComponente = () => {
 ## Estrutura de Pastas
 
 ```
+
 src/
-  ├── assets/       # Arquivos estáticos (imagens, fontes, etc.)
-  ├── components/   # Componentes reutilizáveis da aplicação
-  │   ├── common/   # Componentes comuns (GlobalLoader, NotificationsManager, etc.)
-  │   ├── layouts/  # Layouts da aplicação (MainLayout, AuthLayout)
-  │   └── ui/       # Componentes de interface (Navbar, Sidebar, Cards, Carousel, etc.)
-  │       ├── Carousel/       # Componente de carrossel
-  │       ├── IngredientCard/ # Card para exibição de ingredientes
-  │       ├── RecipeCard/     # Card para exibição de receitas
-  │       └── SkeletonLoading/ # Componentes de skeleton para loading
-  ├── config/       # Configurações globais
-  ├── contexts/     # Contextos React (ThemeContext)
-  ├── hooks/        # Custom hooks
-  ├── mocks/        # Dados mockados (ingredientesMock, receitasMock)
-  ├── pages/        # Páginas da aplicação
-  │   ├── Auth/     # Páginas de autenticação
-  │   ├── Dashboard/# Página do dashboard
-  │   ├── Home/     # Página inicial com carrosséis
-  │   ├── Ingredients/ # Página de listagem de ingredientes
-  │   └── Recipes/  # Página de listagem de receitas
-  ├── routes/       # Configuração de rotas
-  ├── services/     # Serviços externos e simulados
-  │   ├── api/      # Configuração e chamadas de API
-  │   └── dataService.ts # Serviço para carregamento simulado de dados
-  ├── store/        # Configuração do Redux
-  │   ├── sagas/    # Sagas para operações assíncronas
-  │   └── slices/   # Slices do Redux Toolkit
-  ├── themes/       # Configuração de temas
-  └── utils/        # Funções utilitárias
-```
+├── assets/ # Arquivos estáticos (imagens, fontes, etc.)
+├── components/ # Componentes reutilizáveis da aplicação
+│ ├── common/ # Componentes comuns (GlobalLoader, NotificationsManager, etc.)
+│ ├── layouts/ # Layouts da aplicação (MainLayout, AuthLayout)
+│ └── ui/ # Componentes de interface (Navbar, Sidebar, Cards, Carousel, etc.)
+│ ├── Carousel/ # Componente de carrossel
+│ ├── IngredientCard/ # Card para exibição de ingredientes
+│ ├── RecipeCard/ # Card para exibição de receitas
+│ └── SkeletonLoading/ # Componentes de skeleton para loading
+├── config/ # Configurações globais
+├── contexts/ # Contextos React (ThemeContext)
+├── hooks/ # Custom hooks
+├── mocks/ # Dados mockados (ingredientesMock, receitasMock)
+├── pages/ # Páginas da aplicação
+│ ├── Auth/ # Páginas de autenticação
+│ ├── Dashboard/# Página do dashboard
+│ ├── Home/ # Página inicial com carrosséis
+│ ├── Ingredients/ # Página de listagem de ingredientes
+│ └── Recipes/ # Página de listagem de receitas
+├── routes/ # Configuração de rotas
+├── services/ # Serviços externos e simulados
+│ ├── api/ # Configuração e chamadas de API
+│ └── dataService.ts # Serviço para carregamento simulado de dados
+├── store/ # Configuração do Redux
+│ ├── sagas/ # Sagas para operações assíncronas
+│ └── slices/ # Slices do Redux Toolkit
+├── themes/ # Configuração de temas
+└── utils/ # Funções utilitárias
+
+````
 
 ## Funcionalidades Implementadas
 
@@ -204,18 +242,20 @@ Componentes para exibição durante carregamento:
 ```bash
 git clone [URL_DO_REPOSITORIO]
 cd sheila-garcia-pro
-```
+````
 
 2. Instale as dependências:
 
 **Utilizando o script de configuração completa (recomendado):**
 
 No Windows:
+
 ```bash
 setup-project.bat
 ```
 
 Este script:
+
 - Instala todas as dependências necessárias
 - Configura o Craco para path aliases
 - Atualiza os scripts no package.json
@@ -224,17 +264,20 @@ Este script:
 **Ou utilizando os scripts de instalação básica:**
 
 No Linux/Mac:
+
 ```bash
 chmod +x install-dependencies.sh
 ./install-dependencies.sh
 ```
 
 No Windows:
+
 ```bash
 install-dependencies.bat
 ```
 
 **Ou manualmente:**
+
 ```bash
 yarn install
 # ou
@@ -242,6 +285,7 @@ npm install
 ```
 
 3. Inicie o servidor de desenvolvimento:
+
 ```bash
 yarn start
 # ou
@@ -290,6 +334,7 @@ REACT_APP_DESCRIPTION=Aplicação para gerenciamento de receitas e ingredientes
 ## Documentação Adicional
 
 O projeto inclui documentação detalhada sobre:
+
 - [Tela de Ingredientes](./documentacao/tela_ingredientes.md)
 - [Tela de Receitas](./documentacao/tela_receitas.md)
 - [Resumo do Projeto](./documentacao/resumo_do_projeto.md)
