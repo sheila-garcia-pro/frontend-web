@@ -63,6 +63,8 @@ export function* fetchIngredientsSaga(
   action: PayloadAction<SearchParams & { forceRefresh?: boolean }>,
 ): SagaIterator {
   try {
+    console.log('🥕 [INGREDIENTS SAGA] Iniciando busca de ingredientes:', action.payload);
+
     yield put(setGlobalLoading(true));
 
     if (action.payload.forceRefresh) {
@@ -74,10 +76,12 @@ export function* fetchIngredientsSaga(
       }
     }
 
+    console.log('🥕 [INGREDIENTS SAGA] Fazendo requisição à API...');
     const response = yield call(ingredientsService.getCachedIngredients, {
       ...action.payload,
       category: action.payload.category || undefined,
     });
+    console.log('🥕 [INGREDIENTS SAGA] Resposta recebida:', !!response);
 
     yield put(fetchIngredientsSuccess(response));
 
@@ -90,8 +94,9 @@ export function* fetchIngredientsSaga(
         }),
       );
     }
+    console.log('🥕 [INGREDIENTS SAGA] Concluído com sucesso');
   } catch (error) {
-    console.error('fetchIngredientsSaga - erro:', error);
+    console.error('🥕 [INGREDIENTS SAGA] ERRO:', error);
     yield put(
       fetchIngredientsFailure(
         error instanceof Error ? error.message : 'Erro ao carregar ingredientes',

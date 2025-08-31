@@ -24,19 +24,33 @@ class SilentErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBound
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log do erro para debugging (apenas no console)
-    console.error('❌ Error capturado - redirecionando para login:', error, errorInfo);
+    console.error('❌ [SILENT ERROR BOUNDARY] Error capturado:', error, errorInfo);
 
-    // Limpar todos os dados de autenticação
-    localStorage.clear();
-    sessionStorage.clear();
+    // IMPORTANTE: NÃO limpar localStorage aqui pois pode ser um erro não relacionado à autenticação
+    // que pode estar limpando o token válido do usuário
 
-    // Redirecionar imediatamente para login
-    window.location.replace('/login');
+    // Verificar se é realmente um erro relacionado à autenticação
+    const isAuthError =
+      error.message?.includes('auth') ||
+      error.message?.includes('token') ||
+      error.message?.includes('permission') ||
+      error.message?.includes('authenticated');
+
+    if (isAuthError) {
+      localStorage.clear();
+      sessionStorage.clear();
+      // Redirecionar para login apenas para erros de autenticação
+      window.location.replace('/login');
+    }
+    // Para outros tipos de erro, apenas log sem redirecionar
   }
 
   render() {
-    // Se houve erro, não renderizar nada (o redirecionamento já foi feito)
+    // Se houve erro de autenticação, não renderizar nada (o redirecionamento já foi feito)
+    // Para outros erros, tentar renderizar o children mesmo assim
     if (this.state.hasError) {
+      // Resetar o estado de erro para permitir re-renderização
+      // setTimeout(() => this.setState({ hasError: false }), 100);
       return null;
     }
 

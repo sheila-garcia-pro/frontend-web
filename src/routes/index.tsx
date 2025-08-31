@@ -4,6 +4,9 @@ import { useAuth } from '@hooks/useAuth';
 import { useDispatch } from 'react-redux';
 import { checkAuthRequest } from '@store/slices/authSlice';
 
+// RBAC Guards
+import { ProtectedRoute, PermissionRoute } from '@/security/guards';
+
 // Layouts
 import MainLayout from '@components/layouts/MainLayout';
 import AuthLayout from '@components/layouts/AuthLayout';
@@ -16,6 +19,7 @@ import ForgotPasswordPage from '@pages/Auth/ForgotPassword/ForgotPasswordPage';
 import ResetPasswordPage from '@pages/Auth/ResetPassword/ResetPasswordPage';
 import DashboardPage from '@pages/Dashboard';
 import NotFoundPage from '@pages/NotFound';
+import NotAuthorizedPage from '@pages/NotAuthorized';
 import IngredientsPage from '@pages/Ingredients';
 import RecipesPage from '@pages/Recipes';
 import RecipeDetailsPage from '@pages/Recipes/RecipeDetails';
@@ -24,36 +28,8 @@ import ProfilePage from '@pages/Profile';
 import MenuPage from '@pages/Menu';
 import MenuDetailsPage from '@pages/Menu/MenuDetails';
 
-// Interface para definir propriedades do componente PrivateRoute
-interface PrivateRouteProps {
-  element: React.ReactElement;
-}
-
-// Interface para rotas de autenticação
-interface AuthRouteProps {
-  element: React.ReactElement;
-}
-
-// Componente para proteger rotas - redireciona para login quando não autenticado
-const PrivateRoute: React.FC<PrivateRouteProps> = ({ element }) => {
-  const { isAuthenticated, loading } = useAuth();
-
-  // Se está carregando, não fazer nada (o loading global está sendo mostrado)
-  if (loading) {
-    return null;
-  }
-
-  if (!isAuthenticated) {
-    // Redireciona para a página de login se não estiver autenticado
-    return <Navigate to="/login" replace />;
-  }
-
-  // Renderiza o elemento se estiver autenticado
-  return element;
-};
-
 // Componente para rotas de autenticação - acessíveis quando não autenticado
-const AuthRoute: React.FC<AuthRouteProps> = ({ element }) => {
+const AuthRoute: React.FC<{ element: React.ReactElement }> = ({ element }) => {
   const { isAuthenticated, loading } = useAuth();
 
   // Se está carregando, não fazer nada (o loading global está sendo mostrado)
@@ -77,7 +53,12 @@ const AppRoutesContent: React.FC = () => {
 
   // Verificar autenticação apenas uma vez na inicialização
   useEffect(() => {
-    dispatch(checkAuthRequest());
+    // Adicionar um pequeno delay para evitar conflito com login
+    const timer = setTimeout(() => {
+      dispatch(checkAuthRequest());
+    }, 1000); // Aumentei para 1 segundo
+
+    return () => clearTimeout(timer);
   }, [dispatch]);
 
   // Mostrar loading enquanto verifica autenticação inicial
@@ -107,21 +88,101 @@ const AppRoutesContent: React.FC = () => {
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
       </Route>
+
+      {/* Página 403 - Acessível para usuários autenticados */}
+      <Route
+        path="/403"
+        element={
+          <ProtectedRoute>
+            <NotAuthorizedPage />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Rotas protegidas - requerem autenticação */}
-      <Route path="/" element={<PrivateRoute element={<MainLayout />} />}>
-        {' '}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        }
+      >
+        {/* Home - acesso básico */}
         <Route index element={<HomePage />} />
-        <Route path="ingredients" element={<IngredientsPage />} />
-        <Route path="recipes" element={<RecipesPage />} />
-        <Route path="recipes/:id" element={<RecipeDetailsPage />} />
-        <Route path="menu" element={<MenuPage />} />
-        <Route path="menu/:id" element={<MenuDetailsPage />} />
+
+        {/* Dashboard - acesso básico */}
         <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="suppliers" element={<SuppliersPage />} />
+
+        {/* Perfil - acesso básico */}
         <Route path="profile" element={<ProfilePage />} />
+
+        {/* Ingredientes - com permissões específicas */}
+        <Route
+          path="ingredients"
+          element={
+            <PermissionRoute required={['get_ingredient']}>
+              <IngredientsPage />
+            </PermissionRoute>
+          }
+        />
+
+        {/* Receitas - com permissões específicas */}
+        <Route
+          path="recipes"
+          element={
+            <PermissionRoute required={['get_recipe']}>
+              <RecipesPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="recipes/:id"
+          element={
+            <PermissionRoute required={['get_recipe']}>
+              <RecipeDetailsPage />
+            </PermissionRoute>
+          }
+        />
+
+        {/* Cardápios/Menu - com permissões específicas */}
+        <Route
+          path="menu"
+          element={
+            <PermissionRoute required={['get_menu']}>
+              <MenuPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="menu/:id"
+          element={
+            <PermissionRoute required={['get_menu']}>
+              <MenuDetailsPage />
+            </PermissionRoute>
+          }
+        />
+
+        {/* Fornecedores - com permissões específicas */}
+        <Route
+          path="suppliers"
+          element={
+            <PermissionRoute required={['get_suppliers']}>
+              <SuppliersPage />
+            </PermissionRoute>
+          }
+        />
       </Route>
-      {/* Rota 404 - Protegida por padrão, redireciona para login se não autenticado */}
-      <Route path="*" element={<PrivateRoute element={<NotFoundPage />} />} />
+
+      {/* Rota 404 - Protegida por padrão */}
+      <Route
+        path="*"
+        element={
+          <ProtectedRoute>
+            <NotFoundPage />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 };

@@ -145,9 +145,13 @@ const authSlice = createSlice({
     },
     checkAuthFailure: (state) => {
       state.loading = false;
-      state.user = null;
-      state.token = null;
-      state.isAuthenticated = false;
+      // Só limpar dados se realmente não estávamos autenticados antes
+      // Isso evita que um checkAuth falho após login bem-sucedido destrua a sessão
+      if (!state.isAuthenticated) {
+        state.user = null;
+        state.token = null;
+        state.isAuthenticated = false;
+      }
     },
 
     // Atualização do usuário

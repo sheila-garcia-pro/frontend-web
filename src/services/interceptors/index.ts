@@ -49,6 +49,7 @@ export const setupInterceptors = (api: AxiosInstance): void => {
     (error: AxiosError): Promise<AxiosError> => {
       const status = error.response?.status;
       const errorMessage = extractErrorMessage(error);
+
       // Se receber 401 Unauthorized, limpar token e redirecionar
       if (status === 401) {
         // Limpar token imediatamente
@@ -70,6 +71,26 @@ export const setupInterceptors = (api: AxiosInstance): void => {
         return Promise.reject({
           ...error,
           message: 'Sessão expirada. Redirecionando para login...',
+        });
+      }
+
+      // Se receber 403 Forbidden, redirecionar para página de acesso negado
+      if (status === 403) {
+        // Disparar evento para que hooks possam reagir
+        window.dispatchEvent(new CustomEvent('auth:accessDenied'));
+
+        // Verificar se não está já na página 403 para evitar loops
+        const currentPath = window.location.pathname;
+        const authRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+
+        if (!authRoutes.includes(currentPath) && currentPath !== '/403') {
+          // Redirecionar para página 403
+          window.location.replace('/403');
+        }
+
+        return Promise.reject({
+          ...error,
+          message: 'Acesso negado. Você não tem permissão para este recurso.',
         });
       }
 

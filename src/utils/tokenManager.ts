@@ -25,6 +25,7 @@ export const tokenManager = {
    */
   setToken(token: string): void {
     try {
+      console.log('💾 [TOKEN MANAGER] setToken called with token:', token.substring(0, 20) + '...');
       localStorage.setItem(TOKEN_KEY, token);
 
       // Tentar extrair e salvar o tempo de expiração do JWT
@@ -41,8 +42,10 @@ export const tokenManager = {
       } catch (jwtError) {
         console.warn('Não foi possível extrair expiração do token:', jwtError);
       }
+
+      console.log('✅ [TOKEN MANAGER] Token saved successfully');
     } catch (error) {
-      console.error('Erro ao salvar token:', error);
+      console.error('❌ [TOKEN MANAGER] Erro ao salvar token:', error);
     }
   },
   /**
@@ -121,6 +124,9 @@ export const tokenManager = {
    * Limpa completamente os dados de autenticação
    */
   clearAuthData(): void {
+    console.log('🧹 [TOKEN MANAGER] clearAuthData called');
+    console.trace('🧹 [TOKEN MANAGER] clearAuthData call stack');
+
     this.removeToken();
     this.removeRefreshToken();
 
@@ -138,8 +144,10 @@ export const tokenManager = {
         localStorage.removeItem(key);
         sessionStorage.removeItem(key);
       });
+
+      console.log('🧹 [TOKEN MANAGER] Auth data cleared successfully');
     } catch (error) {
-      console.error('Erro ao limpar dados de autenticação:', error);
+      console.error('❌ [TOKEN MANAGER] Erro ao limpar dados de autenticação:', error);
     }
   },
 
@@ -150,13 +158,23 @@ export const tokenManager = {
   isTokenExpired(): boolean {
     try {
       const token = this.getToken();
-      if (!token) return true;
+      if (!token) {
+        console.log('🔐 [TOKEN] Token não encontrado');
+        return true;
+      }
 
       // Primeiro, tentar usar o tempo de expiração salvo
       const savedExpiry = this.getTokenExpiry();
       if (savedExpiry) {
         const currentTime = Math.floor(Date.now() / 1000);
         const isExpired = savedExpiry < currentTime;
+
+        console.log('🔐 [TOKEN] Verificação usando savedExpiry:', {
+          savedExpiry,
+          currentTime,
+          isExpired,
+          remaining: savedExpiry - currentTime,
+        });
 
         return isExpired;
       }
@@ -171,6 +189,13 @@ export const tokenManager = {
           if (payload.exp) {
             const isExpired = payload.exp < currentTime;
 
+            console.log('🔐 [TOKEN] Verificação decodificando JWT:', {
+              exp: payload.exp,
+              currentTime,
+              isExpired,
+              remaining: payload.exp - currentTime,
+            });
+
             // Salvar a expiração para uso futuro
             localStorage.setItem(TOKEN_EXPIRY_KEY, payload.exp.toString());
 
@@ -181,10 +206,10 @@ export const tokenManager = {
 
       // Se não conseguir determinar a expiração, assumir que não está expirado
       // (mas isso pode indicar que o token não é um JWT válido)
-      console.warn('⚠️ Não foi possível verificar expiração do token');
+      console.warn('⚠️ [TOKEN] Não foi possível verificar expiração do token');
       return false;
     } catch (error) {
-      console.error('❌ Erro ao verificar expiração do token:', error);
+      console.error('❌ [TOKEN] Erro ao verificar expiração do token:', error);
       // Em caso de erro, assumir que está expirado por segurança
       return true;
     }

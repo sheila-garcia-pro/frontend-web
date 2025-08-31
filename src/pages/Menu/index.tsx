@@ -25,6 +25,9 @@ import { MenuListItem, MenusResponse } from '../../types/menu';
 import MenuModal from '../../components/ui/MenuModal/index';
 import MenuDeleteModal from '../../components/ui/MenuDeleteModal/index';
 
+// RBAC
+import { SimpleIfPermission as IfPermission } from '@/components/security';
+
 const MenuPage: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -134,15 +137,17 @@ const MenuPage: React.FC = () => {
           </Typography>
         </Box>
 
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<Add />}
-          onClick={handleCreateMenu}
-          sx={{ borderRadius: 3, px: 3 }}
-        >
-          Novo cardápio
-        </Button>
+        <IfPermission permission="create_menu">
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<Add />}
+            onClick={handleCreateMenu}
+            sx={{ borderRadius: 3, px: 3 }}
+          >
+            Novo cardápio
+          </Button>
+        </IfPermission>
       </Box>
 
       {/* Barra de busca */}
@@ -184,11 +189,13 @@ const MenuPage: React.FC = () => {
               ? 'Tente ajustar os termos de busca'
               : 'Crie seu primeiro cardápio para começar a organizar suas receitas'}
           </Typography>
-          {!searchTerm && (
-            <Button variant="contained" startIcon={<Add />} onClick={handleCreateMenu}>
-              Criar primeiro cardápio
-            </Button>
-          )}
+          <IfPermission permission="create_menu">
+            {!searchTerm && (
+              <Button variant="contained" startIcon={<Add />} onClick={handleCreateMenu}>
+                Criar primeiro cardápio
+              </Button>
+            )}
+          </IfPermission>
         </Card>
       ) : (
         <>
@@ -254,27 +261,31 @@ const MenuPage: React.FC = () => {
                   </CardContent>
 
                   <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
-                    <IconButton
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditMenu(menu);
-                      }}
-                      color="primary"
-                      size="small"
-                    >
-                      <Edit />
-                    </IconButton>
+                    <IfPermission permission="update_menu">
+                      <IconButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditMenu(menu);
+                        }}
+                        color="primary"
+                        size="small"
+                      >
+                        <Edit />
+                      </IconButton>
+                    </IfPermission>
 
-                    <IconButton
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteMenu(menu);
-                      }}
-                      color="error"
-                      size="small"
-                    >
-                      <Delete />
-                    </IconButton>
+                    <IfPermission permission="delete_menu">
+                      <IconButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteMenu(menu);
+                        }}
+                        color="error"
+                        size="small"
+                      >
+                        <Delete />
+                      </IconButton>
+                    </IfPermission>
                   </CardActions>
                 </Card>
               </Grid>
