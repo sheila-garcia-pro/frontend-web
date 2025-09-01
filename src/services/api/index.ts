@@ -15,8 +15,9 @@ const api = axios.create({
     'Content-Type': 'application/json',
     Accept: 'application/json',
   },
-  // Não lançar erro para respostas com status 400-499
-  validateStatus: (status) => status >= 200 && status < 500,
+  // Configuração padrão: só considera sucesso status 2xx
+  // Isso permite que 4xx e 5xx sejam tratados no interceptor de erro
+  validateStatus: (status) => status >= 200 && status < 300,
 });
 
 // Configura os interceptors
