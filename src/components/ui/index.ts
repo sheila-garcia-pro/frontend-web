@@ -4,6 +4,7 @@ export { default as IngredientModal } from './IngredientModal';
 export { default as IngredientDetailsModal } from './IngredientDetailsModal';
 export { default as IngredientEditModal } from './IngredientEditModal';
 export { default as IngredientDetailModal } from './IngredientDetailModal';
+export { default as IngredientAvatarDisplay } from './IngredientAvatarDisplay';
 export { default as CategoryModal } from './CategoryModal';
 
 // Componentes de Receitas

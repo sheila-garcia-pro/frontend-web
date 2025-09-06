@@ -35,6 +35,7 @@ import {
   IngredientModal,
   CategoryModal,
   IngredientDetailsModal,
+  IngredientAvatarDisplay,
 } from '../../components/ui';
 
 // Serviços e Redux
@@ -529,11 +530,11 @@ const IngredientsPage: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar
+                        <IngredientAvatarDisplay
                           src={ingredient.image}
-                          alt={ingredient.name}
+                          name={ingredient.name}
+                          size={40}
                           variant="rounded"
-                          sx={{ width: 40, height: 40 }}
                         />
                         <Typography>{ingredient.name}</Typography>
                       </Box>

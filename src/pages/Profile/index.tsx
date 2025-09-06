@@ -19,6 +19,7 @@ import { uploadUserImage } from '@services/api/auth';
 import useNotification from '@hooks/useNotification';
 import { useTheme } from '../../contexts/ThemeContext';
 import { updateUserRequest } from '@store/slices/authSlice';
+import imageUploadService, { ImageDeleteResponse } from '@services/imageUploadService';
 
 const ProfilePage: React.FC = () => {
   const { t } = useTranslation();
@@ -293,13 +294,40 @@ const ProfilePage: React.FC = () => {
 
     try {
       setUploading(true);
-      const result = await uploadUserImage(file);
+      console.log('📸 [PROFILE] ===== INICIANDO PROCESSO DE ALTERAÇÃO DE IMAGEM =====');
+      console.log('📸 [PROFILE] Arquivo selecionado:', file?.name);
+      console.log('📸 [PROFILE] Imagem atual:', formData.image);
 
-      if (result.url) {
+      // Usar o novo serviço de upload que cuida da exclusão automática
+      const result = await imageUploadService.replaceImage(
+        formData.image || null, // URL da imagem atual
+        file,
+        'users', // Tipo de upload para usuários
+        {
+          waitForDeletion: false, // Não bloquear UX - delete em background
+          onOldImageDeleted: (deleteResult) => {
+            // Log silencioso para debugging - sem feedback visual
+            console.log(
+              '🎯 [PROFILE] Imagem anterior processada:',
+              deleteResult.success ? 'sucesso' : 'erro',
+            );
+          },
+        },
+      );
+
+      console.log('📸 [PROFILE] Resultado do replaceImage:', result);
+
+      if (result.success) {
         setFormData((prev) => ({ ...prev, image: result.url }));
+        notification.showSuccess(
+          t('profile.messages.imageUploaded') || 'Foto atualizada com sucesso!',
+        );
+      } else {
+        throw new Error(result.message || 'Erro no upload');
       }
-    } catch (error) {
-      notification.showError(t('profile.messages.imageUploadError'));
+    } catch (error: any) {
+      console.error('❌ [PROFILE] Erro no upload da imagem:', error);
+      notification.showError(error.message || t('profile.messages.imageUploadError'));
     } finally {
       setUploading(false);
     }

@@ -30,6 +30,7 @@ import { UnitMeasure } from '../../../types/unitMeasure';
 import { Ingredient } from '../../../types/ingredients';
 import { RecipeIngredient, IngredientSearchResult } from '../../../types/recipeIngredients';
 import IngredientDetailModal from '../IngredientDetailModal/IngredientDetailModal';
+import IngredientAvatarDisplay from '../IngredientAvatarDisplay';
 
 interface RecipeIngredientsCardProps {
   recipeId: string;
@@ -302,10 +303,11 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
             getOptionLabel={(option) => (typeof option === 'string' ? option : option.name)}
             renderOption={(props, option) => (
               <Box component="li" {...props} onClick={() => handleAddIngredient(option)}>
-                <Avatar
+                <IngredientAvatarDisplay
                   src={option.image}
-                  alt={option.name}
-                  sx={{ width: 32, height: 32, mr: 2 }}
+                  name={option.name}
+                  size={32}
+                  sx={{ mr: 2 }}
                 />
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="body1">{option.name}</Typography>
@@ -386,9 +388,10 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
                   }}
                 >
                   <ListItemAvatar>
-                    <Avatar
+                    <IngredientAvatarDisplay
                       src={recipeIngredient.ingredient.image}
-                      alt={recipeIngredient.ingredient.name}
+                      name={recipeIngredient.ingredient.name}
+                      size={40}
                     />
                   </ListItemAvatar>
                   <ListItemText
