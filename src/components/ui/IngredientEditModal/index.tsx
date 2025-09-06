@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -27,6 +27,7 @@ import { UnitMeasure } from '../../../types/unitMeasure';
 import { getUnitMeasures } from '../../../services/api/unitMeasure';
 
 import { useTranslation } from 'react-i18next';
+import ImageUploadComponent from '../ImageUploadImproved';
 
 interface IngredientEditModalProps {
   open: boolean;
@@ -58,11 +59,9 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [uploading, setUploading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [unitMeasures, setUnitMeasures] = useState<UnitMeasure[]>([]);
   const [loadingUnitMeasures, setLoadingUnitMeasures] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   // Resetar formulário quando o modal fecha ou o ingrediente muda
   useEffect(() => {
     setFormData({
@@ -133,49 +132,12 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
     setErrors((prev) => ({ ...prev, category: '' }));
   };
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      await handleUpload(file);
-    }
-  };
+  const handleImageChange = (imageUrl: string | null) => {
+    setFormData((prev) => ({ ...prev, image: imageUrl || undefined }));
 
-  const handleUpload = async (file: File) => {
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('type', 'ingredients');
-
-      const token = localStorage.getItem(
-        import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token',
-      );
-
-      const response = await fetch('https://sgpro-api.squareweb.app/v1/upload/image', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-      if (data.url) {
-        setFormData((prev) => ({ ...prev, image: data.url }));
-        setErrors((prev) => ({ ...prev, image: '' }));
-      } else {
-        const errorMessage = data.message
-          ? Array.isArray(data.message)
-            ? data.message[0]
-            : data.message
-          : 'Erro ao fazer upload da imagem';
-        setErrors((prev) => ({ ...prev, image: errorMessage }));
-      }
-    } catch (error) {
-      console.error('Erro no upload:', error);
-      setErrors((prev) => ({ ...prev, image: 'Erro ao fazer upload da imagem' }));
-    } finally {
-      setUploading(false);
+    // Limpar erro de imagem se houver
+    if (errors.image && imageUrl) {
+      setErrors((prev) => ({ ...prev, image: '' }));
     }
   };
 
@@ -404,55 +366,17 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
           </Box>
 
           {/* Campo de upload de imagem */}
-          <input
-            type="file"
-            accept="image/*"
-            style={{ display: 'none' }}
-            onChange={handleFileSelect}
-            ref={fileInputRef}
+          <ImageUploadComponent
+            value={formData.image || null}
+            onChange={handleImageChange}
+            disabled={ingredientLoading}
+            label="Imagem do Ingrediente"
+            error={errors.image}
+            helperText="Faça upload de uma imagem para identificar o ingrediente (opcional)"
+            type="ingredients"
+            placeholder="Clique para selecionar uma imagem do ingrediente"
+            ingredientName={formData.name?.trim() || ingredient.name || 'Ingrediente'}
           />
-          <Box
-            sx={{
-              width: '100%',
-              height: 150,
-              border: '2px dashed',
-              borderColor: errors.image ? 'error.main' : 'divider',
-              borderRadius: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              position: 'relative',
-              cursor: 'pointer',
-              '&:hover': {
-                borderColor: 'primary.main',
-                backgroundColor: 'primary.lighter',
-              },
-            }}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {uploading ? (
-              <CircularProgress size={24} />
-            ) : formData.image ? (
-              <Box
-                component="img"
-                src={formData.image}
-                alt="Preview"
-                sx={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                }}
-              />
-            ) : (
-              <Typography color="textSecondary">{t('ingredients.form.clickToUpload')}</Typography>
-            )}
-          </Box>
-          {errors.image && (
-            <Typography color="error" variant="caption">
-              {errors.image}
-            </Typography>
-          )}
         </Box>
       </DialogContent>
       <DialogActions>

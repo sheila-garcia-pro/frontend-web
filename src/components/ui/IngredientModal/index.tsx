@@ -25,6 +25,7 @@ import { fetchCategoriesRequest } from '../../../store/slices/categoriesSlice';
 import { RootState } from '../../../store';
 import { CreateIngredientParams } from '../../../types/ingredients';
 import { useTranslation } from 'react-i18next';
+import ImageUploadComponent from '../ImageUploadImproved';
 
 interface IngredientModalProps {
   open: boolean;
@@ -50,8 +51,6 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
     },
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [uploading, setUploading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [unitMeasures, setUnitMeasures] = useState<UnitMeasure[]>([]);
   const [loadingUnitMeasures, setLoadingUnitMeasures] = useState(false);
@@ -89,7 +88,6 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
         },
       });
       setErrors({});
-      setSelectedFile(null);
       setIsSubmitted(false);
     }
   }, [open]);
@@ -107,7 +105,6 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
           unitMeasure: 'Quilograma',
         },
       });
-      setSelectedFile(null);
       setIsSubmitted(false);
       onClose();
     }
@@ -150,46 +147,12 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      try {
-        setUploading(true);
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('type', 'ingredients');
+  const handleImageChange = (imageUrl: string | null) => {
+    setFormData((prev) => ({ ...prev, image: imageUrl || '' }));
 
-        const token = localStorage.getItem(
-          import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token',
-        );
-
-        const response = await fetch('https://sgpro-api.squareweb.app/v1/upload/image', {
-          method: 'POST',
-          body: formData,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const data = await response.json();
-        if (data.url) {
-          setFormData((prev) => ({ ...prev, image: data.url }));
-          setErrors((prev) => ({ ...prev, image: '' }));
-        } else {
-          const errorMessage = data.message
-            ? Array.isArray(data.message)
-              ? data.message[0]
-              : data.message
-            : 'Erro ao fazer upload da imagem';
-          setErrors((prev) => ({ ...prev, image: errorMessage }));
-        }
-      } catch (error) {
-        console.error('Erro no upload:', error);
-        setErrors((prev) => ({ ...prev, image: 'Erro ao fazer upload da imagem' }));
-      } finally {
-        setUploading(false);
-      }
+    // Limpar erro de imagem se houver
+    if (errors.image && imageUrl) {
+      setErrors((prev) => ({ ...prev, image: '' }));
     }
   };
 
@@ -204,9 +167,10 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
       newErrors.category = 'A categoria é obrigatória';
     }
 
-    if (!formData.image) {
-      newErrors.image = 'A imagem é obrigatória';
-    }
+    // Imagem não é mais obrigatória
+    // if (!formData.image) {
+    //   newErrors.image = 'A imagem é obrigatória';
+    // }
 
     if (formData.price) {
       const price = parseFloat(formData.price.price as string);
@@ -413,38 +377,18 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
               </Box>
             )}
 
-            <FormControl fullWidth error={!!errors.image}>
-              <Button
-                variant="outlined"
-                component="label"
-                disabled={uploading || ingredientLoading}
-                startIcon={uploading ? <CircularProgress size={20} /> : null}
-              >
-                {uploading ? 'Enviando...' : 'Escolher Imagem'}
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  disabled={uploading || ingredientLoading}
-                />
-              </Button>
-              {selectedFile && (
-                <Typography variant="caption" sx={{ mt: 1 }}>
-                  Arquivo selecionado: {selectedFile.name}
-                </Typography>
-              )}
-              {formData.image && (
-                <Typography variant="caption" sx={{ mt: 1, color: 'success.main' }}>
-                  Upload realizado com sucesso!
-                </Typography>
-              )}
-              {errors.image && (
-                <Typography variant="caption" color="error" sx={{ mt: 1 }}>
-                  {errors.image}
-                </Typography>
-              )}
-            </FormControl>
+            <ImageUploadComponent
+              value={formData.image || null}
+              onChange={handleImageChange}
+              disabled={ingredientLoading}
+              label="Imagem do Ingrediente"
+              required={false}
+              error={errors.image}
+              helperText="Faça upload de uma imagem para identificar o ingrediente (opcional)"
+              type="ingredients"
+              placeholder="Clique para selecionar uma imagem do ingrediente"
+              ingredientName={formData.name.trim() || 'Ingrediente'}
+            />
           </Stack>
         </Box>
       </DialogContent>
@@ -452,11 +396,7 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
         <Button onClick={onClose} color="inherit">
           {t('ingredients.actions.cancel')}
         </Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={uploading || ingredientLoading}
-        >
+        <Button onClick={handleSubmit} variant="contained" disabled={ingredientLoading}>
           {t('ingredients.actions.save')}
         </Button>
       </DialogActions>
