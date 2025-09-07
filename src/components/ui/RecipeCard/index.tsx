@@ -1,16 +1,8 @@
-import React, { ElementType } from 'react';
-import {
-  Card,
-  CardMedia,
-  CardContent,
-  CardActions,
-  Typography,
-  Box,
-  Chip,
-  Button,
-} from '@mui/material';
-import { People, Restaurant, Visibility, AccessTime } from '@mui/icons-material';
+import React from 'react';
+import { Card, CardContent, CardActions, Typography, Box, Chip, Button } from '@mui/material';
+import { Restaurant, Visibility, AccessTime } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
+import RecipeAvatar from '../RecipeAvatar';
 
 interface RecipeCardProps {
   id: string;
@@ -45,13 +37,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
         },
       }}
     >
-      <CardMedia
-        component="img"
-        height="140"
-        image={image}
-        alt={`Imagem da receita ${name}`}
-        sx={{ objectFit: 'cover' }}
-      />
+      <RecipeAvatar image={image} name={name} size={140} borderRadius={0} />
       <CardContent sx={{ flexGrow: 1, p: 2 }}>
         <Typography gutterBottom variant="subtitle1" component="div" noWrap>
           {name}

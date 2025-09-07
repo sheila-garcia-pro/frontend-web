@@ -105,6 +105,16 @@ const DirectCostDialog: React.FC<DirectCostDialogProps> = ({ open, onClose, onAd
             InputProps={{
               startAdornment: isPercentage ? '%' : 'R$',
             }}
+            sx={{
+              '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                {
+                  WebkitAppearance: 'none',
+                  margin: 0,
+                },
+              '& input[type="number"]': {
+                MozAppearance: 'textfield',
+              },
+            }}
           />
           <FormControlLabel
             control={
@@ -170,6 +180,16 @@ const IndirectCostDialog: React.FC<IndirectCostDialogProps> = ({ open, onClose, 
             type="number"
             fullWidth
             required
+            sx={{
+              '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                {
+                  WebkitAppearance: 'none',
+                  margin: 0,
+                },
+              '& input[type="number"]': {
+                MozAppearance: 'textfield',
+              },
+            }}
           />
           <TextField
             label="Descrição (opcional)"
@@ -676,7 +696,10 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                       justifyContent: 'space-between',
                       p: 1,
                       borderRadius: 1,
-                      '&:hover': { bgcolor: '#f7fafc' },
+                      '&:hover': {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : '#f7fafc',
+                      },
                     }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -763,7 +786,14 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                   <TableContainer component={Paper} elevation={1}>
                     <Table size="small">
                       <TableHead>
-                        <TableRow sx={{ bgcolor: '#f7fafc' }}>
+                        <TableRow
+                          sx={{
+                            bgcolor: (theme) =>
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(255, 255, 255, 0.05)'
+                                : '#f7fafc',
+                          }}
+                        >
                           <TableCell sx={{ fontWeight: 600 }}>Ingrediente</TableCell>
                           <TableCell align="right" sx={{ fontWeight: 600 }}>
                             Quantidade
@@ -786,7 +816,14 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                           return (
                             <TableRow
                               key={ingredient.ingredient._id || index}
-                              sx={{ '&:hover': { bgcolor: '#f7fafc' } }}
+                              sx={{
+                                '&:hover': {
+                                  bgcolor: (theme) =>
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(255, 255, 255, 0.08)'
+                                      : '#f7fafc',
+                                },
+                              }}
                             >
                               <TableCell>
                                 <Typography variant="body2" sx={{ fontWeight: 500 }}>
@@ -812,14 +849,28 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                             </TableRow>
                           );
                         })}
-                        <TableRow sx={{ bgcolor: '#edf2f7' }}>
+                        <TableRow
+                          sx={{
+                            bgcolor: (theme) =>
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(255, 255, 255, 0.05)'
+                                : '#edf2f7',
+                          }}
+                        >
                           <TableCell colSpan={3}>
                             <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                              Total Ingredientes
+                              Total Ingredientes test
                             </Typography>
                           </TableCell>
                           <TableCell align="right">
-                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#c53030' }}>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontWeight: 700,
+                                color: (theme) =>
+                                  theme.palette.mode === 'dark' ? '#ff6b6b' : '#c53030',
+                              }}
+                            >
                               {formatCurrency(calculations.totalIngredientsCost)}
                             </Typography>
                           </TableCell>
@@ -866,7 +917,14 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                     <TableContainer component={Paper} elevation={1}>
                       <Table size="small">
                         <TableHead>
-                          <TableRow sx={{ bgcolor: '#f7fafc' }}>
+                          <TableRow
+                            sx={{
+                              bgcolor: (theme) =>
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(255, 255, 255, 0.05)'
+                                  : '#f7fafc',
+                            }}
+                          >
                             <TableCell sx={{ fontWeight: 600 }}>Nome</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Descrição</TableCell>
                             <TableCell align="right" sx={{ fontWeight: 600 }}>
@@ -882,7 +940,17 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                             ? financialData.totalDirectCosts
                             : financialData.unitDirectCosts
                           ).map((cost) => (
-                            <TableRow key={cost.id} sx={{ '&:hover': { bgcolor: '#f7fafc' } }}>
+                            <TableRow
+                              key={cost.id}
+                              sx={{
+                                '&:hover': {
+                                  bgcolor: (theme) =>
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(255, 255, 255, 0.08)'
+                                      : '#f7fafc',
+                                },
+                              }}
+                            >
                               <TableCell>
                                 <Typography variant="body2" sx={{ fontWeight: 500 }}>
                                   {cost.name}
@@ -965,7 +1033,14 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                     <TableContainer component={Paper} elevation={1}>
                       <Table size="small">
                         <TableHead>
-                          <TableRow sx={{ bgcolor: '#f7fafc' }}>
+                          <TableRow
+                            sx={{
+                              bgcolor: (theme) =>
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(255, 255, 255, 0.05)'
+                                  : '#f7fafc',
+                            }}
+                          >
                             <TableCell sx={{ fontWeight: 600 }}>Nome</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Descrição</TableCell>
                             <TableCell align="right" sx={{ fontWeight: 600 }}>
@@ -978,7 +1053,17 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                         </TableHead>
                         <TableBody>
                           {financialData.indirectCosts.map((cost) => (
-                            <TableRow key={cost.id} sx={{ '&:hover': { bgcolor: '#f7fafc' } }}>
+                            <TableRow
+                              key={cost.id}
+                              sx={{
+                                '&:hover': {
+                                  bgcolor: (theme) =>
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(255, 255, 255, 0.08)'
+                                      : '#f7fafc',
+                                },
+                              }}
+                            >
                               <TableCell>
                                 <Typography variant="body2" sx={{ fontWeight: 500 }}>
                                   {cost.name}

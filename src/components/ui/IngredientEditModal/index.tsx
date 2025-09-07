@@ -272,6 +272,16 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
               inputProps: { min: 0.1, max: 3.0, step: 0.01 },
             }}
             helperText="Fator para ajuste de perdas e desperdício (padrão: 1.0)"
+            sx={{
+              '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                {
+                  WebkitAppearance: 'none',
+                  margin: 0,
+                },
+              '& input[type="number"]': {
+                MozAppearance: 'textfield',
+              },
+            }}
           />
 
           <Box
@@ -300,6 +310,16 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
                 InputProps={{
                   inputProps: { min: 0, step: 0.01 },
                 }}
+                sx={{
+                  '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                    {
+                      WebkitAppearance: 'none',
+                      margin: 0,
+                    },
+                  '& input[type="number"]': {
+                    MozAppearance: 'textfield',
+                  },
+                }}
               />
               <TextField
                 fullWidth
@@ -312,6 +332,16 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
                 helperText={errors['price.quantity']}
                 InputProps={{
                   inputProps: { min: 0, step: 0.01 },
+                }}
+                sx={{
+                  '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                    {
+                      WebkitAppearance: 'none',
+                      margin: 0,
+                    },
+                  '& input[type="number"]': {
+                    MozAppearance: 'textfield',
+                  },
                 }}
               />{' '}
               <TextField

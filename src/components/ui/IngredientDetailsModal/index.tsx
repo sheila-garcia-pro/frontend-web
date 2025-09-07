@@ -609,7 +609,17 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                                   handleUpdatePriceMeasure('price', newPrice);
                                 }
                               }}
-                              sx={{ width: 120 }}
+                              sx={{
+                                width: 120,
+                                '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                                  {
+                                    WebkitAppearance: 'none',
+                                    margin: 0,
+                                  },
+                                '& input[type="number"]': {
+                                  MozAppearance: 'textfield',
+                                },
+                              }}
                             />
                             <IconButton
                               size="small"
@@ -664,7 +674,17 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                                   handleUpdatePriceMeasure('quantity', newQuantity);
                                 }
                               }}
-                              sx={{ width: 120 }}
+                              sx={{
+                                width: 120,
+                                '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                                  {
+                                    WebkitAppearance: 'none',
+                                    margin: 0,
+                                  },
+                                '& input[type="number"]': {
+                                  MozAppearance: 'textfield',
+                                },
+                              }}
                             />
                             <IconButton
                               size="small"

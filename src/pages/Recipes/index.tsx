@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect, useCallback } from 'react';
+import React, { FC } from 'react';
 import {
   Container,
   Box,
@@ -14,16 +14,15 @@ import {
   Grid,
 } from '@mui/material';
 import { Search, Restaurant, Add } from '@mui/icons-material';
-import { useDispatch } from 'react-redux';
-import { useLocation } from 'react-router-dom';
-import { addNotification } from '../../store/slices/uiSlice';
 import RecipeCard from '../../components/ui/RecipeCard';
 import RecipeSkeleton from '../../components/ui/SkeletonLoading/RecipeSkeleton';
 import RecipeCategoryMenu from '../../components/ui/RecipeCategoryMenuConsolidated';
-import { getCachedRecipes, getRecipes } from '../../services/api/recipes';
-import { clearCache } from '../../services/api';
-import { Recipe } from '../../types/recipes';
 import RecipeModal from '../../components/ui/RecipeModal';
+import RecipesStats from '../../components/ui/RecipesStats';
+
+// Hooks
+import { useRecipesFilters, usePagination } from '../../hooks/useRecipesFilters';
+import { useRecipesPage } from '../../hooks/useRecipesPage';
 
 // RBAC
 import { SimpleIfPermission as IfPermission } from '@/components/security';
@@ -32,7 +31,6 @@ import { SimpleIfPermission as IfPermission } from '@/components/security';
 interface SortOption {
   value: string;
   label: string;
-  sortFn: (a: Recipe, b: Recipe) => number;
 }
 
 // Componente da página de receitas
@@ -43,175 +41,55 @@ interface SortOption {
 // - Após excluir uma receita: navega de volta com state.reloadList = true
 // - Refresh manual: usa handleRefreshList (com cache)
 const RecipesPage: FC = () => {
-  // Estados
-  const [loading, setLoading] = useState(true);
-  const [receitas, setReceitas] = useState<Recipe[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedType, setSelectedType] = useState<string>('');
-  const [sortOption, setSortOption] = useState('name_asc');
-  const [totalPages, setTotalPages] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Usar o hook personalizado para gerenciar todo o estado
+  const {
+    // Estados
+    loading,
+    receitas,
+    searchInput,
+    currentPage,
+    selectedCategory,
+    sortOption,
+    totalPages,
+    isModalOpen,
+    debouncedSearchTerm,
+    itemsPerPage,
 
-  // Redux e Navigation
-  const dispatch = useDispatch();
-  const location = useLocation();
-  const itemsPerPage = 8;
-
-  // Função para recarregar forçadamente a lista (sem cache - para após exclusões)
-  const handleForceRefreshList = useCallback(async () => {
-    setLoading(true);
-    try {
-      // Limpa completamente o cache antes de fazer a nova requisição
-      clearCache('/v1/users/me/recipe');
-
-      const response = await getRecipes({
-        page: currentPage,
-        itemPerPage: itemsPerPage,
-        category: selectedType,
-        search: searchTerm,
-      });
-
-      setReceitas(response.data);
-      setTotalPages(response.totalPages);
-    } catch (error) {
-      console.error('Erro ao recarregar receitas:', error);
-      dispatch(
-        addNotification({
-          message: 'Erro ao recarregar lista de receitas.',
-          type: 'error',
-          duration: 5000,
-        }),
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, selectedType, searchTerm, dispatch]);
-  // Efeito para detectar quando chegamos com estado de reload (após exclusão ou edição)
-  useEffect(() => {
-    const state = location.state as {
-      reloadList?: boolean;
-      deletedRecipeName?: string;
-      editedRecipeName?: string;
-    } | null;
-
-    if (state?.reloadList) {
-      // Força o reload da lista SEM cache
-      handleForceRefreshList();
-
-      // Mostra notificação sobre a operação realizada
-      if (state.deletedRecipeName) {
-        dispatch(
-          addNotification({
-            message: `Receita "${state.deletedRecipeName}" excluída com sucesso!`,
-            type: 'success',
-            duration: 4000,
-          }),
-        );
-      } else if (state.editedRecipeName) {
-        dispatch(
-          addNotification({
-            message: `Receita "${state.editedRecipeName}" atualizada com sucesso!`,
-            type: 'success',
-            duration: 4000,
-          }),
-        );
-      }
-
-      // Limpa o state para evitar reloads desnecessários
-      window.history.replaceState({}, document.title);
-    }
-  }, [location.state, dispatch, handleForceRefreshList]);
-
-  // Efeito para carregar os dados
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-
-      try {
-        const response = await getCachedRecipes({
-          page: currentPage,
-          itemPerPage: itemsPerPage,
-          category: selectedType,
-          search: searchTerm,
-        });
-
-        setReceitas(response.data);
-        setTotalPages(response.totalPages);
-
-        dispatch(
-          addNotification({
-            message: 'Receitas carregadas com sucesso!',
-            type: 'success',
-            duration: 4000,
-          }),
-        );
-      } catch (error) {
-        console.error('Erro ao carregar receitas:', error);
-
-        dispatch(
-          addNotification({
-            message: 'Erro ao carregar receitas.',
-            type: 'error',
-            duration: 5000,
-          }),
-        );
-
-        setReceitas([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [dispatch, currentPage, selectedType, searchTerm]);
+    // Handlers
+    handleSearchChange,
+    handleCategoryToggle,
+    handleSortChange,
+    handlePageChange,
+    handleRefreshList,
+    handleForceRefreshList,
+    handleOpenModal,
+    handleCloseModal,
+    handleRecipeCreated,
+  } = useRecipesPage();
 
   // Opções de ordenação
   const sortOptions: SortOption[] = [
-    {
-      value: 'name_asc',
-      label: 'Nome (A-Z)',
-      sortFn: (a, b) => a.name.localeCompare(b.name),
-    },
-    {
-      value: 'name_desc',
-      label: 'Nome (Z-A)',
-      sortFn: (a, b) => b.name.localeCompare(a.name),
-    },
+    { value: 'name_asc', label: 'Nome (A-Z)' },
+    { value: 'name_desc', label: 'Nome (Z-A)' },
+    { value: 'category_asc', label: 'Categoria (A-Z)' },
+    { value: 'category_desc', label: 'Categoria (Z-A)' },
+    { value: 'preparationTime_asc', label: 'Tempo Preparo (Menor-Maior)' },
+    { value: 'preparationTime_desc', label: 'Tempo Preparo (Maior-Menor)' },
   ];
 
-  // Manipuladores de eventos
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
-    setCurrentPage(1);
-  };
+  // Aplicar filtros e ordenação usando o hook personalizado
+  const { filteredAndSortedRecipes, totalFilteredItems } = useRecipesFilters(receitas, {
+    searchTerm: debouncedSearchTerm,
+    category: selectedCategory,
+    sortOption,
+  });
 
-  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
-    setCurrentPage(value);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleTypeChange = (event: SelectChangeEvent) => {
-    setSelectedType(event.target.value);
-    setCurrentPage(1);
-  };
-
-  const handleSortChange = (event: SelectChangeEvent) => {
-    setSortOption(event.target.value);
-  };
-
-  const handleOpenModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
-  const handleRecipeCreated = () => {
-    // Usar refresh forçado (sem cache) após criar uma nova receita
-    // Isso garante que a nova receita aparecerá imediatamente na lista
-    handleForceRefreshList();
-  };
+  // Aplicar paginação usando o hook personalizado
+  const { paginatedItems: paginatedRecipes, totalPages: totalFilteredPages } = usePagination(
+    filteredAndSortedRecipes,
+    currentPage,
+    itemsPerPage,
+  );
 
   // Obter tipos de pratos únicos para o filtro
   const dishTypes =
@@ -219,33 +97,10 @@ const RecipesPage: FC = () => {
       ? ['', ...Array.from(new Set(receitas.map((recipe) => recipe.category)))]
       : [''];
 
-  // Filtragem das receitas
-  let filteredRecipes = [...receitas];
-
-  // Aplicar filtro de busca (por nome ou tipo)
-  if (searchTerm) {
-    filteredRecipes = filteredRecipes.filter(
-      (recipe) =>
-        recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        recipe.category.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
-  }
-
-  // Aplicar filtro de tipo
-  if (selectedType) {
-    filteredRecipes = filteredRecipes.filter((recipe) => recipe.category === selectedType);
-  }
-
-  // Aplicar ordenação
-  const currentSortOption = sortOptions.find((option) => option.value === sortOption);
-  if (currentSortOption) {
-    filteredRecipes.sort(currentSortOption.sortFn);
-  }
-
-  // Paginação
-  const totalFilteredPages = Math.ceil(filteredRecipes.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedRecipes = filteredRecipes.slice(startIndex, startIndex + itemsPerPage); // Renderização dos skeleton loaders durante o carregamento
+  // Manipuladores de eventos
+  const handleTypeChange = (event: SelectChangeEvent) => {
+    handleCategoryToggle(event.target.value);
+  }; // Renderização dos skeleton loaders durante o carregamento
   const renderSkeletons = () => {
     return Array.from({ length: itemsPerPage }).map((_, index) => (
       <Grid key={`skeleton-${index}`} size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 3 }}>
@@ -319,7 +174,7 @@ const RecipesPage: FC = () => {
               placeholder="Buscar receitas..."
               variant="outlined"
               fullWidth
-              value={searchTerm}
+              value={searchInput}
               onChange={handleSearchChange}
               InputProps={{
                 startAdornment: (
@@ -358,7 +213,7 @@ const RecipesPage: FC = () => {
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             <FormControl sx={{ minWidth: 250 }}>
               <Select
-                value={selectedType}
+                value={selectedCategory}
                 onChange={handleTypeChange}
                 displayEmpty
                 size="small"
@@ -382,10 +237,22 @@ const RecipesPage: FC = () => {
 
             {/* Informações de resultados */}
             <Typography variant="body2" color="text.secondary">
-              {loading ? 'Carregando...' : `${filteredRecipes.length} receita(s)`}
+              {loading ? 'Carregando...' : `${totalFilteredItems} receita(s)`}
             </Typography>
           </Box>
-        </Box>{' '}
+        </Box>
+
+        {/* Estatísticas da lista */}
+        <RecipesStats
+          totalRecipes={receitas.length}
+          filteredCount={totalFilteredItems}
+          currentPage={currentPage}
+          totalPages={totalFilteredPages}
+          itemsPerPage={itemsPerPage}
+          selectedCategory={selectedCategory}
+          searchTerm={debouncedSearchTerm}
+        />
+
         {/* Grid de Receitas */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
           {loading ? (
@@ -422,7 +289,7 @@ const RecipesPage: FC = () => {
                   Nenhuma receita encontrada
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {searchTerm || selectedType
+                  {searchInput || selectedCategory
                     ? 'Tente ajustar os filtros de busca'
                     : 'Comece criando sua primeira receita'}
                 </Typography>
@@ -431,10 +298,10 @@ const RecipesPage: FC = () => {
           )}
         </Grid>
         {/* Paginação */}
-        {!loading && filteredRecipes.length > itemsPerPage && (
+        {!loading && totalFilteredItems > itemsPerPage && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
             <Pagination
-              count={Math.max(totalFilteredPages, totalPages)}
+              count={totalFilteredPages}
               page={currentPage}
               onChange={handlePageChange}
               color="primary"

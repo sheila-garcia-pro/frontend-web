@@ -369,6 +369,16 @@ const UserNutritionalTableModal: React.FC<UserNutritionalTableModalProps> = ({
                     type="number"
                     inputProps={{ step: '0.01', min: '0' }}
                     size="small"
+                    sx={{
+                      '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                        {
+                          WebkitAppearance: 'none',
+                          margin: 0,
+                        },
+                      '& input[type="number"]': {
+                        MozAppearance: 'textfield',
+                      },
+                    }}
                   />
                 </Box>
               ))}
@@ -397,6 +407,16 @@ const UserNutritionalTableModal: React.FC<UserNutritionalTableModalProps> = ({
                     type="number"
                     inputProps={{ step: '0.01', min: '0' }}
                     size="small"
+                    sx={{
+                      '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                        {
+                          WebkitAppearance: 'none',
+                          margin: 0,
+                        },
+                      '& input[type="number"]': {
+                        MozAppearance: 'textfield',
+                      },
+                    }}
                   />
                 </Box>
               ))}
@@ -425,6 +445,16 @@ const UserNutritionalTableModal: React.FC<UserNutritionalTableModalProps> = ({
                     type="number"
                     inputProps={{ step: '0.01', min: '0' }}
                     size="small"
+                    sx={{
+                      '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                        {
+                          WebkitAppearance: 'none',
+                          margin: 0,
+                        },
+                      '& input[type="number"]': {
+                        MozAppearance: 'textfield',
+                      },
+                    }}
                   />
                 </Box>
               ))}
@@ -453,6 +483,16 @@ const UserNutritionalTableModal: React.FC<UserNutritionalTableModalProps> = ({
                     type="number"
                     inputProps={{ step: '0.01', min: '0' }}
                     size="small"
+                    sx={{
+                      '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                        {
+                          WebkitAppearance: 'none',
+                          margin: 0,
+                        },
+                      '& input[type="number"]': {
+                        MozAppearance: 'textfield',
+                      },
+                    }}
                   />
                 </Box>
               ))}
@@ -481,6 +521,16 @@ const UserNutritionalTableModal: React.FC<UserNutritionalTableModalProps> = ({
                     type="number"
                     inputProps={{ step: '0.01', min: '0' }}
                     size="small"
+                    sx={{
+                      '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                        {
+                          WebkitAppearance: 'none',
+                          margin: 0,
+                        },
+                      '& input[type="number"]': {
+                        MozAppearance: 'textfield',
+                      },
+                    }}
                   />
                 </Box>
               ))}

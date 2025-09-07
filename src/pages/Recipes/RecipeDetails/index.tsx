@@ -25,7 +25,6 @@ import {
   Share,
   Edit,
   Delete,
-  ImageNotSupported,
 } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { addNotification } from '../../../store/slices/uiSlice';
@@ -42,6 +41,7 @@ import {
 } from '../../../types/recipeIngredients';
 import RecipeStepsCard from '../../../components/ui/RecipeStepsCard';
 import RecipeSaveManager from '../../../components/ui/RecipeSaveManager';
+import RecipeAvatar from '../../../components/ui/RecipeAvatar';
 
 const RecipeDetailsPage: FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,7 +50,6 @@ const RecipeDetailsPage: FC = () => {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [imageError, setImageError] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [recipeIngredients, setRecipeIngredients] = useState<RecipeIngredient[]>([]);
@@ -201,11 +200,6 @@ const RecipeDetailsPage: FC = () => {
     // Atualizar o estado local imediatamente para feedback visual rápido
     setRecipe(updatedRecipe);
     setRefreshing(true);
-
-    // Reset do erro de imagem caso a URL tenha mudado
-    if (recipe?.image !== updatedRecipe.image) {
-      setImageError(false);
-    }
 
     // Fazer nova chamada à API para garantir dados mais recentes
     // Usar o ID original como fallback caso o updatedRecipe._id seja undefined
@@ -456,7 +450,7 @@ const RecipeDetailsPage: FC = () => {
           }}
         >
           <CardContent sx={{ p: 0 }}>
-            {/* Imagem circular no topo */}
+            {/* Avatar circular no topo */}
             <Box
               sx={{
                 display: 'flex',
@@ -466,40 +460,24 @@ const RecipeDetailsPage: FC = () => {
                 bgcolor: 'grey.50',
               }}
             >
-              {!imageError ? (
-                <Box
-                  component="img"
-                  src={recipe.image}
-                  alt={recipe.name}
-                  onError={() => setImageError(true)}
-                  sx={{
-                    width: 120,
-                    height: 120,
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    border: '4px solid',
-                    borderColor: 'primary.main',
-                    boxShadow: 2,
-                  }}
+              <Box
+                sx={{
+                  width: 120,
+                  height: 120,
+                  borderRadius: '50%',
+                  border: '4px solid',
+                  borderColor: 'primary.main',
+                  boxShadow: 2,
+                  overflow: 'hidden',
+                }}
+              >
+                <RecipeAvatar
+                  image={recipe.image}
+                  name={recipe.name}
+                  size={120}
+                  borderRadius={50}
                 />
-              ) : (
-                <Box
-                  sx={{
-                    width: 120,
-                    height: 120,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    bgcolor: 'background.paper',
-                    border: '4px solid',
-                    borderColor: 'primary.main',
-                    boxShadow: 2,
-                  }}
-                >
-                  <ImageNotSupported sx={{ fontSize: 48, color: 'text.secondary' }} />
-                </Box>
-              )}
+              </Box>
             </Box>
 
             {/* Conteúdo principal */}
@@ -518,33 +496,6 @@ const RecipeDetailsPage: FC = () => {
                     zIndex: 1,
                   }}
                 >
-                  <Tooltip title="Compartilhar">
-                    <IconButton
-                      onClick={handleShare}
-                      color="primary"
-                      size="small"
-                      sx={{
-                        bgcolor: 'background.paper',
-                        boxShadow: 1,
-                        '&:hover': { boxShadow: 2 },
-                      }}
-                    >
-                      <Share />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Favoritar">
-                    <IconButton
-                      color="primary"
-                      size="small"
-                      sx={{
-                        bgcolor: 'background.paper',
-                        boxShadow: 1,
-                        '&:hover': { boxShadow: 2 },
-                      }}
-                    >
-                      <Bookmark />
-                    </IconButton>
-                  </Tooltip>
                   <Tooltip title="Editar">
                     <IconButton
                       onClick={handleEditClick}

@@ -621,6 +621,16 @@ const MenuModal: React.FC<MenuModalProps> = ({
                                     error={!!errors[`quantity_${index}`]}
                                     helperText={errors[`quantity_${index}`]}
                                     disabled={loading}
+                                    sx={{
+                                      '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                                        {
+                                          WebkitAppearance: 'none',
+                                          margin: 0,
+                                        },
+                                      '& input[type="number"]': {
+                                        MozAppearance: 'textfield',
+                                      },
+                                    }}
                                   />
                                 </Grid>
 

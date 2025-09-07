@@ -336,6 +336,16 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
               }}
               helperText="Fator para ajuste de perdas e desperdício (padrão: 1.0)"
               disabled={ingredientLoading}
+              sx={{
+                '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                  {
+                    WebkitAppearance: 'none',
+                    margin: 0,
+                  },
+                '& input[type="number"]': {
+                  MozAppearance: 'textfield',
+                },
+              }}
             />
 
             <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
@@ -354,6 +364,16 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
                 inputProps: { min: 0, step: 0.01 },
                 startAdornment: <InputAdornment position="start">R$</InputAdornment>,
               }}
+              sx={{
+                '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                  {
+                    WebkitAppearance: 'none',
+                    margin: 0,
+                  },
+                '& input[type="number"]': {
+                  MozAppearance: 'textfield',
+                },
+              }}
             />
             <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
               <TextField
@@ -367,6 +387,16 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
                 helperText={errors['price.quantity']}
                 InputProps={{
                   inputProps: { min: 0, step: 0.01 },
+                }}
+                sx={{
+                  '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                    {
+                      WebkitAppearance: 'none',
+                      margin: 0,
+                    },
+                  '& input[type="number"]': {
+                    MozAppearance: 'textfield',
+                  },
                 }}
               />
 

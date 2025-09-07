@@ -125,7 +125,13 @@ const RecipeStepsCard: React.FC<RecipeStepsCardProps> = ({
 
       {/* Lista de passos */}
       {steps.length > 0 ? (
-        <List sx={{ bgcolor: 'background.default', borderRadius: 1 }}>
+        <List
+          sx={{
+            bgcolor: (theme) =>
+              theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'background.default',
+            borderRadius: 1,
+          }}
+        >
           {steps.map((step, index) => (
             <ListItem key={index} sx={{ py: 1.5 }}>
               <ListItemText
@@ -191,10 +197,12 @@ const RecipeStepsCard: React.FC<RecipeStepsCardProps> = ({
             textAlign: 'center',
             py: 4,
             color: 'text.secondary',
-            bgcolor: 'background.default',
+            bgcolor: (theme) =>
+              theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'background.default',
             borderRadius: 1,
             border: '1px dashed',
-            borderColor: 'divider',
+            borderColor: (theme) =>
+              theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'divider',
           }}
         >
           <Typography variant="body1">Nenhum passo adicionado ainda</Typography>

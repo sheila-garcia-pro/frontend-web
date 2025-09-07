@@ -1,0 +1,38 @@
+/* Remove setas dos inputs de número para evitar alterações acidentais durante scroll */
+
+/* WebKit browsers (Chrome, Safari, Edge) */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+/* Para Material-UI TextField com type="number" */
+.MuiTextField-root input[type='number']::-webkit-outer-spin-button,
+.MuiTextField-root input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.MuiTextField-root input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+/* Para inputs dentro de InputBase do Material-UI */
+.MuiInputBase-input[type='number']::-webkit-outer-spin-button,
+.MuiInputBase-input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.MuiInputBase-input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}

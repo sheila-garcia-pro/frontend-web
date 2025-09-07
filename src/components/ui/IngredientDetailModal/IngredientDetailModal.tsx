@@ -330,7 +330,17 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
                       onChange={(e) => setQuantity(e.target.value)}
                       fullWidth
                       inputProps={{ min: 0, step: 0.1 }}
-                      sx={{ flex: 1 }}
+                      sx={{
+                        flex: 1,
+                        '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                          {
+                            WebkitAppearance: 'none',
+                            margin: 0,
+                          },
+                        '& input[type="number"]': {
+                          MozAppearance: 'textfield',
+                        },
+                      }}
                     />
                     <FormControl sx={{ flex: 1 }}>
                       <InputLabel>Unidade</InputLabel>
@@ -444,6 +454,16 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
                           startAdornment: <InputAdornment position="start">R$</InputAdornment>,
                         }}
                         inputProps={{ min: 0, step: 0.01 }}
+                        sx={{
+                          '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                            {
+                              WebkitAppearance: 'none',
+                              margin: 0,
+                            },
+                          '& input[type="number"]': {
+                            MozAppearance: 'textfield',
+                          },
+                        }}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>
@@ -454,6 +474,16 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
                         onChange={(e) => setPurchaseQuantity(e.target.value)}
                         fullWidth
                         inputProps={{ min: 0, step: 0.1 }}
+                        sx={{
+                          '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                            {
+                              WebkitAppearance: 'none',
+                              margin: 0,
+                            },
+                          '& input[type="number"]': {
+                            MozAppearance: 'textfield',
+                          },
+                        }}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>

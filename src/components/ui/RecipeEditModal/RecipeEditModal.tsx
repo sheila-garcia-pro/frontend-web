@@ -6,19 +6,18 @@ import {
   DialogActions,
   TextField,
   Button,
-  Grid,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   Box,
   Typography,
-  IconButton,
-  Divider,
   SelectChangeEvent,
   InputAdornment,
+  Stack,
+  CircularProgress,
 } from '@mui/material';
-import { Close, Save, Cancel } from '@mui/icons-material';
+import { Save } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { addNotification } from '../../../store/slices/uiSlice';
 import { Recipe, CreateRecipeParams } from '../../../types/recipes';
@@ -52,7 +51,6 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
   const [recipeSteps, setRecipeSteps] = useState<string[]>([]);
   const [formData, setFormData] = useState<CreateRecipeParams>({
     name: '',
-    sku: '',
     category: '',
     image: null,
     yieldRecipe: '',
@@ -71,7 +69,6 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
     if (recipe) {
       setFormData({
         name: recipe.name,
-        sku: recipe.sku,
         category: recipe.category,
         image: recipe.image,
         yieldRecipe: recipe.yieldRecipe,
@@ -250,29 +247,19 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
     <Dialog
       open={open}
       onClose={handleClose}
-      maxWidth="md"
+      maxWidth="sm"
       fullWidth
       PaperProps={{
+        elevation: 5,
         sx: { borderRadius: 2 },
       }}
     >
-      <DialogTitle>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
-            Editar Receita
-          </Typography>
-          <IconButton onClick={handleClose} disabled={loading}>
-            <Close />
-          </IconButton>
-        </Box>
-      </DialogTitle>
+      <DialogTitle>Editar Receita</DialogTitle>
 
-      <Divider />
-
-      <DialogContent sx={{ p: 3 }}>
-        <Grid container spacing={3}>
-          {/* Nome */}
-          <Grid size={{ xs: 12, md: 8 }}>
+      <DialogContent dividers>
+        <Box sx={{ py: 2 }}>
+          <Stack spacing={3}>
+            {/* Nome da Receita */}
             <TextField
               fullWidth
               label="Nome da Receita"
@@ -280,21 +267,11 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
               onChange={handleInputChange('name')}
               required
               disabled={loading}
+              autoFocus
             />
-          </Grid>
-          {/* SKU */}
-          <Grid size={{ xs: 12, md: 4 }}>
-            <TextField
-              fullWidth
-              label="SKU"
-              value={formData.sku}
-              onChange={handleInputChange('sku')}
-              disabled={loading}
-            />
-          </Grid>
-          {/* Categoria */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
+
+            {/* Categoria */}
+            <FormControl fullWidth required>
               <InputLabel>Categoria</InputLabel>
               <Select
                 value={formData.category}
@@ -309,9 +286,63 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
                 ))}
               </Select>
             </FormControl>
-          </Grid>
-          {/* Tempo de Preparo */}
-          <Grid size={{ xs: 12, md: 6 }}>
+
+            {/* Rendimento e Tipo */}
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Quantidade"
+                value={formData.yieldRecipe}
+                onChange={handleInputChange('yieldRecipe')}
+                disabled={loading}
+                placeholder="Ex: 4, 6, 8"
+                type="number"
+                inputProps={{
+                  min: 1,
+                  step: 1,
+                }}
+                sx={{
+                  flex: 1,
+                  '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                    {
+                      WebkitAppearance: 'none',
+                      margin: 0,
+                    },
+                  '& input[type="number"]': {
+                    MozAppearance: 'textfield',
+                  },
+                }}
+              />
+
+              <FormControl fullWidth required sx={{ flex: 1 }}>
+                <InputLabel>Tipo de Rendimento</InputLabel>
+                <Select
+                  value={formData.typeYield}
+                  onChange={handleSelectChange('typeYield')}
+                  label="Tipo de Rendimento"
+                  disabled={loading}
+                >
+                  {yieldTypes.map((type) => (
+                    <MenuItem key={type} value={type}>
+                      {type}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+
+            {formData.yieldRecipe && formData.typeYield && (
+              <Box sx={{ mt: -2, mb: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Rendimento:{' '}
+                  <strong>
+                    {formData.yieldRecipe} {formData.typeYield?.toLowerCase()}
+                  </strong>
+                </Typography>
+              </Box>
+            )}
+
+            {/* Tempo de Preparo */}
             <TextField
               fullWidth
               label="Tempo de Preparo"
@@ -320,211 +351,358 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
               placeholder="Ex: 1 hora, 30 minutos"
               disabled={loading}
             />
-          </Grid>
-          {/* Rendimento */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label="Rendimento"
-              value={formData.yieldRecipe}
-              onChange={handleInputChange('yieldRecipe')}
-              disabled={loading}
-            />
-          </Grid>
-          {/* Tipo de Rendimento */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>Tipo de Rendimento</InputLabel>
-              <Select
-                value={formData.typeYield}
-                onChange={handleSelectChange('typeYield')}
-                label="Tipo de Rendimento"
+
+            {/* Peso e Unidade */}
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Peso da Receita"
+                value={formData.weightRecipe}
+                onChange={handleInputChange('weightRecipe')}
                 disabled={loading}
-              >
-                {yieldTypes.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {type}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          {/* Peso */}
-          <Grid size={{ xs: 12, md: 6 }}>
+                placeholder="Ex: 1.5, 250, 0.5"
+                sx={{ flex: 2 }}
+              />
+
+              <FormControl fullWidth required sx={{ flex: 1 }}>
+                <InputLabel>Unidade de Peso</InputLabel>
+                <Select
+                  value={formData.typeWeightRecipe}
+                  onChange={handleSelectChange('typeWeightRecipe')}
+                  label="Unidade de Peso"
+                  disabled={loading}
+                >
+                  {weightTypes.map((type) => (
+                    <MenuItem key={type} value={type}>
+                      {type}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+
+            {formData.weightRecipe && formData.typeWeightRecipe && (
+              <Box sx={{ mt: -2, mb: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Peso total:{' '}
+                  <strong>
+                    {formData.weightRecipe} {formData.typeWeightRecipe?.toLowerCase()}
+                  </strong>
+                </Typography>
+              </Box>
+            )}
+
+            {/* Descrição */}
             <TextField
               fullWidth
-              label="Peso"
-              value={formData.weightRecipe}
-              onChange={handleInputChange('weightRecipe')}
-              disabled={loading}
-            />
-          </Grid>
-          {/* Tipo de Peso */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>Unidade de Peso</InputLabel>
-              <Select
-                value={formData.typeWeightRecipe}
-                onChange={handleSelectChange('typeWeightRecipe')}
-                label="Unidade de Peso"
-                disabled={loading}
-              >
-                {weightTypes.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {type}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>{' '}
-          {/* Upload de Imagem */}
-          <Grid size={{ xs: 12 }}>
-            {' '}
-            <ImageUploadComponent
-              value={formData.image || null}
-              onChange={handleImageChange}
-              disabled={loading}
-              label="Imagem da Receita"
-              helperText="Clique para selecionar uma imagem da receita. Você pode visualizar, alterar ou remover a imagem atual."
-            />
-          </Grid>
-          {/* Descrição */}
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              label="Descrição"
+              label="Descrição (Opcional)"
               value={formData.descripition}
               onChange={handleInputChange('descripition')}
               multiline
               rows={4}
-              placeholder="Descreva a receita..."
+              placeholder="Descreva os detalhes da receita (opcional)..."
               disabled={loading}
             />
-          </Grid>
-          {/* Seção de Informações Financeiras */}
-          <Grid size={{ xs: 12 }}>
-            <Box sx={{ mt: 2 }}>
+
+            {/* Upload de Imagem */}
+            <Box>
+              <Typography variant="body2" color="text.primary" sx={{ fontWeight: 500, mb: 1 }}>
+                Imagem da Receita (Opcional)
+              </Typography>
+              <ImageUploadComponent
+                value={formData.image || null}
+                onChange={handleImageChange}
+                disabled={loading}
+                label="Imagem da Receita"
+                helperText="Clique para selecionar uma imagem da receita. Você pode visualizar, alterar ou remover a imagem atual."
+              />
+            </Box>
+
+            {/* Ingredientes da Receita */}
+            {recipe && (
+              <Box sx={{ mt: 1 }}>
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{
+                    fontWeight: 600,
+                    color: 'primary.main',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                >
+                  🥘 Ingredientes da Receita
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Gerencie os ingredientes utilizados nesta receita
+                </Typography>
+
+                <Box
+                  sx={{
+                    border: '1px solid',
+                    borderColor: (theme) =>
+                      theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'divider',
+                    borderRadius: 2,
+                    p: 1,
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 0.02)'
+                        : 'background.paper',
+                  }}
+                >
+                  <RecipeIngredientsCard
+                    recipeId={recipe._id}
+                    initialIngredients={recipeIngredients}
+                    onIngredientsUpdate={handleIngredientsUpdate}
+                  />
+                </Box>
+
+                {recipeIngredients.length > 0 && (
+                  <Box
+                    sx={{
+                      mt: 2,
+                      p: 2,
+                      bgcolor: 'success.light',
+                      borderRadius: 1,
+                      border: '1px solid',
+                      borderColor: 'success.main',
+                    }}
+                  >
+                    <Typography variant="body2" color="success.dark" sx={{ fontWeight: 500 }}>
+                      ✓ {recipeIngredients.length} ingrediente(s) configurado(s)
+                    </Typography>
+                    <Typography variant="caption" color="success.dark">
+                      Custo total estimado: R${' '}
+                      {recipeIngredients
+                        .reduce((total, ingredient) => total + ingredient.totalCost, 0)
+                        .toFixed(2)}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            )}
+
+            {/* Passos da Receita */}
+            {recipe && (
+              <Box sx={{ mt: 1 }}>
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{
+                    fontWeight: 600,
+                    color: 'primary.main',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                >
+                  �‍🍳 Modo de Preparo
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Defina os passos para preparar esta receita
+                </Typography>
+
+                <Box
+                  sx={{
+                    border: '1px solid',
+                    borderColor: (theme) =>
+                      theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'divider',
+                    borderRadius: 2,
+                    p: 1,
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 0.02)'
+                        : 'background.paper',
+                  }}
+                >
+                  <RecipeStepsCard
+                    recipeId={recipe._id}
+                    initialSteps={recipeSteps}
+                    onStepsUpdate={handleStepsUpdate}
+                  />
+                </Box>
+              </Box>
+            )}
+
+            {/* Seção de Informações Financeiras */}
+            <Box>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
                 💰 Informações Financeiras (Opcional)
               </Typography>
 
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <TextField
-                    fullWidth
-                    label="Preço de Venda"
-                    value={formData.sellingPrice || ''}
-                    onChange={(e) => {
-                      const value = e.target.value;
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  fullWidth
+                  label="Preço de Venda"
+                  value={formData.sellingPrice || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const sellingPrice = value ? parseFloat(value) : undefined;
+
+                    setFormData((prev) => {
+                      const newFormData = {
+                        ...prev,
+                        sellingPrice,
+                      };
+
+                      // Calcular lucro automaticamente se tiver preço de venda e custo
+                      if (sellingPrice && prev.costPrice) {
+                        newFormData.profit = sellingPrice - prev.costPrice;
+                      } else if (!sellingPrice || !prev.costPrice) {
+                        newFormData.profit = undefined;
+                      }
+
+                      return newFormData;
+                    });
+                  }}
+                  type="number"
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                  }}
+                  inputProps={{ min: 0, step: 0.01 }}
+                  placeholder="Ex: 25,00"
+                  disabled={loading}
+                  sx={{
+                    flex: 1,
+                    '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                      {
+                        WebkitAppearance: 'none',
+                        margin: 0,
+                      },
+                    '& input[type="number"]': {
+                      MozAppearance: 'textfield',
+                    },
+                  }}
+                />
+
+                <TextField
+                  fullWidth
+                  label="Preço de Custo"
+                  value={formData.costPrice || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const costPrice = value ? parseFloat(value) : undefined;
+
+                    setFormData((prev) => {
+                      const newFormData = {
+                        ...prev,
+                        costPrice,
+                      };
+
+                      // Calcular lucro automaticamente se tiver preço de venda e custo
+                      if (prev.sellingPrice && costPrice) {
+                        newFormData.profit = prev.sellingPrice - costPrice;
+                      } else if (!prev.sellingPrice || !costPrice) {
+                        newFormData.profit = undefined;
+                      }
+
+                      return newFormData;
+                    });
+                  }}
+                  onFocus={() => {
+                    // Auto-preencher com o custo dos ingredientes se não tiver valor e houver ingredientes
+                    if (!formData.costPrice && recipeIngredients.length > 0) {
+                      const totalCost = recipeIngredients.reduce(
+                        (total, ingredient) => total + ingredient.totalCost,
+                        0,
+                      );
                       setFormData((prev) => ({
                         ...prev,
-                        sellingPrice: value ? parseFloat(value) : undefined,
+                        costPrice: totalCost,
+                        profit: prev.sellingPrice ? prev.sellingPrice - totalCost : undefined,
                       }));
-                    }}
-                    type="number"
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-                    }}
-                    inputProps={{ min: 0, step: 0.01 }}
-                    placeholder="Ex: 25,00"
-                    disabled={loading}
-                  />
-                </Grid>
+                    }
+                  }}
+                  type="number"
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                  }}
+                  inputProps={{ min: 0, step: 0.01 }}
+                  placeholder="Ex: 15,00"
+                  disabled={loading}
+                  helperText={
+                    recipeIngredients.length > 0 && !formData.costPrice
+                      ? `Clique para preencher automaticamente com R$ ${recipeIngredients.reduce((total, ingredient) => total + ingredient.totalCost, 0).toFixed(2)}`
+                      : undefined
+                  }
+                  sx={{
+                    flex: 1,
+                    '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                      {
+                        WebkitAppearance: 'none',
+                        margin: 0,
+                      },
+                    '& input[type="number"]': {
+                      MozAppearance: 'textfield',
+                    },
+                  }}
+                />
 
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <TextField
-                    fullWidth
-                    label="Preço de Custo"
-                    value={formData.costPrice || ''}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setFormData((prev) => ({
-                        ...prev,
-                        costPrice: value ? parseFloat(value) : undefined,
-                      }));
-                    }}
-                    type="number"
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-                    }}
-                    inputProps={{ min: 0, step: 0.01 }}
-                    placeholder="Ex: 15,00"
-                    disabled={loading}
-                  />
-                </Grid>
+                <TextField
+                  fullWidth
+                  label="Lucro"
+                  value={formData.profit !== undefined ? formData.profit.toFixed(2) : ''}
+                  type="number"
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                    readOnly: true,
+                  }}
+                  placeholder="Calculado automaticamente"
+                  disabled={loading}
+                  sx={{
+                    flex: 1,
+                    '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                      {
+                        WebkitAppearance: 'none',
+                        margin: 0,
+                      },
+                    '& input[type="number"]': {
+                      MozAppearance: 'textfield',
+                    },
+                    '& .MuiInputBase-input': {
+                      backgroundColor: (theme) =>
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255, 255, 255, 0.05)'
+                          : 'rgba(0, 0, 0, 0.03)',
+                      cursor: 'not-allowed',
+                    },
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255, 255, 255, 0.2)'
+                            : 'rgba(0, 0, 0, 0.2)',
+                      },
+                    },
+                  }}
+                />
+              </Box>
 
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <TextField
-                    fullWidth
-                    label="Lucro"
-                    value={formData.profit || ''}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setFormData((prev) => ({
-                        ...prev,
-                        profit: value ? parseFloat(value) : undefined,
-                      }));
-                    }}
-                    type="number"
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-                    }}
-                    inputProps={{ min: 0, step: 0.01 }}
-                    placeholder="Ex: 10,00"
-                    disabled={loading}
-                  />
-                </Grid>
-              </Grid>
-
-              {(formData.sellingPrice || formData.costPrice) && (
-                <Box sx={{ mt: 2, p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
-                  <Typography variant="caption" color="primary.dark">
-                    💡 Dica: O lucro será calculado automaticamente se você informar preço de venda
-                    e custo
+              {recipeIngredients.length > 0 && !formData.costPrice && (
+                <Box sx={{ mt: 1, p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
+                  <Typography variant="caption" color="info.dark">
+                    💰 Sugestão: Baseado nos ingredientes configurados, o custo estimado é R${' '}
+                    {recipeIngredients
+                      .reduce((total, ingredient) => total + ingredient.totalCost, 0)
+                      .toFixed(2)}
                   </Typography>
                 </Box>
               )}
             </Box>
-          </Grid>
-          {/* Ingredientes da Receita */}
-          {recipe && (
-            <Grid size={{ xs: 12 }}>
-              <Box sx={{ mt: 2 }}>
-                <RecipeIngredientsCard
-                  recipeId={recipe._id}
-                  initialIngredients={recipeIngredients}
-                  onIngredientsUpdate={handleIngredientsUpdate}
-                />
-              </Box>
-            </Grid>
-          )}
-          {/* Passos da Receita */}
-          {recipe && (
-            <Grid size={{ xs: 12 }}>
-              <Box sx={{ mt: 2 }}>
-                <RecipeStepsCard
-                  recipeId={recipe._id}
-                  initialSteps={recipeSteps}
-                  onStepsUpdate={handleStepsUpdate}
-                />
-              </Box>
-            </Grid>
-          )}
-        </Grid>
+          </Stack>
+        </Box>
       </DialogContent>
 
-      <Divider />
-
-      <DialogActions sx={{ p: 3, gap: 1 }}>
-        <Button onClick={handleClose} disabled={loading} startIcon={<Cancel />} variant="outlined">
+      <DialogActions sx={{ px: 3, py: 2 }}>
+        <Button onClick={handleClose} color="inherit" disabled={loading}>
           Cancelar
         </Button>
         <Button
           onClick={handleSubmit}
-          disabled={loading}
-          startIcon={<Save />}
           variant="contained"
-          color="primary"
+          disabled={loading}
+          startIcon={loading ? <CircularProgress size={20} /> : <Save />}
         >
           {loading ? 'Salvando...' : 'Salvar Alterações'}
         </Button>

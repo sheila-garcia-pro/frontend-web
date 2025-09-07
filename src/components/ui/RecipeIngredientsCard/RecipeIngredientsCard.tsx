@@ -388,12 +388,20 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
                   }}
                   sx={{
                     border: '1px solid',
-                    borderColor: 'divider',
+                    borderColor: (theme) =>
+                      theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'divider',
                     borderRadius: 2,
                     mb: 1,
                     cursor: 'pointer',
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 0.02)'
+                        : 'background.paper',
                     '&:hover': {
-                      bgcolor: 'action.hover',
+                      bgcolor: (theme) =>
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255, 255, 255, 0.08)'
+                          : 'action.hover',
                       borderColor: 'primary.main',
                     },
                     transition: 'all 0.2s ease-in-out',
@@ -543,10 +551,12 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
             sx={{
               textAlign: 'center',
               py: 6,
-              bgcolor: 'background.paper',
+              bgcolor: (theme) =>
+                theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'background.paper',
               borderRadius: 2,
               border: '2px dashed',
-              borderColor: 'divider',
+              borderColor: (theme) =>
+                theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'divider',
             }}
           >
             <Restaurant sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
