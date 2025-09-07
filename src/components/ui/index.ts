@@ -6,6 +6,7 @@ export { default as IngredientEditModal } from './IngredientEditModal';
 export { default as IngredientDetailModal } from './IngredientDetailModal';
 export { default as IngredientAvatarDisplay } from './IngredientAvatarDisplay';
 export { default as CategoryModal } from './CategoryModal';
+export { IngredientsStats } from './IngredientsStats';
 
 // Componentes de Receitas
 export { default as RecipeEditModal } from './RecipeEditModal/RecipeEditModal';

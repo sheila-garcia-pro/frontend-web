@@ -34,6 +34,7 @@ export interface SearchParams {
   itemPerPage: number;
   category?: string;
   search?: string;
+  sort?: string;
   forceRefresh?: boolean;
 }
 

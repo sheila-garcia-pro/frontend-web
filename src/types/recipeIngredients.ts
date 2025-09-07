@@ -1,5 +1,6 @@
 import { Ingredient } from './ingredients';
 import { RecipeIngredientAPI } from './recipes';
+import { convertToGrams } from '../utils/unitConversion';
 
 // Interface para histórico de preços de ingredientes
 export interface IngredientPriceHistory {
@@ -101,10 +102,20 @@ export const convertAPIIngredientsToRecipeIngredients = async (
 
       // Calcular custo total usando o fator de correção do ingrediente
       const correctionFactor = ingredient.correctionFactor || 1.0;
-      const pricePerUnit = ingredientWithPrice.price
-        ? ingredientWithPrice.price.price / ingredientWithPrice.price.quantity
-        : 0;
-      const totalCost = pricePerUnit * quantity * correctionFactor;
+
+      // Calcular preço por unidade considerando a conversão correta de unidades
+      let pricePerUnit = 0;
+      if (ingredientWithPrice.price) {
+        const quantityInGrams = convertToGrams(
+          ingredientWithPrice.price.quantity,
+          ingredientWithPrice.price.unitMeasure,
+        );
+        pricePerUnit = ingredientWithPrice.price.price / quantityInGrams;
+      }
+
+      // Converter a quantidade usada na receita para gramas para cálculo correto
+      const quantityInGrams = convertToGrams(quantity, apiIngredient.unitAmountUseIngredient);
+      const totalCost = pricePerUnit * quantityInGrams * correctionFactor;
 
       // Calcular custo por porção
       const pricePerPortion = ingredientWithPrice.price?.pricePerPortion || 0;
@@ -114,7 +125,7 @@ export const convertAPIIngredientsToRecipeIngredients = async (
         ingredient: ingredientWithPrice,
         quantity,
         unitMeasure: apiIngredient.unitAmountUseIngredient,
-        totalWeight: quantity * correctionFactor,
+        totalWeight: quantityInGrams * correctionFactor, // Peso já em gramas
         totalCost,
         costPerPortion,
         correctionFactor, // Manter para compatibilidade

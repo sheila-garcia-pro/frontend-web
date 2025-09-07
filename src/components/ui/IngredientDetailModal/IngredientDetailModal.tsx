@@ -41,6 +41,7 @@ import { getNutritionalTable } from '../../../services/api/nutritionalTable';
 import { NutritionalTable } from '../../../types/nutritionalTable';
 import { getCachedUnitMeasures } from '../../../services/api/unitMeasure';
 import { UnitMeasure } from '../../../types/unitMeasure';
+import { calculatePricePerPortion } from '../../../utils/unitConversion';
 
 interface IngredientDetailModalProps {
   open: boolean;
@@ -211,14 +212,13 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
   };
 
   // Calcular preço por porção (100g)
-  const calculatePricePerPortion = () => {
+  const calculatePricePerPortionLocal = () => {
     const price = parseFloat(purchasePrice) || 0;
     const purchaseQty = parseFloat(purchaseQuantity) || 1;
 
     if (price === 0 || purchaseQty === 0) return 0;
 
-    const pricePerGram = price / purchaseQty;
-    return pricePerGram * 100; // 100g como porção padrão
+    return calculatePricePerPortion(price, purchaseQty, purchaseUnit);
   };
 
   // Manipular confirmação
@@ -249,7 +249,7 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
       purchasePrice: price,
       purchaseQuantity: purchaseQty,
       purchaseUnit,
-      pricePerPortion: calculatePricePerPortion(),
+      pricePerPortion: calculatePricePerPortionLocal(),
     });
 
     onClose();
@@ -527,7 +527,7 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
                         Preço por porção (100g):
                       </Typography>
                       <Typography variant="h6" color="error.dark" sx={{ fontWeight: 700 }}>
-                        R$ {calculatePricePerPortion().toFixed(2)}
+                        R$ {calculatePricePerPortionLocal().toFixed(2)}
                       </Typography>
                     </Grid>
                   </Grid>
@@ -813,7 +813,7 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
                       }}
                     >
                       <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
-                        📊 Distribuição de Macronutrientes
+                        📊 Distribuição de Macronutrientes teste 2
                       </Typography>
 
                       {(() => {
@@ -886,7 +886,7 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
                                 fontSize: '0.9rem',
                               }}
                             >
-                              📊 Distribuição de Macronutrientes
+                              📊 Distribuição de Macronutrientes 3
                             </Typography>
 
                             {/* Barra de progresso principal */}
