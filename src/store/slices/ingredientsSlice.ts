@@ -17,6 +17,7 @@ export interface IngredientsState {
   filter: {
     category: string | null;
     search: string;
+    sort: string;
   };
   selectedIngredient: Ingredient | null;
 }
@@ -32,6 +33,7 @@ const initialState: IngredientsState = {
   filter: {
     category: null,
     search: '',
+    sort: 'name_asc',
   },
   selectedIngredient: null,
 };
@@ -49,10 +51,12 @@ const ingredientsSlice = createSlice({
     fetchIngredientsSuccess: (state, action: PayloadAction<IngredientsResponse>) => {
       state.loading = false;
       state.error = null;
+
+      // Substitui completamente a lista com os dados da API
       state.items = action.payload.data;
       state.total = action.payload.total;
-      state.page = action.payload.page;
-      state.itemPerPage = action.payload.itemPerPage;
+      state.page = action.payload.page || 1; // Normaliza valores undefined
+      state.itemPerPage = action.payload.itemPerPage || 1000;
     },
     fetchIngredientsFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
@@ -67,9 +71,10 @@ const ingredientsSlice = createSlice({
     },
     createIngredientSuccess: (state, action: PayloadAction<Ingredient>) => {
       state.loading = false;
-      // Adiciona o novo ingrediente no início da lista, preservando a ordem existente
-      state.items = [action.payload, ...state.items];
       state.error = null;
+
+      // ✅ NÃO adiciona o item à lista - a lista já foi recarregada via fetchIngredientsSuccess
+      // Apenas confirma que a operação foi bem sucedida
     },
     createIngredientFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
@@ -79,6 +84,9 @@ const ingredientsSlice = createSlice({
     // Atualizar filtros
     setCategoryFilter: (state, action: PayloadAction<string | null>) => {
       state.filter.category = action.payload;
+    },
+    setSortFilter: (state, action: PayloadAction<string>) => {
+      state.filter.sort = action.payload;
     },
 
     // Atualizar ingrediente
@@ -134,6 +142,8 @@ const ingredientsSlice = createSlice({
       state.error = null;
       // Remove o ingrediente da lista
       state.items = state.items.filter((item) => item._id !== action.payload);
+      // Atualiza o total para refletir a remoção
+      state.total = Math.max(0, state.total - 1);
       // Limpa o ingrediente selecionado se for o mesmo
       if (state.selectedIngredient?._id === action.payload) {
         state.selectedIngredient = null;
@@ -191,6 +201,7 @@ export const {
   deleteIngredientSuccess,
   deleteIngredientFailure,
   setCategoryFilter,
+  setSortFilter,
   updatePriceMeasureRequest,
   updatePriceMeasureSuccess,
   updatePriceMeasureFailure,

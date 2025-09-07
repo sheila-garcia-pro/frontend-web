@@ -26,6 +26,7 @@ import { RootState } from '../../../store';
 import { CreateIngredientParams } from '../../../types/ingredients';
 import { useTranslation } from 'react-i18next';
 import ImageUploadComponent from '../ImageUploadImproved';
+import { calculatePricePerPortion } from '../../../utils/unitConversion';
 
 interface IngredientModalProps {
   open: boolean;
@@ -39,6 +40,8 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
     (state: RootState) => state.categories,
   );
   const { loading: ingredientLoading } = useSelector((state: RootState) => state.ingredients);
+
+  // Estados locais
   const [formData, setFormData] = useState<CreateIngredientParams>({
     name: '',
     category: '',
@@ -47,11 +50,14 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
     price: {
       price: '',
       quantity: '',
-      unitMeasure: 'Quilograma',
+      unitMeasure: 'Quilogramas', // Corrigido para bater com as opções disponíveis
     },
   });
+
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false); // Novo estado para controlar o loading de 3 segundos
+  const [processingMessage, setProcessingMessage] = useState(''); // Mensagem durante o processamento
   const [unitMeasures, setUnitMeasures] = useState<UnitMeasure[]>([]);
   const [loadingUnitMeasures, setLoadingUnitMeasures] = useState(false);
 
@@ -84,7 +90,7 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
         price: {
           price: '',
           quantity: '',
-          unitMeasure: 'Quilograma',
+          unitMeasure: 'Quilogramas',
         },
       });
       setErrors({});
@@ -93,7 +99,7 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
   }, [open]);
 
   useEffect(() => {
-    if (isSubmitted && !ingredientLoading) {
+    if (isSubmitted && !ingredientLoading && !isProcessing) {
       setFormData({
         name: '',
         category: '',
@@ -102,13 +108,29 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
         price: {
           price: '',
           quantity: '',
-          unitMeasure: 'Quilograma',
+          unitMeasure: 'Quilogramas',
         },
       });
       setIsSubmitted(false);
+      setErrors({});
       onClose();
     }
-  }, [ingredientLoading, isSubmitted, onClose]);
+  }, [ingredientLoading, isSubmitted, onClose, isProcessing]);
+
+  // Efeito para controlar o estado de processamento após criar ingrediente
+  useEffect(() => {
+    if (isSubmitted && ingredientLoading) {
+      setIsProcessing(true);
+      setProcessingMessage('Salvando ingrediente...');
+    }
+
+    // Quando terminar de carregar (sucesso ou erro)
+    if (isSubmitted && !ingredientLoading && isProcessing) {
+      // Fecha imediatamente pois o delay de 3s já é aplicado na saga
+      setIsProcessing(false);
+      setProcessingMessage('');
+    }
+  }, [ingredientLoading, isSubmitted, isProcessing]);
 
   useEffect(() => {
     if (open) {
@@ -133,7 +155,7 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
           price: {
             price: prev.price?.price || '',
             quantity: prev.price?.quantity || '',
-            unitMeasure: prev.price?.unitMeasure || 'Quilograma',
+            unitMeasure: prev.price?.unitMeasure || 'Quilogramas',
             [priceField]: value,
           },
         }));
@@ -228,6 +250,34 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
     >
       <DialogTitle>{t('ingredients.newIngredient')}</DialogTitle>
       <DialogContent dividers>
+        {/* Overlay de processamento */}
+        {isProcessing && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+              borderRadius: 2,
+            }}
+          >
+            <CircularProgress size={48} sx={{ mb: 2 }} />
+            <Typography variant="h6" sx={{ mb: 1, textAlign: 'center' }}>
+              Processando criação...
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+              Salvando ingrediente e atualizando lista (3 segundos)
+            </Typography>
+          </Box>
+        )}
+
         <Box sx={{ py: 2 }}>
           <Stack spacing={2}>
             <TextField
@@ -368,10 +418,10 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
                 </Typography>
                 <Typography variant="h6" color="secondary.main" sx={{ fontWeight: 600 }}>
                   R${' '}
-                  {(
-                    (parseFloat(formData.price.price.toString()) /
-                      parseFloat(formData.price.quantity.toString())) *
-                    100
+                  {calculatePricePerPortion(
+                    parseFloat(formData.price.price.toString()),
+                    parseFloat(formData.price.quantity.toString()),
+                    formData.price.unitMeasure,
                   ).toFixed(2)}
                 </Typography>
               </Box>
@@ -393,11 +443,24 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
         </Box>
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} color="inherit">
+        <Button onClick={onClose} color="inherit" disabled={ingredientLoading || isProcessing}>
           {t('ingredients.actions.cancel')}
         </Button>
-        <Button onClick={handleSubmit} variant="contained" disabled={ingredientLoading}>
-          {t('ingredients.actions.save')}
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          disabled={ingredientLoading || isProcessing}
+          startIcon={
+            ingredientLoading || isProcessing ? (
+              <CircularProgress size={20} sx={{ color: 'inherit' }} />
+            ) : null
+          }
+        >
+          {isProcessing
+            ? processingMessage || 'Processando...'
+            : ingredientLoading
+              ? 'Salvando...'
+              : t('ingredients.actions.save')}
         </Button>
       </DialogActions>
     </Dialog>

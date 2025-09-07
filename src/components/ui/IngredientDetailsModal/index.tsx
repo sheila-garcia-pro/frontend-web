@@ -45,13 +45,14 @@ import {
   UserNutritionalTable,
   CreateUserNutritionalTableRequest,
 } from '../../../types/nutritionalTable';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import * as ingredientsService from '../../../services/api/ingredients';
 import { addNotification } from '../../../store/slices/uiSlice';
 import {
   fetchIngredientsRequest,
   deleteIngredientRequest,
 } from '../../../store/slices/ingredientsSlice';
+import { RootState } from '../../../store';
 import IngredientEditModal from '../IngredientEditModal';
 import UserNutritionalTableModal from '../UserNutritionalTableModal';
 import UserNutritionalTablesManager from '../UserNutritionalTablesManager';
@@ -74,7 +75,12 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const theme = useTheme();
+
+  // Redux state para controlar loading de operações
+  const { loading: ingredientLoading } = useSelector((state: RootState) => state.ingredients);
+
   const [loading, setLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false); // Estado para controlar delete com 3s
   const [ingredient, setIngredient] = useState<Ingredient | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [nutritionalTables, setNutritionalTables] = useState<NutritionalTable[]>([]);
@@ -355,10 +361,25 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
 
   const handleDelete = () => {
     if (ingredient) {
+      setIsDeleting(true);
       dispatch(deleteIngredientRequest(ingredient._id));
-      onClose();
+      // Não fechamos o modal imediatamente - aguardamos o processamento
     }
   };
+
+  // useEffect para monitorar o delete e fechar modal após processamento
+  useEffect(() => {
+    if (isDeleting && ingredientLoading) {
+      // Delete foi iniciado - permanece no estado de loading
+      return;
+    }
+
+    if (isDeleting && !ingredientLoading) {
+      // Delete terminou - fecha o modal imediatamente pois o delay já foi aplicado na saga
+      setIsDeleting(false);
+      onClose(); // Fecha o modal após o processamento completo
+    }
+  }, [isDeleting, ingredientLoading, onClose]);
   const handleUpdatePriceMeasure = async (
     field: 'price' | 'quantity' | 'unitMeasure',
     value: string,
@@ -452,6 +473,34 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
       <DialogTitle sx={{ pr: 6 }}>{t('ingredients.details')}</DialogTitle>
 
       <DialogContent>
+        {/* Overlay para delete em processamento */}
+        {isDeleting && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+              borderRadius: 2,
+            }}
+          >
+            <CircularProgress size={48} sx={{ mb: 2 }} />
+            <Typography variant="h6" sx={{ mb: 1, textAlign: 'center' }}>
+              Processando exclusão...
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+              Excluindo ingrediente e atualizando lista (3 segundos)
+            </Typography>
+          </Box>
+        )}
+
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
             <CircularProgress />
@@ -876,6 +925,7 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                             {(() => {
                               const themeColors = getThemeAwareColors(theme);
                               const validItems = [
+                                // Macronutrientes principais
                                 {
                                   label: t('ingredients.nutrition.fields.energy'),
                                   value: selectedTable.energyKcal,
@@ -891,20 +941,6 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                                   maxValue: 100,
                                 },
                                 {
-                                  label: t('ingredients.nutrition.fields.totalSugar'),
-                                  value: selectedTable.totalSugarG,
-                                  unit: t('ingredients.nutrition.units.g'),
-                                  color: themeColors.totalSugar,
-                                  maxValue: 50,
-                                },
-                                {
-                                  label: t('ingredients.nutrition.fields.addSugar'),
-                                  value: selectedTable.addSugarG,
-                                  unit: t('ingredients.nutrition.units.g'),
-                                  color: themeColors.addSugar,
-                                  maxValue: 25,
-                                },
-                                {
                                   label: t('ingredients.nutrition.fields.protein'),
                                   value: selectedTable.proteinG,
                                   unit: t('ingredients.nutrition.units.g'),
@@ -917,6 +953,90 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
                                   unit: t('ingredients.nutrition.units.g'),
                                   color: themeColors.fats,
                                   maxValue: 50,
+                                },
+                                {
+                                  label: 'Fibra Alimentar',
+                                  value: selectedTable.dietaryFiberG,
+                                  unit: 'g',
+                                  color: '#8BC34A', // Verde
+                                  maxValue: 30,
+                                },
+                                {
+                                  label: t('ingredients.nutrition.fields.totalSugar'),
+                                  value: selectedTable.totalSugarG,
+                                  unit: t('ingredients.nutrition.units.g'),
+                                  color: themeColors.totalSugar,
+                                  maxValue: 50,
+                                },
+                                {
+                                  label: 'Gorduras Saturadas',
+                                  value: selectedTable.saturatedFatsG,
+                                  unit: 'g',
+                                  color: '#FF5722', // Vermelho
+                                  maxValue: 20,
+                                },
+                                {
+                                  label: 'Sódio',
+                                  value: selectedTable.sodiumMG,
+                                  unit: 'mg',
+                                  color: '#FF9800', // Laranja
+                                  maxValue: 2000,
+                                },
+                                {
+                                  label: 'Colesterol',
+                                  value: selectedTable.cholesterolMG,
+                                  unit: 'mg',
+                                  color: '#9C27B0', // Roxo
+                                  maxValue: 300,
+                                },
+                                {
+                                  label: 'Cálcio',
+                                  value: selectedTable.calciumMG,
+                                  unit: 'mg',
+                                  color: '#00BCD4', // Ciano
+                                  maxValue: 1200,
+                                },
+                                {
+                                  label: 'Ferro',
+                                  value: selectedTable.ironMG,
+                                  unit: 'mg',
+                                  color: '#795548', // Marrom
+                                  maxValue: 18,
+                                },
+                                {
+                                  label: 'Potássio',
+                                  value: selectedTable.potassiumMG,
+                                  unit: 'mg',
+                                  color: '#607D8B', // Blue Grey
+                                  maxValue: 3500,
+                                },
+                                {
+                                  label: 'Magnésio',
+                                  value: selectedTable.magnesiumMG,
+                                  unit: 'mg',
+                                  color: '#4CAF50', // Verde
+                                  maxValue: 400,
+                                },
+                                {
+                                  label: 'Fósforo',
+                                  value: selectedTable.phosphorusMG,
+                                  unit: 'mg',
+                                  color: '#FFC107', // Âmbar
+                                  maxValue: 700,
+                                },
+                                {
+                                  label: 'Zinco',
+                                  value: selectedTable.zincMG,
+                                  unit: 'mg',
+                                  color: '#3F51B5', // Indigo
+                                  maxValue: 11,
+                                },
+                                {
+                                  label: 'Vitamina C',
+                                  value: selectedTable.vitaminCMCG,
+                                  unit: 'mcg',
+                                  color: '#E91E63', // Pink
+                                  maxValue: 90000, // 90mg convertido para mcg
                                 },
                               ].filter((item) => isValidNutritionalValue(item.value));
 
@@ -1242,8 +1362,19 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
             <Button onClick={handleEditClick} color="primary" startIcon={<Edit />}>
               {t('ingredients.actions.edit')}
             </Button>
-            <Button onClick={handleDelete} color="error" startIcon={<Delete />}>
-              {t('ingredients.actions.delete')}
+            <Button
+              onClick={handleDelete}
+              color="error"
+              startIcon={
+                ingredientLoading || isDeleting ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  <Delete />
+                )
+              }
+              disabled={ingredientLoading || isDeleting}
+            >
+              {ingredientLoading || isDeleting ? 'Processando...' : t('ingredients.actions.delete')}
             </Button>
           </>
         )}

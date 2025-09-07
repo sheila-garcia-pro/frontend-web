@@ -28,6 +28,7 @@ import { getCachedIngredients, updateIngredient } from '../../../services/api/in
 import { getCachedUnitMeasures } from '../../../services/api/unitMeasure';
 import { UnitMeasure } from '../../../types/unitMeasure';
 import { Ingredient } from '../../../types/ingredients';
+import { convertToGrams } from '../../../utils/unitConversion';
 import { RecipeIngredient, IngredientSearchResult } from '../../../types/recipeIngredients';
 import IngredientDetailModal from '../IngredientDetailModal/IngredientDetailModal';
 import IngredientAvatarDisplay from '../IngredientAvatarDisplay';
@@ -128,17 +129,24 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
   }, [selectedIngredients]);
 
   // Função para calcular o custo total de um ingrediente
-  const calculateIngredientCost = (ingredient: Ingredient, quantity: number): number => {
+  const calculateIngredientCost = (
+    ingredient: Ingredient,
+    quantity: number,
+    unitMeasure: string,
+  ): number => {
     if (!ingredient.price) return 0;
 
-    // Converter quantidade para a unidade base do preço
-    const baseQuantity = ingredient.price.quantity;
-    const basePrice = ingredient.price.price;
+    // Converter quantidades para gramas para cálculo correto
+    const baseQuantityInGrams = convertToGrams(
+      ingredient.price.quantity,
+      ingredient.price.unitMeasure,
+    );
+    const quantityInGrams = convertToGrams(quantity, unitMeasure);
 
-    // Calcular preço por unidade base
-    const pricePerUnit = basePrice / baseQuantity;
+    // Calcular preço por grama
+    const pricePerGram = ingredient.price.price / baseQuantityInGrams;
 
-    return pricePerUnit * quantity;
+    return pricePerGram * quantityInGrams;
   };
 
   // Abrir modal para adicionar ingrediente
@@ -172,11 +180,15 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
     if (!selectedIngredient) return;
 
     // Calcular custo total com fator de correção
-    const pricePerUnit = data.purchasePrice / data.purchaseQuantity;
-    const totalCost = pricePerUnit * data.quantity * data.correctionFactor;
+    // Calcular custo total usando conversão correta de unidades
+    const purchaseQuantityInGrams = convertToGrams(data.purchaseQuantity, data.purchaseUnit);
+    const quantityUsedInGrams = convertToGrams(data.quantity, data.unitMeasure);
+
+    const pricePerGram = data.purchasePrice / purchaseQuantityInGrams;
+    const totalCost = pricePerGram * quantityUsedInGrams * data.correctionFactor;
 
     // Calcular custo por porção para este ingrediente na receita
-    const costPerPortion = (data.pricePerPortion * data.quantity) / 100; // ajustado para a quantidade usada
+    const costPerPortion = (data.pricePerPortion * quantityUsedInGrams) / 100; // ajustado para a quantidade usada
 
     // Atualizar o ingrediente com novos dados de preço, fator de correção e preço por porção
     const updatedIngredient = {
@@ -261,7 +273,7 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
     if (isNaN(quantityNum) || quantityNum <= 0) return;
 
     const ingredient = selectedIngredients[index];
-    const totalCost = calculateIngredientCost(ingredient.ingredient, quantityNum);
+    const totalCost = calculateIngredientCost(ingredient.ingredient, quantityNum, editUnit);
 
     const updatedIngredients = [...selectedIngredients];
     updatedIngredients[index] = {

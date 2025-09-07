@@ -23,23 +23,61 @@ import * as ingredientsService from '../../services/api/ingredients';
 import { clearCache } from '../../services/api';
 import { SearchParams, CreateIngredientParams } from '../../types/ingredients';
 
-// Função auxiliar para recarregar a lista de ingredientes
-function* reloadIngredientsList(showLoading = true): SagaIterator {
+// Função auxiliar para recarregar a lista de ingredientes com a URL específica
+function* forceReloadIngredientsFromAPI(): SagaIterator {
+  try {
+    // Limpa TODO o cache para evitar inconsistências
+    yield call(clearCache); // Limpa todo o cache, não apenas um endpoint
+
+    // Faz a chamada específica para a API conforme solicitado
+    const searchParams: SearchParams = {
+      page: 1,
+      itemPerPage: 1000,
+      forceRefresh: true, // Força refresh para evitar qualquer cache restante
+    };
+
+    // Chama diretamente a API para garantir dados atualizados
+    const response = yield call(ingredientsService.getCachedIngredients, searchParams);
+
+    // Força a estrutura correta da resposta para evitar page/itemPerPage undefined
+    const normalizedResponse = {
+      ...response,
+      page: response.page || 1,
+      itemPerPage: response.itemPerPage || 1000,
+    };
+
+    yield put(fetchIngredientsSuccess(normalizedResponse));
+  } catch (error) {
+    yield put(
+      addNotification({
+        message: 'Erro ao atualizar a lista de ingredientes.',
+        type: 'error',
+        duration: 5000,
+      }),
+    );
+  }
+}
+
+// Função auxiliar para recarregar a lista de ingredientes (versão anterior mantida para compatibilidade)
+function* reloadIngredientsList(showLoading = true, forceFullReload = true): SagaIterator {
   try {
     if (showLoading) {
       yield put(setGlobalLoading(true));
     }
 
-    const currentState = yield select((state) => state.ingredients);
-    const searchParams: SearchParams = {
-      page: currentState.page || 1,
-      itemPerPage: currentState.itemPerPage || 10,
-      category: currentState.filter.category || undefined,
-      search: currentState.filter.search || undefined,
-    };
-
     // Limpa o cache antes de fazer a nova requisição
     yield call(clearCache, '/v1/users/me/ingredient');
+
+    // Para garantir que todos os ingredientes sejam carregados após operações CRUD,
+    // utilizamos um itemPerPage alto para simular o comportamento da página
+    const searchParams: SearchParams = {
+      page: 1,
+      itemPerPage: forceFullReload ? 1000 : 10, // Carrega muitos ingredientes para permitir filtros frontend
+      search: undefined, // Remove filtros para recarregar tudo
+      category: undefined,
+      sort: 'name_asc',
+    };
+
     const response = yield call(ingredientsService.getCachedIngredients, searchParams);
     yield put(fetchIngredientsSuccess(response));
   } catch (error) {
@@ -63,8 +101,6 @@ export function* fetchIngredientsSaga(
   action: PayloadAction<SearchParams & { forceRefresh?: boolean }>,
 ): SagaIterator {
   try {
-    console.log('🥕 [INGREDIENTS SAGA] Iniciando busca de ingredientes:', action.payload);
-
     yield put(setGlobalLoading(true));
 
     if (action.payload.forceRefresh) {
@@ -76,12 +112,10 @@ export function* fetchIngredientsSaga(
       }
     }
 
-    console.log('🥕 [INGREDIENTS SAGA] Fazendo requisição à API...');
     const response = yield call(ingredientsService.getCachedIngredients, {
       ...action.payload,
       category: action.payload.category || undefined,
     });
-    console.log('🥕 [INGREDIENTS SAGA] Resposta recebida:', !!response);
 
     yield put(fetchIngredientsSuccess(response));
 
@@ -94,9 +128,7 @@ export function* fetchIngredientsSaga(
         }),
       );
     }
-    console.log('🥕 [INGREDIENTS SAGA] Concluído com sucesso');
   } catch (error) {
-    console.error('🥕 [INGREDIENTS SAGA] ERRO:', error);
     yield put(
       fetchIngredientsFailure(
         error instanceof Error ? error.message : 'Erro ao carregar ingredientes',
@@ -124,10 +156,8 @@ export function* createIngredientSaga(action: PayloadAction<CreateIngredientPara
     const response = yield call(ingredientsService.createIngredient, action.payload);
 
     if (response) {
-      yield put(createIngredientSuccess(response));
-
-      // Recarrega a lista de ingredientes
-      yield call(reloadIngredientsList);
+      // ❌ NÃO adiciona o item individualmente - evita duplicação
+      // yield put(createIngredientSuccess(response));
 
       yield put(
         addNotification({
@@ -136,6 +166,15 @@ export function* createIngredientSaga(action: PayloadAction<CreateIngredientPara
           duration: 4000,
         }),
       );
+
+      // Aguarda 3 segundos antes de recarregar a lista (conforme solicitado)
+      yield delay(3000);
+
+      // Força o carregamento COMPLETO da lista atualizada da API
+      yield call(forceReloadIngredientsFromAPI);
+
+      // Dispara o success APÓS recarregar para evitar duplicação
+      yield put(createIngredientSuccess(response));
     }
   } catch (error) {
     yield put(
@@ -166,7 +205,7 @@ export function* updateIngredientSaga(
       action.payload.id,
       action.payload.params,
     );
-    yield put(updateIngredientSuccess(response)); // Mostra notificação de sucesso imediatamente
+    yield put(updateIngredientSuccess(response));
     yield put(
       addNotification({
         message: 'Ingrediente atualizado com sucesso!',
@@ -178,8 +217,8 @@ export function* updateIngredientSaga(
     // Aguarda 1 segundo antes de recarregar a lista (tempo suficiente para o servidor processar)
     yield delay(1000);
 
-    // Recarrega a lista de ingredientes sem mostrar loading global
-    yield call(reloadIngredientsList, false);
+    // Força o carregamento da lista atualizada da API
+    yield call(forceReloadIngredientsFromAPI);
   } catch (error) {
     console.error('updateIngredientSaga - erro:', error);
     yield put(
@@ -204,6 +243,8 @@ export function* updateIngredientSaga(
 export function* deleteIngredientSaga(action: PayloadAction<string>): SagaIterator {
   try {
     yield put(setGlobalLoading(true));
+
+    // Executa o delete na API
     yield call(ingredientsService.deleteIngredient, action.payload);
     yield put(deleteIngredientSuccess(action.payload));
 
@@ -216,13 +257,12 @@ export function* deleteIngredientSaga(action: PayloadAction<string>): SagaIterat
       }),
     );
 
-    // Aguarda 1 segundo antes de recarregar a lista
-    yield delay(1000);
+    // Aguarda 3 segundos antes de recarregar a lista (conforme solicitado)
+    yield delay(3000);
 
-    // Recarrega a lista de ingredientes sem mostrar loading global
-    yield call(reloadIngredientsList, false);
+    // Força o carregamento da lista atualizada da API
+    yield call(forceReloadIngredientsFromAPI);
   } catch (error) {
-    console.error('deleteIngredientSaga - erro:', error);
     yield put(
       deleteIngredientFailure(
         error instanceof Error ? error.message : 'Erro ao deletar ingrediente',
@@ -270,8 +310,8 @@ export function* updatePriceMeasureSaga(
     // Aguarda 1 segundo antes de recarregar a lista
     yield delay(1000);
 
-    // Recarrega a lista de ingredientes sem mostrar loading global
-    yield call(reloadIngredientsList, false);
+    // Força o carregamento da lista atualizada da API
+    yield call(forceReloadIngredientsFromAPI);
   } catch (error) {
     console.error('updatePriceMeasureSaga - erro:', error);
     yield put(

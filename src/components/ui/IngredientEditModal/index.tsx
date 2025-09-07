@@ -28,6 +28,7 @@ import { getUnitMeasures } from '../../../services/api/unitMeasure';
 
 import { useTranslation } from 'react-i18next';
 import ImageUploadComponent from '../ImageUploadImproved';
+import { calculatePricePerPortion } from '../../../utils/unitConversion';
 
 interface IngredientEditModalProps {
   open: boolean;
@@ -355,10 +356,10 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
                 </Typography>
                 <Typography variant="h6" color="secondary.main" sx={{ fontWeight: 600 }}>
                   R${' '}
-                  {(
-                    (parseFloat(formData.price.price.toString()) /
-                      parseFloat(formData.price.quantity.toString())) *
-                    100
+                  {calculatePricePerPortion(
+                    parseFloat(formData.price.price.toString()),
+                    parseFloat(formData.price.quantity.toString()),
+                    formData.price.unitMeasure,
                   ).toFixed(2)}
                 </Typography>
               </Box>

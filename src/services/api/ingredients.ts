@@ -6,6 +6,7 @@ import {
   SearchParams,
 } from '../../types/ingredients';
 import { IngredientPriceHistory } from '../../types/recipeIngredients';
+import { calculatePricePerPortion as calculatePricePerPortionUtil } from '../../utils/unitConversion';
 
 type QueryParams = {
   [key: string]: number | string | undefined;
@@ -23,6 +24,7 @@ const createCacheKey = (params: SearchParams): string => {
     itemPerPage: params.itemPerPage || 12,
     category: params.category || '',
     search: params.search || '',
+    sort: params.sort || 'name_asc',
   };
 
   // Cria uma chave ordenada para evitar diferenças por ordem dos parâmetros
@@ -54,31 +56,32 @@ export const getCachedIngredients = async (params: SearchParams): Promise<Ingred
   const cacheKey = createCacheKey(params);
 
   try {
-    console.log('🥕 [API] getCachedIngredients iniciado:', { params, cacheKey });
-
     // Remove parâmetros vazios ou nulos para a chamada à API
     const queryParams = Object.entries(params).reduce((acc, [key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
+      if (value !== undefined && value !== null && value !== '' && key !== 'forceRefresh') {
         acc[key] = value;
       }
       return acc;
     }, {} as QueryParams);
 
-    console.log('🥕 [API] Fazendo requisição com queryParams:', queryParams);
+    // Se forceRefresh é true, faz requisição direta sem cache
+    let finalResponse: IngredientsResponse;
 
-    const response = await cachedGet<IngredientsResponse>(
-      '/v1/users/me/ingredient',
-      queryParams,
-      cacheKey,
-    );
+    if (params.forceRefresh) {
+      const directResponse = await api.get<IngredientsResponse>('/v1/users/me/ingredient', {
+        params: queryParams,
+      });
+      finalResponse = directResponse.data;
+    } else {
+      finalResponse = await cachedGet<IngredientsResponse>(
+        '/v1/users/me/ingredient',
+        queryParams,
+        cacheKey,
+      );
+    }
 
-    console.log('🥕 [API] Resposta recebida com sucesso:', {
-      total: response.total,
-      dataLength: response.data.length,
-    });
-    return response;
+    return finalResponse;
   } catch (error) {
-    console.error('🥕 [API] getCachedIngredients - ERRO:', error);
     throw error;
   }
 };
@@ -160,11 +163,10 @@ export const updateIngredientCorrectionFactor = async (
 export const calculatePricePerPortion = (
   price: number,
   quantity: number,
+  unitMeasure?: string,
   portionSize: number = 100, // tamanho padrão da porção em gramas
 ): number => {
-  if (quantity <= 0 || price <= 0) return 0;
-  const pricePerGram = price / quantity;
-  return pricePerGram * portionSize;
+  return calculatePricePerPortionUtil(price, quantity, unitMeasure || '', portionSize);
 };
 
 // Atualizar ingrediente com preço por porção calculado
@@ -183,8 +185,17 @@ export const updateIngredientWithPricePerPortion = async (
       typeof ingredientData.price.quantity === 'string'
         ? parseFloat(ingredientData.price.quantity)
         : ingredientData.price.quantity;
+    const unitMeasure =
+      typeof ingredientData.price.unitMeasure === 'string'
+        ? ingredientData.price.unitMeasure
+        : undefined;
 
-    ingredientData.price.pricePerPortion = calculatePricePerPortion(price, quantity, portionSize);
+    ingredientData.price.pricePerPortion = calculatePricePerPortion(
+      price,
+      quantity,
+      unitMeasure,
+      portionSize,
+    );
   }
 
   return updateIngredient(id, ingredientData);
