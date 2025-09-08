@@ -40,7 +40,6 @@ type ResetPasswordPayload = { token: string; newPassword: string };
 // Saga Login
 function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
   try {
-    console.log('🚀 [LOGIN SAGA] Starting login for:', action.payload.email);
     setLoginInProgress(true);
     yield put(setGlobalLoading(true));
 
@@ -51,7 +50,6 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
     };
 
     // Chama o serviço de API para login
-    console.log('📡 [LOGIN SAGA] Calling login API...');
     const response = yield call(authService.login, credentials); // Verifica se obteve um token válido
     if (!response || !response.token) {
       throw new Error('Não foi possível realizar o login. Por favor, tente novamente.');
@@ -59,12 +57,10 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
     const { token, refreshToken, user, expiresIn } = response;
 
     // Salva o token no localStorage usando tokenManager
-    console.log('💾 [LOGIN SAGA] Saving token:', token.substring(0, 20) + '...');
     tokenManager.setToken(token);
 
     // Verificar se foi salvo corretamente
     const savedToken = tokenManager.getToken();
-    console.log('✅ [LOGIN SAGA] Token saved successfully:', !!savedToken);
 
     // Salva o refresh token se fornecido
     if (refreshToken) {
@@ -87,14 +83,9 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
     }
 
     // Despacha a ação de sucesso
-    console.log(
-      '🎯 [LOGIN SAGA] Dispatching loginSuccess with user:',
-      userData?.name || userData?.email,
-    );
     yield put(loginSuccess({ user: userData, token }));
 
     // Verificar se o estado foi atualizado
-    console.log('✅ [LOGIN SAGA] loginSuccess dispatched');
 
     // Marcar login recente para proteção contra checkAuth imediato
     markRecentLogin();
@@ -107,7 +98,6 @@ function* loginSaga(action: PayloadAction<LoginPayload>): SagaIterator {
       }),
     );
 
-    console.log('🎉 [LOGIN SAGA] Login saga completed successfully');
     setLoginInProgress(false);
   } catch (error) {
     setLoginInProgress(false);
@@ -185,40 +175,27 @@ function* checkAuthSaga(): SagaIterator {
   const isLoginActive = getLoginInProgress();
   const hasRecentLogin = isRecentLogin();
 
-  console.log('🔍 [CHECK AUTH SAGA] Starting checkAuth:', {
-    hasToken: !!token,
-    loginInProgress: isLoginActive,
-    recentLogin: hasRecentLogin,
-  });
-
   // Se login está em progresso ou aconteceu recentemente, não verificar agora
   if (isLoginActive || hasRecentLogin) {
-    console.log('🔍 [CHECK AUTH SAGA] Skipping checkAuth due to recent/active login');
     return;
   }
 
   if (!token) {
-    console.log('🔍 [CHECK AUTH SAGA] No token found, failing');
     yield put(checkAuthFailure());
     return;
   }
 
   try {
-    console.log('🔍 [CHECK AUTH SAGA] Calling getCurrentUser...');
     // Chama o serviço de API para verificar o token obtendo o usuário atual
     const user = yield call(usersService.getCurrentUser);
 
-    console.log('🔍 [CHECK AUTH SAGA] getCurrentUser response:', user);
-
     // Se a chamada foi bem sucedida, o token ainda é válido
     if (user) {
-      console.log('🔍 [CHECK AUTH SAGA] User found, dispatching checkAuthSuccess');
       // Despacha a ação de sucesso
       yield put(checkAuthSuccess({ user, token }));
       return;
     }
 
-    console.log('🔍 [CHECK AUTH SAGA] No user returned, throwing error');
     // Se não obteve usuário, considera falha na autenticação
     throw new Error('Falha ao obter dados do usuário');
   } catch (error) {
@@ -232,7 +209,6 @@ function* checkAuthSaga(): SagaIterator {
       (error.code === 'NETWORK_ERROR' || error.code === 'ECONNABORTED');
 
     if (isNetworkError) {
-      console.log('🔍 [CHECK AUTH SAGA] Network error, not clearing auth data');
       // Para erros de rede, não limpar os dados, apenas falhar silenciosamente
       yield put(checkAuthFailure());
       return;

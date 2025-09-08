@@ -294,9 +294,6 @@ const ProfilePage: React.FC = () => {
 
     try {
       setUploading(true);
-      console.log('📸 [PROFILE] ===== INICIANDO PROCESSO DE ALTERAÇÃO DE IMAGEM =====');
-      console.log('📸 [PROFILE] Arquivo selecionado:', file?.name);
-      console.log('📸 [PROFILE] Imagem atual:', formData.image);
 
       // Usar o novo serviço de upload que cuida da exclusão automática
       const result = await imageUploadService.replaceImage(
@@ -307,15 +304,9 @@ const ProfilePage: React.FC = () => {
           waitForDeletion: false, // Não bloquear UX - delete em background
           onOldImageDeleted: (deleteResult) => {
             // Log silencioso para debugging - sem feedback visual
-            console.log(
-              '🎯 [PROFILE] Imagem anterior processada:',
-              deleteResult.success ? 'sucesso' : 'erro',
-            );
           },
         },
       );
-
-      console.log('📸 [PROFILE] Resultado do replaceImage:', result);
 
       if (result.success) {
         setFormData((prev) => ({ ...prev, image: result.url }));

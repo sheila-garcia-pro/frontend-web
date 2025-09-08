@@ -94,20 +94,13 @@ class ImageUploadService {
   async deleteImage(imageUrl: string): Promise<ImageDeleteResponse> {
     try {
       if (!imageUrl) {
-        console.log('ℹ️ [IMAGE SERVICE] Nenhuma URL fornecida para deletar');
         return { success: true, message: 'Nenhuma imagem para deletar' };
       }
 
-      console.log('🗑️ [IMAGE SERVICE] Iniciando exclusão da imagem:', imageUrl);
-
       // A API espera a URL completa como parâmetro query (confirmado pelos testes)
-      console.log('🔄 [IMAGE SERVICE] Enviando DELETE com URL como parâmetro');
-
       await api.delete('/v1/upload/image', {
         params: { url: imageUrl },
       });
-
-      console.log('🎉 [IMAGE SERVICE] SUCESSO - Imagem deletada do servidor');
 
       return {
         success: true,
@@ -127,9 +120,6 @@ class ImageUploadService {
 
       // Se o erro for 404 (imagem já não existe), considerar como sucesso
       if (error.response?.status === 404) {
-        console.log(
-          'ℹ️ [IMAGE SERVICE] Imagem não encontrada (404) - considerando como já deletada',
-        );
         return {
           success: true,
           message: 'Imagem já foi removida do servidor (404)',
@@ -159,16 +149,8 @@ class ImageUploadService {
   ): Promise<ImageUploadResponse> {
     const { waitForDeletion = false, onOldImageDeleted } = options || {};
 
-    console.log('🚀 [IMAGE SERVICE] ===== INÍCIO DA SUBSTITUIÇÃO DE IMAGEM =====');
-    console.log('🚀 [IMAGE SERVICE] Imagem antiga:', oldImageUrl);
-    console.log('🚀 [IMAGE SERVICE] Novo arquivo:', newFile?.name);
-    console.log('🚀 [IMAGE SERVICE] Tipo:', type);
-    console.log('🚀 [IMAGE SERVICE] Aguardar exclusão:', waitForDeletion);
-    console.log('🚀 [IMAGE SERVICE] Callback definido:', !!onOldImageDeleted);
-
     try {
       // Primeiro, faz upload da nova imagem
-      console.log('🔄 [IMAGE SERVICE] Iniciando upload da nova imagem...');
       const uploadResult = await this.uploadImage(newFile, type);
 
       if (!uploadResult.success) {
@@ -176,11 +158,8 @@ class ImageUploadService {
         return uploadResult;
       }
 
-      console.log('✅ [IMAGE SERVICE] Nova imagem uploaded com sucesso:', uploadResult.url);
-
       // Se não há imagem antiga, retorna apenas o resultado do upload
       if (!oldImageUrl) {
-        console.log('ℹ️ [IMAGE SERVICE] Nenhuma imagem antiga para deletar');
         return {
           ...uploadResult,
           oldImageDeleted: true,
@@ -190,20 +169,12 @@ class ImageUploadService {
 
       // Se deve aguardar a exclusão
       if (waitForDeletion) {
-        console.log('🗑️ [IMAGE SERVICE] Aguardando exclusão da imagem antiga...');
         const deleteResult = await this.deleteImage(oldImageUrl);
 
         // Chama callback se fornecido
         if (onOldImageDeleted) {
           onOldImageDeleted(deleteResult);
         }
-
-        console.log(
-          deleteResult.success
-            ? '✅ [IMAGE SERVICE] Imagem antiga deletada com sucesso'
-            : '⚠️ [IMAGE SERVICE] Falha ao deletar imagem antiga (não crítico)',
-          deleteResult.message,
-        );
 
         return {
           ...uploadResult,
@@ -212,17 +183,9 @@ class ImageUploadService {
         };
       } else {
         // Deletar a imagem antiga em background (não bloqueia o fluxo)
-        console.log('🗑️ [IMAGE SERVICE] Iniciando exclusão da imagem antiga em background...');
 
         this.deleteImage(oldImageUrl)
           .then((deleteResult) => {
-            console.log(
-              deleteResult.success
-                ? '✅ [IMAGE SERVICE] Imagem antiga deletada em background'
-                : '⚠️ [IMAGE SERVICE] Falha ao deletar imagem antiga em background (não crítico)',
-              deleteResult.message,
-            );
-
             // Chama callback se fornecido
             if (onOldImageDeleted) {
               onOldImageDeleted(deleteResult);
@@ -266,10 +229,7 @@ class ImageUploadService {
    * @param imageUrl - URL da imagem para teste
    */
   async testDeleteEndpoint(imageUrl: string): Promise<void> {
-    console.log('🧪 [IMAGE SERVICE] TESTE - Analisando padrão da API para:', imageUrl);
-
     const imageId = this.extractImageIdFromUrl(imageUrl);
-    console.log('🧪 [IMAGE SERVICE] TESTE - ID extraído:', imageId);
 
     // Testar diferentes formatos de URL que a API pode aceitar
     const testEndpoints = [
@@ -279,17 +239,6 @@ class ImageUploadService {
       `/v1/upload/delete/${imageId}`,
       `/v1/image/delete/${imageId}`,
     ];
-
-    console.log('🧪 [IMAGE SERVICE] TESTE - Endpoints que serão testados:');
-    testEndpoints.forEach((endpoint, index) => {
-      console.log(`🧪 [IMAGE SERVICE] TESTE - ${index + 1}. DELETE ${endpoint}`);
-    });
-
-    console.log('🧪 [IMAGE SERVICE] TESTE - Dados disponíveis:');
-    console.log('🧪 [IMAGE SERVICE] TESTE - URL completa:', imageUrl);
-    console.log('🧪 [IMAGE SERVICE] TESTE - Nome do arquivo:', imageUrl.split('/').pop());
-    console.log('🧪 [IMAGE SERVICE] TESTE - ID (sem extensão):', imageId);
-    console.log('🧪 [IMAGE SERVICE] TESTE - Domain:', imageUrl.split('/').slice(0, 3).join('/'));
   }
 
   /**
@@ -299,19 +248,13 @@ class ImageUploadService {
    */
   private extractImageIdFromUrl(url: string): string | null {
     try {
-      console.log('🔍 [IMAGE SERVICE] Analisando URL:', url);
-
       // URL formato: https://public-blob.squarecloud.dev/hash/users/fileName.webp
       // Precisamos extrair apenas o fileName sem a extensão
       const urlParts = url.split('/');
       const fileName = urlParts[urlParts.length - 1];
 
-      console.log('🔍 [IMAGE SERVICE] Nome do arquivo extraído:', fileName);
-
       // Remover extensão do arquivo para obter o ID
       const imageId = fileName.split('.')[0];
-
-      console.log('🔍 [IMAGE SERVICE] ID da imagem final:', imageId);
 
       // Verificar se temos um ID válido
       if (!imageId || imageId.length < 5) {

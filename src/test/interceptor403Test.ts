@@ -8,26 +8,13 @@
 import api from '@services/api';
 
 export const test403Response = async () => {
-  console.log('🧪 [TEST] Testando resposta 403...');
-
   try {
     // Simular uma requisição que pode retornar 403
     // Substitua pela URL que está retornando 403 no seu caso
     const response = await api.get('/v1/some-protected-endpoint');
 
-    console.log('✅ [TEST] Resposta recebida:', response.status);
     return response;
   } catch (error: any) {
-    console.log('🔍 [TEST] Erro capturado:', {
-      status: error.response?.status,
-      message: error.message,
-      config: error.config?.url,
-    });
-
-    if (error.response?.status === 403) {
-      console.log('🎯 [TEST] Status 403 detectado - Interceptor deve ter sido acionado');
-    }
-
     throw error;
   }
 };
