@@ -310,7 +310,13 @@ const MenuModal: React.FC<MenuModalProps> = ({
           const results = response.data.map((item) => {
             // Determinar o ID correto - acessar propriedades com segurança
             const itemAny = item as any;
-            const itemId = item._id || item.id || itemAny.idItem || itemAny.idReceita || itemAny.idIngrediente || itemAny.itemId;
+            const itemId =
+              item._id ||
+              item.id ||
+              itemAny.idItem ||
+              itemAny.idReceita ||
+              itemAny.idIngrediente ||
+              itemAny.itemId;
 
             return {
               _id: itemId,
@@ -319,7 +325,7 @@ const MenuModal: React.FC<MenuModalProps> = ({
               type: (item.type || 'ingredient') as 'recipe' | 'ingredient',
             };
           });
-          
+
           setFilteredResults(results);
 
           // Adicionar os novos resultados ao cache, evitando duplicatas
