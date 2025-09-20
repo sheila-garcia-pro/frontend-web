@@ -3,6 +3,7 @@ import { Card, CardContent, CardActions, Typography, Box, Chip, Button } from '@
 import { Restaurant, Visibility, AccessTime } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 import RecipeAvatar from '../RecipeAvatar';
+import { Recipe } from '../../../types/recipes';
 
 interface RecipeCardProps {
   id: string;
@@ -21,6 +22,24 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
   preparationTime,
   descripition,
 }) => {
+  // Criar objeto Recipe para os botões PDF
+  const recipeForPDF: Recipe = {
+    _id: id,
+    name,
+    image,
+    category,
+    preparationTime,
+    descripition,
+    sku: '',
+    yieldRecipe: '',
+    typeYield: '',
+    weightRecipe: '',
+    typeWeightRecipe: '',
+    ingredients: [],
+    sellingPrice: 0,
+    costPrice: 0,
+    profit: 0,
+  };
   return (
     <Card
       sx={{
@@ -74,17 +93,17 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
           />
         </Box>
       </CardContent>
-      <CardActions sx={{ p: 1, pt: 0 }}>
+      <CardActions sx={{ p: 1, pt: 0, flexDirection: 'column', gap: 1 }}>
+        {/* Botão Ver Detalhes */}
         <Button
           size="small"
           component={RouterLink}
           to={`/recipes/${id}`}
           startIcon={<Visibility sx={{ fontSize: '0.8rem' }} />}
           sx={{
-            ml: 'auto',
-            mr: 'auto',
             fontSize: '0.8rem',
             borderRadius: 2,
+            width: '100%',
           }}
           variant="outlined"
         >

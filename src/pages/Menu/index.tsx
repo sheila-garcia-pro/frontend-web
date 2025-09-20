@@ -32,6 +32,8 @@ import {
   Groups,
   FoodBank,
   Visibility,
+  PictureAsPdf,
+  Download,
 } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -40,6 +42,10 @@ import { getUserMenus, deleteMenu } from '../../services/api/menu';
 import { MenuListItem, MenusResponse } from '../../types/menu';
 import MenuModal from '../../components/ui/MenuModal/index';
 import MenuDeleteModal from '../../components/ui/MenuDeleteModal/index';
+import { MenuActions } from '../../components/pdf';
+import { useMenuPDF } from '../../hooks/useMenuPDF';
+import { usePDFModal } from '../../hooks/usePDFModal';
+import { PDFModal } from '../../components/pdf';
 
 // RBAC
 import { SimpleIfPermission as IfPermission } from '@/components/security';
@@ -47,6 +53,10 @@ import { SimpleIfPermission as IfPermission } from '@/components/security';
 const MenuPage: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // Hooks para PDF
+  const { isGenerating, downloadPDF, previewPDF, convertMenuToPDFData } = useMenuPDF();
+  const { isModalOpen, pdfUrl, openModal, closeModal } = usePDFModal();
 
   // Estados da página
   const [menus, setMenus] = useState<MenuListItem[]>([]);
@@ -159,7 +169,10 @@ const MenuPage: React.FC = () => {
     setMenuActionId(null);
   };
 
-  const handleMenuActionClick = (action: 'view' | 'edit' | 'delete', menu: MenuListItem) => {
+  const handleMenuActionClick = (
+    action: 'view' | 'edit' | 'delete' | 'preview' | 'download',
+    menu: MenuListItem,
+  ) => {
     handleCloseMenu();
 
     switch (action) {
@@ -172,6 +185,51 @@ const MenuPage: React.FC = () => {
       case 'delete':
         handleDeleteMenu(menu);
         break;
+      case 'preview':
+        handlePreviewPDF(menu);
+        break;
+      case 'download':
+        handleDownloadPDF(menu);
+        break;
+    }
+  };
+
+  // Handlers para PDF
+  const handlePreviewPDF = async (menu: MenuListItem) => {
+    try {
+      const pdfData = await convertMenuToPDFData(menu);
+      const url = await previewPDF(pdfData);
+      openModal(url);
+    } catch (error) {
+      dispatch(
+        addNotification({
+          message: 'Erro ao gerar visualização do PDF',
+          type: 'error',
+          duration: 4000,
+        }),
+      );
+    }
+  };
+
+  const handleDownloadPDF = async (menu: MenuListItem) => {
+    try {
+      const pdfData = await convertMenuToPDFData(menu);
+      await downloadPDF(pdfData);
+      dispatch(
+        addNotification({
+          message: 'PDF baixado com sucesso!',
+          type: 'success',
+          duration: 3000,
+        }),
+      );
+    } catch (error) {
+      dispatch(
+        addNotification({
+          message: 'Erro ao baixar PDF',
+          type: 'error',
+          duration: 4000,
+        }),
+      );
     }
   };
 
@@ -539,6 +597,30 @@ const MenuPage: React.FC = () => {
                   <ListItemText primary="Visualizar" />
                 </MenuItem>,
 
+                <MenuItem
+                  key="preview-pdf"
+                  onClick={() => handleMenuActionClick('preview', menu)}
+                  sx={{ py: 1 }}
+                >
+                  <ListItemIcon>
+                    <PictureAsPdf fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText primary="Visualizar PDF" />
+                </MenuItem>,
+
+                <MenuItem
+                  key="download-pdf"
+                  onClick={() => handleMenuActionClick('download', menu)}
+                  sx={{ py: 1 }}
+                >
+                  <ListItemIcon>
+                    <Download fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText primary="Baixar PDF" />
+                </MenuItem>,
+
+                <Divider key="divider-1" />,
+
                 <IfPermission key="edit-permission" permission="update_menu">
                   <MenuItem onClick={() => handleMenuActionClick('edit', menu)} sx={{ py: 1 }}>
                     <ListItemIcon>
@@ -629,6 +711,13 @@ const MenuPage: React.FC = () => {
         onClose={() => setDeleteModalOpen(false)}
         onMenuDeleted={handleMenuDeleted}
         menu={selectedMenu}
+      />
+
+      <PDFModal
+        isOpen={isModalOpen}
+        pdfUrl={pdfUrl}
+        onClose={closeModal}
+        title={selectedMenu?.name || 'Cardápio'}
       />
     </Container>
   );
