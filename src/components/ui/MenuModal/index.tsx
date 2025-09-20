@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -10,24 +10,36 @@ import {
   Typography,
   Divider,
   IconButton,
-  Paper,
   Card,
   CardContent,
   Chip,
   InputAdornment,
   FormControl,
+  InputLabel,
   Select,
   MenuItem,
   Grid,
   CircularProgress,
   Alert,
 } from '@mui/material';
-import { Close, Search, Add, Delete, Restaurant, Calculate } from '@mui/icons-material';
+import {
+  Close,
+  Search,
+  Add,
+  Delete,
+  Restaurant,
+  Calculate,
+  AttachMoney,
+  AccountBalance,
+} from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { addNotification } from '../../../store/slices/uiSlice';
-import { createMenu, updateMenu, getMenuById } from '../../../services/api/menu';
-import { getRecipes } from '../../../services/api/recipes';
-import { getIngredients } from '../../../services/api/ingredients';
+import {
+  createMenu,
+  updateMenu,
+  getMenuById,
+  getRecipesIngredients,
+} from '../../../services/api/menu';
 import { getUnitMeasures } from '../../../services/api/unitMeasure';
 import {
   MenuListItem,
@@ -51,19 +63,6 @@ interface MenuModalProps {
   onMenuSaved: () => void;
   menu?: MenuListItem | null;
   editMode?: boolean;
-}
-
-interface RecipeSearchResult {
-  _id: string;
-  name: string;
-  image: string;
-  category: string;
-}
-
-interface IngredientSearchResult {
-  _id: string;
-  name: string;
-  category: string;
 }
 
 interface SearchResult {
@@ -93,10 +92,11 @@ const MenuModal: React.FC<MenuModalProps> = ({
 
   // Estados para busca de receitas e ingredientes
   const [itemSearch, setItemSearch] = useState('');
-  const [availableRecipes, setAvailableRecipes] = useState<RecipeSearchResult[]>([]);
-  const [availableIngredients, setAvailableIngredients] = useState<IngredientSearchResult[]>([]);
   const [filteredResults, setFilteredResults] = useState<SearchResult[]>([]);
+  const [allFoundItems, setAllFoundItems] = useState<SearchResult[]>([]); // Cache de todos os itens encontrados
   const [loadingItems, setLoadingItems] = useState(false);
+  const [isTyping, setIsTyping] = useState(false); // Indica se o usuário está digitando
+  const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
 
   // Estados para unidades de medida
   const [unitMeasures, setUnitMeasures] = useState<UnitMeasure[]>([]);
@@ -114,6 +114,29 @@ const MenuModal: React.FC<MenuModalProps> = ({
     indirectCosts: 0,
   });
 
+  // Estados para custos detalhados
+  const [directCosts, setDirectCosts] = useState<
+    Array<{
+      id: string;
+      name: string;
+      value: number;
+      isPercentage?: boolean;
+    }>
+  >([]);
+
+  const [indirectCosts, setIndirectCosts] = useState<
+    Array<{
+      id: string;
+      name: string;
+      value: number;
+      monthlyRevenue?: number;
+    }>
+  >([]);
+
+  // Estados para preço de venda
+  const [sellPrice, setSellPrice] = useState<number>(0);
+  const [monthlyRevenue, setMonthlyRevenue] = useState<number>(0);
+
   // Carregar dados iniciais
   useEffect(() => {
     if (open) {
@@ -125,16 +148,39 @@ const MenuModal: React.FC<MenuModalProps> = ({
         resetForm();
       }
     }
+
+    // Cleanup function para limpar timeout ao desmontar
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
   }, [open, editMode, menu]);
 
   const resetForm = () => {
     setFormData({
       name: '',
       description: '',
+      yield: undefined,
+      yieldUnit: '',
       menuItems: [],
     });
     setErrors({});
     setItemSearch('');
+    setFilteredResults([]);
+    setAllFoundItems([]); // Limpar cache de itens
+    setIsTyping(false); // Resetar estado de digitação
+    setDirectCosts([]);
+    setIndirectCosts([]);
+    setSellPrice(0);
+    setMonthlyRevenue(0);
+
+    // Limpar timeout de busca
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+      setSearchTimeout(null);
+    }
+
     setFinancialData({
       totalCost: 0,
       unitCost: 0,
@@ -154,8 +200,27 @@ const MenuModal: React.FC<MenuModalProps> = ({
       setFormData({
         name: menuDetails.name,
         description: menuDetails.description || '',
+        yield: menuDetails.yield,
+        yieldUnit: menuDetails.yieldUnit || '',
         menuItems: menuDetails.menuItems,
       });
+
+      // Carregar os dados dos itens existentes no menu para o cache
+      if (menuDetails.menuItems && menuDetails.menuItems.length > 0) {
+        const itemIds = menuDetails.menuItems.map((item) => item.idItem);
+        await loadItemsForCache(itemIds);
+      }
+
+      // Carregar custos detalhados se disponíveis
+      if (menuDetails.directCosts) {
+        setDirectCosts(menuDetails.directCosts);
+      }
+      if (menuDetails.indirectCosts) {
+        setIndirectCosts(menuDetails.indirectCosts);
+      }
+      if (menuDetails.sellPrice) {
+        setSellPrice(menuDetails.sellPrice);
+      }
 
       if (menuDetails.totalCost !== undefined) {
         const calculated = calculateMenuFinancials({
@@ -168,7 +233,6 @@ const MenuModal: React.FC<MenuModalProps> = ({
         setFinancialData(calculated);
       }
     } catch (error) {
-      console.error('Erro ao carregar detalhes do cardápio:', error);
       dispatch(
         addNotification({
           message: 'Erro ao carregar detalhes do cardápio.',
@@ -181,33 +245,34 @@ const MenuModal: React.FC<MenuModalProps> = ({
     }
   };
 
-  const loadRecipesAndIngredients = async () => {
+  // Função auxiliar para carregar dados dos itens para o cache
+  const loadItemsForCache = async (itemIds: string[]) => {
     try {
-      setLoadingItems(true);
+      // Fazer uma busca genérica para tentar carregar os dados dos itens
+      const response = await getRecipesIngredients({
+        name: '', // Busca vazia para obter mais itens
+        page: 1,
+        itemPerPage: 50, // Aumentar o limite para tentar pegar os itens existentes
+      });
 
-      // Carrega receitas
-      const recipesResponse = await getRecipes({ page: 1, itemPerPage: 100 });
-      const recipes = recipesResponse.data.map((recipe) => ({
-        _id: recipe._id,
-        name: recipe.name,
-        image: recipe.image,
-        category: recipe.category,
-      }));
-      setAvailableRecipes(recipes);
+      if (response.data && Array.isArray(response.data)) {
+        const results = response.data.map((item) => ({
+          ...item,
+          type: item.type as 'recipe' | 'ingredient',
+        }));
 
-      // Carrega ingredientes
-      const ingredientsResponse = await getIngredients({ page: 1, itemPerPage: 100 });
-      const ingredients = ingredientsResponse.data.map((ingredient) => ({
-        _id: ingredient._id,
-        name: ingredient.name,
-        category: ingredient.category,
-      }));
-      setAvailableIngredients(ingredients);
+        // Filtrar apenas os itens que estão no menu
+        const menuItems = results.filter((item) => itemIds.includes(item._id));
+        setAllFoundItems(menuItems);
+      }
     } catch (error) {
-      console.error('Erro ao carregar receitas e ingredientes:', error);
-    } finally {
-      setLoadingItems(false);
+      // Error logging removed
     }
+  };
+
+  const loadRecipesAndIngredients = async () => {
+    // Não precisamos mais carregar itens iniciais,
+    // pois a busca será feita dinamicamente via API
   };
 
   const loadUnitMeasures = async () => {
@@ -216,41 +281,152 @@ const MenuModal: React.FC<MenuModalProps> = ({
       const units = await getUnitMeasures();
       setUnitMeasures(units);
     } catch (error) {
-      console.error('Erro ao carregar unidades de medida:', error);
+      // Error logging removed
     } finally {
       setLoadingUnits(false);
     }
   };
 
-  // Filtrar receitas e ingredientes com base na busca
-  useEffect(() => {
-    if (itemSearch.trim()) {
-      const filteredRecipes = availableRecipes
-        .filter((recipe) => recipe.name.toLowerCase().includes(itemSearch.toLowerCase()))
-        .map((recipe) => ({ ...recipe, type: 'recipe' as const }));
+  // Função otimizada para buscar itens com base no termo de busca
+  const searchItems = useCallback(
+    async (searchTerm: string) => {
+      if (!searchTerm.trim()) {
+        setFilteredResults([]);
+        return;
+      }
 
-      const filteredIngredients = availableIngredients
-        .filter((ingredient) => ingredient.name.toLowerCase().includes(itemSearch.toLowerCase()))
-        .map((ingredient) => ({ ...ingredient, type: 'ingredient' as const }));
+      try {
+        setLoadingItems(true);
 
-      setFilteredResults([...filteredRecipes, ...filteredIngredients]);
-    } else {
-      setFilteredResults([]);
-    }
-  }, [itemSearch, availableRecipes, availableIngredients]);
+        // Usar apenas a nova API unificada
+        const response = await getRecipesIngredients({
+          name: searchTerm,
+          page: 1,
+          itemPerPage: 15, // Limitado para melhor performance
+        });
 
-  // Recalcular dados financeiros quando os itens do menu mudarem
+        // Vamos ver o que cada item tem
+        if (response.data && Array.isArray(response.data)) {
+          const results = response.data.map((item) => {
+            // Determinar o ID correto - acessar propriedades com segurança
+            const itemAny = item as any;
+            const itemId = item._id || item.id || itemAny.idItem || itemAny.idReceita || itemAny.idIngrediente || itemAny.itemId;
+
+            return {
+              _id: itemId,
+              name: item.name,
+              category: item.category,
+              type: (item.type || 'ingredient') as 'recipe' | 'ingredient',
+            };
+          });
+          
+          setFilteredResults(results);
+
+          // Adicionar os novos resultados ao cache, evitando duplicatas
+          setAllFoundItems((prev) => {
+            const existing = prev.map((item) => item._id);
+            const newItems = results.filter((item) => item._id && !existing.includes(item._id));
+            return [...prev, ...newItems];
+          });
+        } else {
+          setFilteredResults([]);
+        }
+      } catch (error) {
+        setFilteredResults([]);
+        dispatch(
+          addNotification({
+            message: 'Erro ao buscar itens. Tente novamente.',
+            type: 'error',
+            duration: 3000,
+          }),
+        );
+      } finally {
+        setLoadingItems(false);
+        setIsTyping(false); // Garantir que o estado de digitação seja limpo
+      }
+    },
+    [dispatch],
+  ); // Dependências do useCallback
+
+  // Handler otimizado para mudança no campo de busca com debounce inteligente
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setItemSearch(value);
+      setIsTyping(true); // Usuário começou a digitar
+
+      // Limpar timeout anterior
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+
+      // Se o campo estiver vazio, limpar resultados imediatamente
+      if (!value.trim()) {
+        setFilteredResults([]);
+        setLoadingItems(false);
+        setIsTyping(false);
+        return;
+      }
+
+      // Configurar novo timeout para busca - só busca quando o usuário para de digitar
+      const timeout = setTimeout(() => {
+        setIsTyping(false); // Usuário parou de digitar
+        searchItems(value);
+      }, 500); // 500ms para garantir que o usuário parou de digitar
+
+      setSearchTimeout(timeout);
+    },
+    [searchItems, searchTimeout],
+  );
+
+  // Recalcular dados financeiros quando os itens do menu ou custos mudarem
   useEffect(() => {
     if (formData.menuItems.length > 0) {
-      // Por ora usando valores simulados - idealmente calcularíamos com base nos preços reais dos itens
-      const estimated = calculateMenuFinancials({
-        totalItems: formData.menuItems.length,
-        itemsCost: formData.menuItems.length * 2.5, // Custo estimado por item
-        directCostsPercentage: 0,
-        indirectCostsPercentage: 0,
-        sellPrice: 0, // Usuário pode definir depois
+      // Custo base dos itens (estimado)
+      const itemsCost = formData.menuItems.length * 2.5;
+
+      // Calcular custos diretos
+      let totalDirectCosts = 0;
+      directCosts.forEach((cost) => {
+        if (cost.isPercentage) {
+          totalDirectCosts += (sellPrice * cost.value) / 100;
+        } else {
+          totalDirectCosts += cost.value;
+        }
       });
-      setFinancialData(estimated);
+
+      // Calcular custos indiretos (rateio)
+      let totalIndirectCosts = 0;
+      if (monthlyRevenue > 0) {
+        indirectCosts.forEach((cost) => {
+          const costPercentage = cost.value / monthlyRevenue;
+          totalIndirectCosts += sellPrice * costPercentage;
+        });
+      }
+
+      const totalCost = itemsCost + totalDirectCosts + totalIndirectCosts;
+      const unitCost =
+        (formData.yield || formData.menuItems.length) > 0
+          ? totalCost / (formData.yield || formData.menuItems.length)
+          : 0;
+
+      let profitMargin = 0;
+      let markup = 0;
+
+      if (sellPrice > 0 && totalCost > 0) {
+        profitMargin = ((sellPrice - totalCost) / sellPrice) * 100;
+        markup = ((sellPrice - totalCost) / totalCost) * 100;
+      }
+
+      setFinancialData({
+        totalCost,
+        unitCost,
+        sellPrice,
+        profitMargin,
+        markup,
+        itemsCost,
+        directCosts: totalDirectCosts,
+        indirectCosts: totalIndirectCosts,
+      });
     } else {
       setFinancialData({
         totalCost: 0,
@@ -263,7 +439,7 @@ const MenuModal: React.FC<MenuModalProps> = ({
         indirectCosts: 0,
       });
     }
-  }, [formData.menuItems]);
+  }, [formData.menuItems, formData.yield, directCosts, indirectCosts, sellPrice, monthlyRevenue]);
 
   const handleInputChange = (field: keyof CreateMenuParams, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -273,7 +449,20 @@ const MenuModal: React.FC<MenuModalProps> = ({
   };
 
   const handleAddItem = (item: SearchResult) => {
+    // Validar se o item tem um ID válido
+    if (!item._id) {
+      dispatch(
+        addNotification({
+          message: 'Erro: Item sem identificador válido. Tente novamente.',
+          type: 'error',
+          duration: 3000,
+        }),
+      );
+      return;
+    }
+
     const existingItem = formData.menuItems.find((menuItem) => menuItem.idItem === item._id);
+
     if (existingItem) {
       dispatch(
         addNotification({
@@ -284,6 +473,15 @@ const MenuModal: React.FC<MenuModalProps> = ({
       );
       return;
     }
+
+    // Adicionar item ao cache se ainda não estiver lá
+    setAllFoundItems((prev) => {
+      const exists = prev.some((cached) => cached._id === item._id);
+      if (!exists) {
+        return [...prev, item];
+      }
+      return prev;
+    });
 
     const newItem: MenuItemType = {
       idItem: item._id,
@@ -296,6 +494,7 @@ const MenuModal: React.FC<MenuModalProps> = ({
       menuItems: [...prev.menuItems, newItem],
     }));
     setItemSearch('');
+    setFilteredResults([]);
   };
 
   const handleRemoveItem = (index: number) => {
@@ -314,6 +513,48 @@ const MenuModal: React.FC<MenuModalProps> = ({
     }));
   };
 
+  // Funções para gerenciar custos diretos
+  const handleAddDirectCost = () => {
+    const newCost = {
+      id: Date.now().toString(),
+      name: '',
+      value: 0,
+      isPercentage: false,
+    };
+    setDirectCosts((prev) => [...prev, newCost]);
+  };
+
+  const handleUpdateDirectCost = (id: string, field: string, value: any) => {
+    setDirectCosts((prev) =>
+      prev.map((cost) => (cost.id === id ? { ...cost, [field]: value } : cost)),
+    );
+  };
+
+  const handleRemoveDirectCost = (id: string) => {
+    setDirectCosts((prev) => prev.filter((cost) => cost.id !== id));
+  };
+
+  // Funções para gerenciar custos indiretos
+  const handleAddIndirectCost = () => {
+    const newCost = {
+      id: Date.now().toString(),
+      name: '',
+      value: 0,
+      monthlyRevenue: monthlyRevenue,
+    };
+    setIndirectCosts((prev) => [...prev, newCost]);
+  };
+
+  const handleUpdateIndirectCost = (id: string, field: string, value: any) => {
+    setIndirectCosts((prev) =>
+      prev.map((cost) => (cost.id === id ? { ...cost, [field]: value } : cost)),
+    );
+  };
+
+  const handleRemoveIndirectCost = (id: string) => {
+    setIndirectCosts((prev) => prev.filter((cost) => cost.id !== id));
+  };
+
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
 
@@ -325,10 +566,35 @@ const MenuModal: React.FC<MenuModalProps> = ({
       newErrors.menuItems = 'Adicione pelo menos uma receita ou ingrediente ao cardápio';
     }
 
+    // Validar rendimento
+    if (formData.yield && formData.yield <= 0) {
+      newErrors.yield = 'Rendimento deve ser maior que zero';
+    }
+
     // Validar itens do menu
     formData.menuItems.forEach((item, index) => {
       if (!item.quantityUsed || parseFloat(item.quantityUsed) <= 0) {
         newErrors[`quantity_${index}`] = 'Quantidade deve ser maior que zero';
+      }
+    });
+
+    // Validar custos diretos
+    directCosts.forEach((cost, index) => {
+      if (!cost.name.trim()) {
+        newErrors[`directCost_name_${index}`] = 'Nome do custo é obrigatório';
+      }
+      if (cost.value < 0) {
+        newErrors[`directCost_value_${index}`] = 'Valor deve ser maior ou igual a zero';
+      }
+    });
+
+    // Validar custos indiretos
+    indirectCosts.forEach((cost, index) => {
+      if (!cost.name.trim()) {
+        newErrors[`indirectCost_name_${index}`] = 'Nome do custo é obrigatório';
+      }
+      if (cost.value < 0) {
+        newErrors[`indirectCost_value_${index}`] = 'Valor deve ser maior ou igual a zero';
       }
     });
 
@@ -343,8 +609,16 @@ const MenuModal: React.FC<MenuModalProps> = ({
 
     setLoading(true);
     try {
+      // Preparar payload com dados financeiros
+      const menuPayload = {
+        ...formData,
+        sellPrice,
+        directCosts,
+        indirectCosts,
+      };
+
       if (editMode && menu) {
-        await updateMenu(menu._id, formData);
+        await updateMenu(menu._id, menuPayload);
         dispatch(
           addNotification({
             message: 'Cardápio atualizado com sucesso!',
@@ -353,7 +627,7 @@ const MenuModal: React.FC<MenuModalProps> = ({
           }),
         );
       } else {
-        await createMenu(formData);
+        await createMenu(menuPayload);
         dispatch(
           addNotification({
             message: 'Cardápio criado com sucesso!',
@@ -364,7 +638,6 @@ const MenuModal: React.FC<MenuModalProps> = ({
       }
       onMenuSaved();
     } catch (error) {
-      console.error('Erro ao salvar cardápio:', error);
       dispatch(
         addNotification({
           message: 'Erro ao salvar cardápio. Tente novamente.',
@@ -384,21 +657,33 @@ const MenuModal: React.FC<MenuModalProps> = ({
   };
 
   const getItemName = (itemId: string): string => {
-    const recipe = availableRecipes.find((r) => r._id === itemId);
-    if (recipe) return recipe.name;
+    // Primeiro procurar no cache de todos os itens encontrados
+    const item = allFoundItems.find((item) => item._id === itemId);
+    if (item) {
+      return item.name;
+    }
 
-    const ingredient = availableIngredients.find((i) => i._id === itemId);
-    if (ingredient) return ingredient.name;
+    // Como fallback, procurar nos resultados filtrados atuais
+    const filteredItem = filteredResults.find((item) => item._id === itemId);
+    if (filteredItem) {
+      return filteredItem.name;
+    }
 
     return 'Item não encontrado';
   };
 
   const getItemType = (itemId: string): 'recipe' | 'ingredient' | 'unknown' => {
-    const recipe = availableRecipes.find((r) => r._id === itemId);
-    if (recipe) return 'recipe';
+    // Primeiro procurar no cache de todos os itens encontrados
+    const item = allFoundItems.find((item) => item._id === itemId);
+    if (item) {
+      return item.type;
+    }
 
-    const ingredient = availableIngredients.find((i) => i._id === itemId);
-    if (ingredient) return 'ingredient';
+    // Como fallback, procurar nos resultados filtrados atuais
+    const filteredItem = filteredResults.find((item) => item._id === itemId);
+    if (filteredItem) {
+      return filteredItem.type;
+    }
 
     return 'unknown';
   };
@@ -407,17 +692,31 @@ const MenuModal: React.FC<MenuModalProps> = ({
     <Dialog
       open={open}
       onClose={handleClose}
-      maxWidth="md"
+      maxWidth="lg"
       fullWidth
       PaperProps={{
-        sx: { borderRadius: 2, maxHeight: '90vh' },
+        sx: {
+          maxHeight: '90vh', // Reduzir um pouco para dar mais espaço
+          height: 'auto',
+          margin: '12px', // Adicionar margem para melhor visualização
+        },
       }}
     >
       <DialogTitle>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
-            {editMode ? 'Editar Cardápio' : 'Novo Cardápio'}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Restaurant color="primary" />
+            <Box>
+              <Typography variant="h5" component="h2">
+                {editMode ? 'Editar Cardápio' : 'Novo Cardápio'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {editMode
+                  ? 'Faça as alterações necessárias no seu cardápio'
+                  : 'Crie um novo cardápio adicionando receitas e ingredientes'}
+              </Typography>
+            </Box>
+          </Box>
           <IconButton onClick={handleClose} disabled={loading}>
             <Close />
           </IconButton>
@@ -426,16 +725,22 @@ const MenuModal: React.FC<MenuModalProps> = ({
 
       <Divider />
 
-      <DialogContent sx={{ p: 3 }}>
+      <DialogContent
+        sx={{
+          overflow: 'auto',
+          maxHeight: 'calc(90vh - 140px)', // Ajustar para dar mais espaço
+          padding: '12px 20px', // Reduzir padding
+        }}
+      >
         {loading && editMode ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-            <CircularProgress />
+            <CircularProgress size={40} />
           </Box>
         ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {/* Informações básicas */}
-            <Card sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
-              <CardContent>
+            <Card variant="outlined">
+              <CardContent sx={{ p: 3 }}>
                 <Typography variant="h6" gutterBottom>
                   Informações Básicas
                 </Typography>
@@ -466,13 +771,50 @@ const MenuModal: React.FC<MenuModalProps> = ({
                       placeholder="Descreva seu cardápio..."
                     />
                   </Grid>
+
+                  {/* Campos de rendimento */}
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="Rendimento"
+                      value={formData.yield || ''}
+                      onChange={(e) => handleInputChange('yield', e.target.value)}
+                      disabled={loading}
+                      placeholder="Ex: 4, 10, 20..."
+                      InputProps={{
+                        inputProps: { min: 0, step: 1 },
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <FormControl fullWidth disabled={loading}>
+                      <InputLabel>Medida do Rendimento</InputLabel>
+                      <Select
+                        value={formData.yieldUnit || ''}
+                        onChange={(e) => handleInputChange('yieldUnit', e.target.value)}
+                        label="Medida do Rendimento"
+                      >
+                        <MenuItem value="Porções">Porções</MenuItem>
+                        <MenuItem value="Pessoas">Pessoas</MenuItem>
+                        <MenuItem value="Unidades">Unidades</MenuItem>
+                        <MenuItem value="Gramas">Gramas</MenuItem>
+                        <MenuItem value="Quilos">Quilos</MenuItem>
+                        <MenuItem value="Litros">Litros</MenuItem>
+                        <MenuItem value="Mililitros">Mililitros</MenuItem>
+                        <MenuItem value="Fatias">Fatias</MenuItem>
+                        <MenuItem value="Pedaços">Pedaços</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
                 </Grid>
               </CardContent>
             </Card>
 
             {/* Itens do cardápio */}
-            <Card sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
-              <CardContent>
+            <Card variant="outlined">
+              <CardContent sx={{ p: 3 }}>
                 <Typography
                   variant="h6"
                   gutterBottom
@@ -492,59 +834,64 @@ const MenuModal: React.FC<MenuModalProps> = ({
                 <Box sx={{ mb: 3 }}>
                   <TextField
                     fullWidth
-                    placeholder="Digite aqui o nome da receita ou ingrediente..."
+                    placeholder={'Digite aqui o nome da receita ou ingrediente...'}
                     value={itemSearch}
-                    onChange={(e) => setItemSearch(e.target.value)}
-                    disabled={loading || loadingItems}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    disabled={loading}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <Search />
+                          {loadingItems ? (
+                            <CircularProgress size={20} />
+                          ) : isTyping ? (
+                            <Search sx={{ color: 'warning.main' }} />
+                          ) : (
+                            <Search />
+                          )}
                         </InputAdornment>
                       ),
                     }}
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: 3,
                         bgcolor: 'background.paper',
-                        '& input': {
-                          color: 'text.primary',
-                        },
-                        '& .MuiInputAdornment-root .MuiSvgIcon-root': {
-                          color: 'text.secondary',
-                        },
                       },
                     }}
                   />
 
                   {/* Lista de resultados filtrados */}
                   {itemSearch && filteredResults.length > 0 && (
-                    <Paper
+                    <Box
                       sx={{
                         mt: 1,
                         maxHeight: 200,
                         overflow: 'auto',
                         border: '1px solid',
                         borderColor: 'divider',
-                        bgcolor: 'background.paper',
+                        borderRadius: 1,
                       }}
                     >
-                      {filteredResults.slice(0, 5).map((item) => (
+                      {filteredResults.slice(0, 5).map((item, index) => (
                         <Box
-                          key={item._id}
+                          key={item._id || `item-${index}`}
+                          component="button"
                           sx={{
+                            width: '100%',
                             p: 2,
                             display: 'flex',
                             alignItems: 'center',
                             gap: 2,
+                            border: 'none',
+                            bgcolor: 'transparent',
                             cursor: 'pointer',
-                            '&:hover': {
-                              bgcolor: 'action.hover',
-                            },
                             borderBottom: '1px solid',
                             borderColor: 'divider',
                             '&:last-child': {
                               borderBottom: 'none',
+                            },
+                            '&:focus': {
+                              outline: '2px solid',
+                              outlineColor: 'primary.main',
+                              outlineOffset: '-2px',
                             },
                           }}
                           onClick={() => handleAddItem(item)}
@@ -571,7 +918,28 @@ const MenuModal: React.FC<MenuModalProps> = ({
                           </Box>
                         </Box>
                       ))}
-                    </Paper>
+                    </Box>
+                  )}
+
+                  {/* Mensagem quando não há resultados */}
+                  {itemSearch && filteredResults.length === 0 && (
+                    <Box
+                      sx={{
+                        mt: 1,
+                        p: 3,
+                        textAlign: 'center',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography variant="body1" color="text.secondary" gutterBottom>
+                        Nenhum resultado encontrado para "{itemSearch}"
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Tente usar palavras-chave diferentes ou verifique a ortografia
+                      </Typography>
+                    </Box>
                   )}
                 </Box>
 
@@ -581,7 +949,7 @@ const MenuModal: React.FC<MenuModalProps> = ({
                     {formData.menuItems.map((item, index) => {
                       const itemType = getItemType(item.idItem);
                       return (
-                        <Paper
+                        <Box
                           key={index}
                           sx={{
                             p: 2,
@@ -662,12 +1030,12 @@ const MenuModal: React.FC<MenuModalProps> = ({
                               <Delete />
                             </IconButton>
                           </Box>
-                        </Paper>
+                        </Box>
                       );
                     })}
                   </Box>
                 ) : (
-                  <Paper
+                  <Box
                     sx={{
                       p: 4,
                       textAlign: 'center',
@@ -684,17 +1052,15 @@ const MenuModal: React.FC<MenuModalProps> = ({
                       Use a busca acima para encontrar e adicionar receitas ou ingredientes ao seu
                       cardápio
                     </Typography>
-                  </Paper>
+                  </Box>
                 )}
               </CardContent>
             </Card>
 
             {/* Informações financeiras */}
             {formData.menuItems.length > 0 && (
-              <Card
-                sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}
-              >
-                <CardContent>
+              <Card variant="outlined">
+                <CardContent sx={{ p: 3 }}>
                   <Typography
                     variant="h6"
                     gutterBottom
@@ -704,86 +1070,433 @@ const MenuModal: React.FC<MenuModalProps> = ({
                     Financeiro
                   </Typography>
 
-                  <Grid container spacing={3}>
-                    <Grid size={{ xs: 6, sm: 3 }}>
-                      <Paper
-                        sx={{
-                          p: 2,
-                          textAlign: 'center',
-                          bgcolor: 'background.default',
-                          border: '1px solid',
-                          borderColor: 'divider',
-                        }}
-                      >
-                        <Typography variant="body2" color="text.secondary">
-                          CUSTO TOTAL
-                        </Typography>
-                        <Typography variant="h6" color="error">
-                          {formatCurrency(financialData.totalCost)}
-                        </Typography>
-                      </Paper>
-                    </Grid>
+                  {/* Campos de entrada financeira */}
+                  <Box sx={{ mb: 3 }}>
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <TextField
+                          fullWidth
+                          label="Preço de Venda Total"
+                          type="number"
+                          value={sellPrice}
+                          onChange={(e) => setSellPrice(Number(e.target.value))}
+                          InputProps={{
+                            startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                            inputProps: { min: 0, step: 0.01 },
+                          }}
+                          disabled={loading}
+                        />
+                      </Grid>
 
-                    <Grid size={{ xs: 6, sm: 3 }}>
-                      <Paper
-                        sx={{
-                          p: 2,
-                          textAlign: 'center',
-                          bgcolor: 'background.default',
-                          border: '1px solid',
-                          borderColor: 'divider',
-                        }}
-                      >
-                        <Typography variant="body2" color="text.secondary">
-                          CUSTO UNITÁRIO
-                        </Typography>
-                        <Typography variant="h6" color="warning.main">
-                          {formatCurrency(financialData.unitCost)}
-                        </Typography>
-                      </Paper>
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <TextField
+                          fullWidth
+                          label="Faturamento Médio Mensal"
+                          type="number"
+                          value={monthlyRevenue}
+                          onChange={(e) => setMonthlyRevenue(Number(e.target.value))}
+                          InputProps={{
+                            startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                            inputProps: { min: 0, step: 0.01 },
+                          }}
+                          disabled={loading}
+                          helperText="Usado para calcular custos indiretos"
+                        />
+                      </Grid>
                     </Grid>
+                  </Box>
 
-                    <Grid size={{ xs: 6, sm: 3 }}>
-                      <Paper
+                  {/* Custos Diretos */}
+                  <Box sx={{ mb: 3 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        mb: 2,
+                      }}
+                    >
+                      <Typography
+                        variant="subtitle1"
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                      >
+                        <AttachMoney />
+                        Custos Diretos
+                      </Typography>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={handleAddDirectCost}
+                        startIcon={<Add />}
+                        disabled={loading}
+                      >
+                        Adicionar
+                      </Button>
+                    </Box>
+
+                    {directCosts.map((cost) => (
+                      <Box
+                        key={cost.id}
                         sx={{
                           p: 2,
-                          textAlign: 'center',
-                          bgcolor: 'background.default',
+                          mb: 2,
                           border: '1px solid',
                           borderColor: 'divider',
+                          borderRadius: 1,
+                          bgcolor: 'background.default',
                         }}
                       >
-                        <Typography variant="body2" color="text.secondary">
-                          PREÇO DE VENDA
-                        </Typography>
-                        <Typography variant="h6" color="success.main">
-                          {formatCurrency(financialData.sellPrice)}
-                        </Typography>
-                      </Paper>
-                    </Grid>
+                        <Grid container spacing={2} alignItems="center">
+                          <Grid size={{ xs: 12, sm: 4 }}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Nome do custo"
+                              value={cost.name}
+                              onChange={(e) =>
+                                handleUpdateDirectCost(cost.id, 'name', e.target.value)
+                              }
+                              disabled={loading}
+                            />
+                          </Grid>
 
-                    <Grid size={{ xs: 6, sm: 3 }}>
-                      <Paper
+                          <Grid size={{ xs: 8, sm: 3 }}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Valor"
+                              type="number"
+                              value={cost.value}
+                              onChange={(e) =>
+                                handleUpdateDirectCost(cost.id, 'value', Number(e.target.value))
+                              }
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    {cost.isPercentage ? '%' : 'R$'}
+                                  </InputAdornment>
+                                ),
+                                inputProps: { min: 0, step: cost.isPercentage ? 0.1 : 0.01 },
+                              }}
+                              disabled={loading}
+                            />
+                          </Grid>
+
+                          <Grid size={{ xs: 4, sm: 3 }}>
+                            <FormControl fullWidth size="small">
+                              <Select
+                                value={cost.isPercentage ? 'percentage' : 'fixed'}
+                                onChange={(e) =>
+                                  handleUpdateDirectCost(
+                                    cost.id,
+                                    'isPercentage',
+                                    e.target.value === 'percentage',
+                                  )
+                                }
+                                disabled={loading}
+                              >
+                                <MenuItem value="fixed">Valor Fixo</MenuItem>
+                                <MenuItem value="percentage">Percentual</MenuItem>
+                              </Select>
+                            </FormControl>
+                          </Grid>
+
+                          <Grid size={{ xs: 12, sm: 2 }}>
+                            <IconButton
+                              color="error"
+                              onClick={() => handleRemoveDirectCost(cost.id)}
+                              disabled={loading}
+                              size="small"
+                            >
+                              <Delete />
+                            </IconButton>
+                          </Grid>
+                        </Grid>
+                      </Box>
+                    ))}
+                  </Box>
+
+                  {/* Custos Indiretos */}
+                  <Box sx={{ mb: 3 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        mb: 2,
+                      }}
+                    >
+                      <Typography
+                        variant="subtitle1"
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                      >
+                        <AccountBalance />
+                        Custos Indiretos (Rateio)
+                      </Typography>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={handleAddIndirectCost}
+                        startIcon={<Add />}
+                        disabled={loading}
+                      >
+                        Adicionar
+                      </Button>
+                    </Box>
+
+                    {indirectCosts.map((cost) => (
+                      <Box
+                        key={cost.id}
                         sx={{
                           p: 2,
-                          textAlign: 'center',
-                          bgcolor: 'background.default',
+                          mb: 2,
                           border: '1px solid',
                           borderColor: 'divider',
+                          borderRadius: 1,
+                          bgcolor: 'background.default',
                         }}
                       >
-                        <Typography variant="body2" color="text.secondary">
-                          MARGEM DE LUCRO
-                        </Typography>
-                        <Typography
-                          variant="h6"
-                          color={financialData.profitMargin >= 0 ? 'primary' : 'error'}
+                        <Grid container spacing={2} alignItems="center">
+                          <Grid size={{ xs: 12, sm: 5 }}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Nome do custo"
+                              value={cost.name}
+                              onChange={(e) =>
+                                handleUpdateIndirectCost(cost.id, 'name', e.target.value)
+                              }
+                              disabled={loading}
+                            />
+                          </Grid>
+
+                          <Grid size={{ xs: 12, sm: 5 }}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Valor Mensal"
+                              type="number"
+                              value={cost.value}
+                              onChange={(e) =>
+                                handleUpdateIndirectCost(cost.id, 'value', Number(e.target.value))
+                              }
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">R$</InputAdornment>
+                                ),
+                                inputProps: { min: 0, step: 0.01 },
+                              }}
+                              disabled={loading}
+                            />
+                          </Grid>
+
+                          <Grid size={{ xs: 12, sm: 2 }}>
+                            <IconButton
+                              color="error"
+                              onClick={() => handleRemoveIndirectCost(cost.id)}
+                              disabled={loading}
+                              size="small"
+                            >
+                              <Delete />
+                            </IconButton>
+                          </Grid>
+                        </Grid>
+                      </Box>
+                    ))}
+                  </Box>
+
+                  {/* Resumo financeiro simplificado */}
+                  <Box
+                    sx={{
+                      mt: 2,
+                      p: { xs: 1, sm: 2 },
+                      bgcolor: 'background.default',
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      gutterBottom
+                      sx={{
+                        mb: 1.5,
+                        textAlign: 'center',
+                        fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                      }}
+                    >
+                      Resumo Financeiro
+                    </Typography>
+
+                    <Grid container spacing={{ xs: 1, sm: 1.5 }}>
+                      {/* Layout otimizado para todas as telas */}
+                      <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+                        <Box
+                          sx={{
+                            p: { xs: 1, sm: 1.5 }, // Padding responsivo
+                            bgcolor: 'background.paper',
+                            borderRadius: 1,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-start',
+                            minHeight: { xs: '60px', sm: '70px' }, // Altura mínima responsiva
+                            justifyContent: 'space-between',
+                          }}
                         >
-                          {formatPercentage(financialData.profitMargin)}
-                        </Typography>
-                      </Paper>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{
+                              mb: 0.5,
+                              lineHeight: 1.2,
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                            }}
+                          >
+                            Custo Total
+                          </Typography>
+                          <Typography
+                            variant="h6"
+                            color="error.main"
+                            fontWeight="600"
+                            sx={{
+                              fontSize: { xs: '1rem', sm: '1.1rem' },
+                              lineHeight: 1.2,
+                              wordBreak: 'break-word',
+                            }}
+                          >
+                            {formatCurrency(financialData.totalCost)}
+                          </Typography>
+                        </Box>
+                      </Grid>
+
+                      <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+                        <Box
+                          sx={{
+                            p: 1.5,
+                            bgcolor: 'background.paper',
+                            borderRadius: 1,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-start',
+                            minHeight: { xs: '60px', sm: '70px' },
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{
+                              mb: 0.5,
+                              lineHeight: 1.2,
+                              fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                              fontWeight: 500,
+                            }}
+                          >
+                            Custo Unitário
+                          </Typography>
+                          <Typography
+                            variant="h6"
+                            color="warning.main"
+                            fontWeight="600"
+                            sx={{
+                              fontSize: { xs: '1rem', sm: '1.1rem' },
+                              lineHeight: 1.2,
+                              wordBreak: 'break-word',
+                            }}
+                          >
+                            {formatCurrency(financialData.unitCost)}
+                          </Typography>
+                        </Box>
+                      </Grid>
+
+                      <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+                        <Box
+                          sx={{
+                            p: { xs: 1, sm: 1.5 },
+                            bgcolor: 'background.paper',
+                            borderRadius: 1,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-start',
+                            minHeight: { xs: '60px', sm: '70px' },
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{
+                              mb: 0.5,
+                              lineHeight: 1.2,
+                              fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                              fontWeight: 500,
+                            }}
+                          >
+                            Preço de Venda
+                          </Typography>
+                          <Typography
+                            variant="h6"
+                            color="success.main"
+                            fontWeight="600"
+                            sx={{
+                              fontSize: { xs: '1rem', sm: '1.1rem' },
+                              lineHeight: 1.2,
+                              wordBreak: 'break-word',
+                            }}
+                          >
+                            {formatCurrency(sellPrice)}
+                          </Typography>
+                        </Box>
+                      </Grid>
+
+                      <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+                        <Box
+                          sx={{
+                            p: { xs: 1, sm: 1.5 },
+                            bgcolor: 'background.paper',
+                            borderRadius: 1,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-start',
+                            minHeight: { xs: '60px', sm: '70px' },
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{
+                              mb: 0.5,
+                              lineHeight: 1.2,
+                              fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                              fontWeight: 500,
+                            }}
+                          >
+                            Margem de Lucro
+                          </Typography>
+                          <Typography
+                            variant="h6"
+                            fontWeight="600"
+                            color={financialData.profitMargin >= 0 ? 'primary.main' : 'error.main'}
+                            sx={{
+                              fontSize: { xs: '1rem', sm: '1.1rem' },
+                              lineHeight: 1.2,
+                              wordBreak: 'break-word',
+                            }}
+                          >
+                            {formatPercentage(financialData.profitMargin)}
+                          </Typography>
+                        </Box>
+                      </Grid>
                     </Grid>
-                  </Grid>
+                  </Box>
                 </CardContent>
               </Card>
             )}
@@ -793,7 +1506,7 @@ const MenuModal: React.FC<MenuModalProps> = ({
 
       <Divider />
 
-      <DialogActions sx={{ p: 3, gap: 1 }}>
+      <DialogActions sx={{ gap: 1 }}>
         <Button onClick={handleClose} disabled={loading}>
           Cancelar
         </Button>

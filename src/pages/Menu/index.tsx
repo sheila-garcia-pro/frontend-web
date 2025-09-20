@@ -15,8 +15,24 @@ import {
   Pagination,
   CircularProgress,
   Alert,
+  Divider,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
-import { Search, Add, Edit, Delete, MenuBook, Restaurant, MoreVert } from '@mui/icons-material';
+import {
+  Search,
+  Add,
+  Edit,
+  Delete,
+  MenuBook,
+  Restaurant,
+  MoreVert,
+  Groups,
+  FoodBank,
+  Visibility,
+} from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { addNotification } from '../../store/slices/uiSlice';
@@ -46,6 +62,10 @@ const MenuPage: React.FC = () => {
   const [selectedMenu, setSelectedMenu] = useState<MenuListItem | null>(null);
   const [editMode, setEditMode] = useState(false);
 
+  // Estados do menu de ações
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [menuActionId, setMenuActionId] = useState<string | null>(null);
+
   // Função para carregar cardápios
   const loadMenus = useCallback(async () => {
     setLoading(true);
@@ -56,7 +76,13 @@ const MenuPage: React.FC = () => {
         search: searchTerm || undefined,
       });
 
-      setMenus(response.data);
+      // Simulação: adicionar dados de porções (remover quando a API fornecer esses dados)
+      const menusWithPortions = response.data.map((menu) => ({
+        ...menu,
+        totalPortions: Math.floor(Math.random() * 20) + 5, // Entre 5 e 24 porções
+      }));
+
+      setMenus(menusWithPortions);
       setTotalPages(response.totalPages);
       setTotal(response.total);
     } catch (error) {
@@ -122,19 +148,80 @@ const MenuPage: React.FC = () => {
     loadMenus(); // Recarregar lista
   };
 
+  const handleMenuAction = (event: React.MouseEvent<HTMLElement>, menuId: string) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+    setMenuActionId(menuId);
+  };
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+    setMenuActionId(null);
+  };
+
+  const handleMenuActionClick = (action: 'view' | 'edit' | 'delete', menu: MenuListItem) => {
+    handleCloseMenu();
+
+    switch (action) {
+      case 'view':
+        handleViewMenu(menu);
+        break;
+      case 'edit':
+        handleEditMenu(menu);
+        break;
+      case 'delete':
+        handleDeleteMenu(menu);
+        break;
+    }
+  };
+
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       {/* Cabeçalho */}
       <Box
-        sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}
+        sx={{
+          mb: 4,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: { xs: 2, sm: 0 },
+        }}
       >
         <Box>
-          <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 500 }}>
+          <Typography
+            variant="h4"
+            component="h1"
+            gutterBottom
+            sx={{
+              fontWeight: 700,
+              color: 'text.primary',
+              mb: 1,
+            }}
+          >
             Cardápios
           </Typography>
-          <Typography variant="body1" color="text.secondary">
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
             Gerencie seus cardápios e organize suas receitas
           </Typography>
+          {!loading && total > 0 && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
+              <Chip
+                label={`${total} cardápio${total !== 1 ? 's' : ''}`}
+                size="small"
+                color="primary"
+                variant="outlined"
+              />
+              {searchTerm && (
+                <Chip
+                  label={`${menus.length} resultado${menus.length !== 1 ? 's' : ''}`}
+                  size="small"
+                  color="secondary"
+                  variant="outlined"
+                />
+              )}
+            </Box>
+          )}
         </Box>
 
         <IfPermission permission="create_menu">
@@ -143,7 +230,17 @@ const MenuPage: React.FC = () => {
             color="primary"
             startIcon={<Add />}
             onClick={handleCreateMenu}
-            sx={{ borderRadius: 3, px: 3 }}
+            sx={{
+              borderRadius: 3,
+              px: 3,
+              py: 1.5,
+              fontWeight: 600,
+              textTransform: 'none',
+              boxShadow: (theme) => theme.shadows[4],
+              '&:hover': {
+                boxShadow: (theme) => theme.shadows[8],
+              },
+            }}
           >
             Novo cardápio
           </Button>
@@ -160,7 +257,7 @@ const MenuPage: React.FC = () => {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <Search />
+                <Search sx={{ color: 'text.secondary' }} />
               </InputAdornment>
             ),
           }}
@@ -168,6 +265,18 @@ const MenuPage: React.FC = () => {
             maxWidth: 600,
             '& .MuiOutlinedInput-root': {
               borderRadius: 3,
+              bgcolor: 'background.paper',
+              transition: 'all 0.2s ease-in-out',
+              '&:hover': {
+                boxShadow: (theme) => theme.shadows[2],
+              },
+              '&.Mui-focused': {
+                boxShadow: (theme) => theme.shadows[4],
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                  borderWidth: 2,
+                },
+              },
             },
           }}
         />
@@ -179,19 +288,65 @@ const MenuPage: React.FC = () => {
           <CircularProgress size={40} />
         </Box>
       ) : menus.length === 0 ? (
-        <Card sx={{ p: 4, textAlign: 'center' }}>
-          <MenuBook sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>
+        <Card
+          sx={{
+            p: 6,
+            textAlign: 'center',
+            borderRadius: 4,
+            bgcolor: 'background.paper',
+            border: '2px dashed',
+            borderColor: 'grey.300',
+          }}
+        >
+          <Box
+            sx={{
+              width: 120,
+              height: 120,
+              borderRadius: '50%',
+              bgcolor: 'primary.50',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mb: 3,
+              mx: 'auto',
+            }}
+          >
+            <MenuBook sx={{ fontSize: 56, color: 'primary.main' }} />
+          </Box>
+
+          <Typography variant="h5" color="text.primary" gutterBottom sx={{ fontWeight: 600 }}>
             {searchTerm ? 'Nenhum cardápio encontrado' : 'Nenhum cardápio criado ainda'}
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            sx={{ mb: 4, maxWidth: 400, mx: 'auto' }}
+          >
             {searchTerm
-              ? 'Tente ajustar os termos de busca'
-              : 'Crie seu primeiro cardápio para começar a organizar suas receitas'}
+              ? `Não encontramos cardápios com o termo "${searchTerm}". Tente ajustar os termos de busca ou criar um novo cardápio.`
+              : 'Crie seu primeiro cardápio para começar a organizar suas receitas e facilitar o planejamento das suas refeições.'}
           </Typography>
+
           <IfPermission permission="create_menu">
             {!searchTerm && (
-              <Button variant="contained" startIcon={<Add />} onClick={handleCreateMenu}>
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={<Add />}
+                onClick={handleCreateMenu}
+                sx={{
+                  borderRadius: 3,
+                  px: 4,
+                  py: 1.5,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  boxShadow: (theme) => theme.shadows[4],
+                  '&:hover': {
+                    boxShadow: (theme) => theme.shadows[8],
+                  },
+                }}
+              >
                 Criar primeiro cardápio
               </Button>
             )}
@@ -210,29 +365,55 @@ const MenuPage: React.FC = () => {
                     flexDirection: 'column',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease-in-out',
+                    position: 'relative',
+                    bgcolor: 'background.paper',
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'grey.200',
                     '&:hover': {
                       transform: 'translateY(-4px)',
-                      boxShadow: (theme) => theme.shadows[8],
+                      boxShadow: (theme) => theme.shadows[12],
+                      borderColor: 'primary.main',
                     },
                   }}
                   onClick={() => handleViewMenu(menu)}
                 >
-                  <CardContent sx={{ flexGrow: 1, pb: 1 }}>
+                  {/* Menu de ações */}
+                  <IconButton
+                    size="small"
+                    onClick={(e) => handleMenuAction(e, menu._id)}
+                    sx={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      zIndex: 1,
+                      bgcolor: 'background.paper',
+                      boxShadow: 1,
+                      '&:hover': {
+                        bgcolor: 'grey.100',
+                      },
+                    }}
+                  >
+                    <MoreVert fontSize="small" />
+                  </IconButton>
+
+                  <CardContent sx={{ flexGrow: 1, p: 3, textAlign: 'center' }}>
                     {/* Ícone do cardápio */}
                     <Box
                       sx={{
-                        width: 80,
-                        height: 80,
-                        borderRadius: 2,
+                        width: 72,
+                        height: 72,
+                        borderRadius: 3,
                         bgcolor: 'primary.main',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         mb: 2,
                         mx: 'auto',
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                       }}
                     >
-                      <Restaurant sx={{ fontSize: 40, color: 'white' }} />
+                      <Restaurant sx={{ fontSize: 32, color: 'white' }} />
                     </Box>
 
                     {/* Nome do cardápio */}
@@ -242,74 +423,194 @@ const MenuPage: React.FC = () => {
                       gutterBottom
                       sx={{
                         fontWeight: 600,
-                        textAlign: 'center',
                         mb: 1,
+                        color: 'text.primary',
+                        lineHeight: 1.3,
                       }}
                     >
                       {menu.name}
                     </Typography>
 
-                    {/* Informações do cardápio */}
-                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                      <Chip
-                        label={`${menu.totalItems} items`}
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                      />
+                    {/* Descrição se houver */}
+                    {menu.description && (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          mb: 2,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          fontSize: '0.875rem',
+                        }}
+                      >
+                        {menu.description}
+                      </Typography>
+                    )}
+
+                    <Divider sx={{ my: 2 }} />
+
+                    {/* Estatísticas do cardápio */}
+                    <Box
+                      sx={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}
+                    >
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            mb: 0.5,
+                          }}
+                        >
+                          <FoodBank sx={{ fontSize: 16, color: 'primary.main', mr: 0.5 }} />
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                            {menu.totalItems}
+                          </Typography>
+                        </Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Items
+                        </Typography>
+                      </Box>
+
+                      {menu.totalPortions && (
+                        <>
+                          <Box sx={{ width: '1px', height: 24, bgcolor: 'divider' }} />
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                mb: 0.5,
+                              }}
+                            >
+                              <Groups sx={{ fontSize: 16, color: 'success.main', mr: 0.5 }} />
+                              <Typography
+                                variant="h6"
+                                sx={{ fontWeight: 700, color: 'success.main' }}
+                              >
+                                {menu.totalPortions}
+                              </Typography>
+                            </Box>
+                            <Typography variant="caption" color="text.secondary">
+                              Porções
+                            </Typography>
+                          </Box>
+                        </>
+                      )}
                     </Box>
                   </CardContent>
-
-                  <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
-                    <IfPermission permission="update_menu">
-                      <IconButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditMenu(menu);
-                        }}
-                        color="primary"
-                        size="small"
-                      >
-                        <Edit />
-                      </IconButton>
-                    </IfPermission>
-
-                    <IfPermission permission="delete_menu">
-                      <IconButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteMenu(menu);
-                        }}
-                        color="error"
-                        size="small"
-                      >
-                        <Delete />
-                      </IconButton>
-                    </IfPermission>
-                  </CardActions>
                 </Card>
               </Grid>
             ))}
           </Grid>
 
-          {/* Paginação */}
-          {totalPages > 1 && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-              <Pagination
-                count={totalPages}
-                page={currentPage}
-                onChange={handlePageChange}
-                color="primary"
-                size="large"
-              />
-            </Box>
-          )}
+          {/* Menu de ações */}
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleCloseMenu}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            PaperProps={{
+              sx: {
+                mt: 1,
+                minWidth: 160,
+                borderRadius: 2,
+                boxShadow: (theme) => theme.shadows[8],
+              },
+            }}
+          >
+            {(() => {
+              const menu = menus.find((m) => m._id === menuActionId);
+              if (!menu) return null;
 
-          {/* Informações de resultados */}
-          <Box sx={{ textAlign: 'center', mt: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              Exibindo {menus.length} de {total} cardápios
-            </Typography>
+              return [
+                <MenuItem
+                  key="view"
+                  onClick={() => handleMenuActionClick('view', menu)}
+                  sx={{ py: 1 }}
+                >
+                  <ListItemIcon>
+                    <Visibility fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText primary="Visualizar" />
+                </MenuItem>,
+
+                <IfPermission key="edit-permission" permission="update_menu">
+                  <MenuItem onClick={() => handleMenuActionClick('edit', menu)} sx={{ py: 1 }}>
+                    <ListItemIcon>
+                      <Edit fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText primary="Editar" />
+                  </MenuItem>
+                </IfPermission>,
+
+                <IfPermission key="delete-permission" permission="delete_menu">
+                  <>
+                    <Divider />
+                    <MenuItem
+                      onClick={() => handleMenuActionClick('delete', menu)}
+                      sx={{ py: 1, color: 'error.main' }}
+                    >
+                      <ListItemIcon>
+                        <Delete fontSize="small" color="error" />
+                      </ListItemIcon>
+                      <ListItemText primary="Excluir" />
+                    </MenuItem>
+                  </>
+                </IfPermission>,
+              ];
+            })()}
+          </Menu>
+
+          {/* Paginação e informações */}
+          <Box sx={{ mt: 4 }}>
+            {totalPages > 1 && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                <Pagination
+                  count={totalPages}
+                  page={currentPage}
+                  onChange={handlePageChange}
+                  color="primary"
+                  size="large"
+                  sx={{
+                    '& .MuiPaginationItem-root': {
+                      borderRadius: 2,
+                      fontWeight: 500,
+                    },
+                    '& .Mui-selected': {
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    },
+                  }}
+                />
+              </Box>
+            )}
+
+            {/* Informações de resultados */}
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary">
+                {searchTerm ? (
+                  <>
+                    Exibindo <strong>{menus.length}</strong> de <strong>{total}</strong> cardápio
+                    {total !== 1 ? 's' : ''} encontrado{total !== 1 ? 's' : ''}
+                    {searchTerm && (
+                      <>
+                        {' '}
+                        para "<em>{searchTerm}</em>"
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    Exibindo <strong>{menus.length}</strong> de <strong>{total}</strong> cardápio
+                    {total !== 1 ? 's' : ''}
+                  </>
+                )}
+              </Typography>
+            </Box>
           </Box>
         </>
       )}

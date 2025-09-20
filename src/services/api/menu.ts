@@ -61,3 +61,49 @@ export const deleteMenu = async (id: string): Promise<void> => {
     throw error;
   }
 };
+
+// Interface para resposta de receitas e ingredientes combinados
+export interface RecipeIngredientItem {
+  id: string;
+  _id: string;
+  name: string;
+  category: string;
+  type: 'recipe' | 'ingredient';
+  image?: string;
+}
+
+export interface RecipesIngredientsResponse {
+  data: RecipeIngredientItem[];
+  total: number;
+}
+
+// Obter receitas e ingredientes do usuário em uma única chamada
+export const getRecipesIngredients = async (params?: {
+  page?: number;
+  itemPerPage?: number;
+  name?: string; // Parâmetro de busca por nome
+}): Promise<RecipesIngredientsResponse> => {
+  try {
+    const response = await api.get<RecipesIngredientsResponse>('/v1/users/me/recipes-ingredients', {
+      params,
+    });
+
+    // A API pode retornar os dados diretamente em response.data ou em response.data.data
+    if (response.data && Array.isArray(response.data)) {
+      return {
+        data: response.data,
+        total: response.data.length,
+      };
+    } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
+      return response.data;
+    } else {
+      return {
+        data: [],
+        total: 0,
+      };
+    }
+  } catch (error) {
+    console.error('Erro ao buscar receitas e ingredientes:', error);
+    throw error;
+  }
+};
