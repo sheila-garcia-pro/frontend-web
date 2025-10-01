@@ -23,7 +23,7 @@ const createCacheKey = (params: SearchParams): string => {
     page: params.page || 1,
     itemPerPage: params.itemPerPage || 12,
     category: params.category || '',
-    search: params.search || '',
+    name: params.name || '',
     sort: params.sort || 'name_asc',
   };
 

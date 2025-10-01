@@ -33,7 +33,7 @@ export interface SearchParams {
   page: number;
   itemPerPage: number;
   category?: string;
-  search?: string;
+  name?: string;
   sort?: string;
   forceRefresh?: boolean;
 }

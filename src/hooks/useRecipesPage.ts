@@ -56,14 +56,14 @@ export const useRecipesPage = () => {
           response = await getRecipes({
             page: 1,
             itemPerPage: 1000, // Carrega muitas receitas para filtros frontend
-            search: params.search,
+            name: params.search,
             category: params.category,
           });
         } else {
           response = await getCachedRecipes({
             page: 1,
             itemPerPage: 1000, // Carrega muitas receitas para filtros frontend
-            search: params.search,
+            name: params.search,
             category: params.category,
           });
         }

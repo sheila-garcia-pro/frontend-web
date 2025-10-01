@@ -73,7 +73,7 @@ function* reloadIngredientsList(showLoading = true, forceFullReload = true): Sag
     const searchParams: SearchParams = {
       page: 1,
       itemPerPage: forceFullReload ? 1000 : 10, // Carrega muitos ingredientes para permitir filtros frontend
-      search: undefined, // Remove filtros para recarregar tudo
+      name: undefined, // Remove filtros para recarregar tudo
       category: undefined,
       sort: 'name_asc',
     };

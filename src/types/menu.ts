@@ -49,7 +49,7 @@ export interface MenuListItem {
 export interface MenuSearchParams {
   page?: number;
   itemPerPage?: number;
-  search?: string;
+  name?: string;
 }
 
 // Interface para detalhes do cardápio

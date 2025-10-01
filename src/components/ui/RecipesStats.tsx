@@ -82,15 +82,6 @@ export const RecipesStats: React.FC<RecipesStatsProps> = ({
 
       {/* Filtros ativos */}
       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-        {searchTerm && (
-          <Chip
-            label={`Busca: "${searchTerm}"`}
-            size="small"
-            variant="outlined"
-            color="primary"
-            sx={{ borderRadius: 2 }}
-          />
-        )}
         {selectedCategory && (
           <Chip
             label={`Categoria: ${selectedCategory}`}

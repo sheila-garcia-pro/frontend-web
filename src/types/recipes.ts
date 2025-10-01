@@ -48,7 +48,7 @@ export interface SearchParams {
   page?: number;
   itemPerPage?: number;
   category?: string;
-  search?: string;
+  name?: string;
 }
 
 // Interface para custos diretos e indiretos

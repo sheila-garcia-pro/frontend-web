@@ -68,11 +68,13 @@ const IngredientsPage: React.FC = () => {
     debouncedSearchTerm,
     itemsPerPage,
 
-    // Dados do Redux
+    // Dados dos ingredientes
     allIngredients,
     ingredientsLoading,
     categories,
     categoriesLoading,
+    total,
+    totalPages,
 
     // Handlers
     handleSearchChange,
@@ -99,23 +101,8 @@ const IngredientsPage: React.FC = () => {
     { value: 'price_desc', label: 'Preço (Maior-Menor)' },
   ];
 
-  // Aplicar filtros e ordenação usando o hook personalizado
-  const { filteredAndSortedIngredients, totalFilteredItems } = useIngredientsFilters(
-    allIngredients,
-    {
-      searchTerm: debouncedSearchTerm,
-      category: selectedCategory,
-      sortOption,
-      currentTab,
-    },
-  );
-
-  // Aplicar paginação usando o hook personalizado
-  const { paginatedItems: paginatedIngredients, totalPages } = usePagination(
-    filteredAndSortedIngredients,
-    currentPage,
-    itemsPerPage,
-  );
+  // Usar diretamente os dados da API (sem filtros frontend)
+  const paginatedIngredients = allIngredients;
 
   const renderSkeletons = () => {
     const skeletonCount = itemsPerPage;
@@ -282,8 +269,8 @@ const IngredientsPage: React.FC = () => {
 
         {/* Estatísticas da lista */}
         <IngredientsStats
-          totalIngredients={allIngredients.length}
-          filteredCount={totalFilteredItems}
+          totalIngredients={total}
+          filteredCount={allIngredients.length}
           currentPage={currentPage}
           totalPages={totalPages}
           itemsPerPage={itemsPerPage}

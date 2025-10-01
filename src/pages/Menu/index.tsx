@@ -43,6 +43,7 @@ import { MenuListItem, MenusResponse } from '../../types/menu';
 import MenuModal from '../../components/ui/MenuModal/index';
 import MenuDeleteModal from '../../components/ui/MenuDeleteModal/index';
 import { MenuActions } from '../../components/pdf';
+import { useDebounce } from '../../hooks/useDebounce';
 import { useMenuPDF } from '../../hooks/useMenuPDF';
 import { usePDFModal } from '../../hooks/usePDFModal';
 import { PDFModal } from '../../components/pdf';
@@ -61,10 +62,13 @@ const MenuPage: React.FC = () => {
   // Estados da página
   const [menus, setMenus] = useState<MenuListItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+
+  // Aplicar debounce ao termo de busca
+  const debouncedSearchTerm = useDebounce(searchInput, 300);
 
   // Estados dos modais
   const [menuModalOpen, setMenuModalOpen] = useState(false);
@@ -83,7 +87,7 @@ const MenuPage: React.FC = () => {
       const response = await getUserMenus({
         page: currentPage,
         itemPerPage: 12,
-        search: searchTerm || undefined,
+        name: debouncedSearchTerm || undefined,
       });
 
       // Simulação: adicionar dados de porções (remover quando a API fornecer esses dados)
@@ -107,7 +111,7 @@ const MenuPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchTerm, dispatch]);
+  }, [currentPage, debouncedSearchTerm, dispatch]);
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -116,7 +120,7 @@ const MenuPage: React.FC = () => {
 
   // Handlers
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
+    setSearchInput(event.target.value);
     setCurrentPage(1); // Reset para primeira página ao buscar
   };
 
@@ -270,7 +274,7 @@ const MenuPage: React.FC = () => {
                 color="primary"
                 variant="outlined"
               />
-              {searchTerm && (
+              {debouncedSearchTerm && (
                 <Chip
                   label={`${menus.length} resultado${menus.length !== 1 ? 's' : ''}`}
                   size="small"
@@ -310,7 +314,7 @@ const MenuPage: React.FC = () => {
         <TextField
           fullWidth
           placeholder="Digite aqui o nome do cardápio..."
-          value={searchTerm}
+          value={searchInput}
           onChange={handleSearchChange}
           InputProps={{
             startAdornment: (
@@ -373,7 +377,7 @@ const MenuPage: React.FC = () => {
           </Box>
 
           <Typography variant="h5" color="text.primary" gutterBottom sx={{ fontWeight: 600 }}>
-            {searchTerm ? 'Nenhum cardápio encontrado' : 'Nenhum cardápio criado ainda'}
+            {debouncedSearchTerm ? 'Nenhum cardápio encontrado' : 'Nenhum cardápio criado ainda'}
           </Typography>
 
           <Typography
@@ -381,13 +385,13 @@ const MenuPage: React.FC = () => {
             color="text.secondary"
             sx={{ mb: 4, maxWidth: 400, mx: 'auto' }}
           >
-            {searchTerm
-              ? `Não encontramos cardápios com o termo "${searchTerm}". Tente ajustar os termos de busca ou criar um novo cardápio.`
+            {debouncedSearchTerm
+              ? `Não encontramos cardápios com o termo "${debouncedSearchTerm}". Tente ajustar os termos de busca ou criar um novo cardápio.`
               : 'Crie seu primeiro cardápio para começar a organizar suas receitas e facilitar o planejamento das suas refeições.'}
           </Typography>
 
           <IfPermission permission="create_menu">
-            {!searchTerm && (
+            {!debouncedSearchTerm && (
               <Button
                 variant="contained"
                 size="large"
@@ -674,14 +678,14 @@ const MenuPage: React.FC = () => {
             {/* Informações de resultados */}
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="body2" color="text.secondary">
-                {searchTerm ? (
+                {debouncedSearchTerm ? (
                   <>
                     Exibindo <strong>{menus.length}</strong> de <strong>{total}</strong> cardápio
                     {total !== 1 ? 's' : ''} encontrado{total !== 1 ? 's' : ''}
-                    {searchTerm && (
+                    {debouncedSearchTerm && (
                       <>
                         {' '}
-                        para "<em>{searchTerm}</em>"
+                        para "<em>{debouncedSearchTerm}</em>"
                       </>
                     )}
                   </>

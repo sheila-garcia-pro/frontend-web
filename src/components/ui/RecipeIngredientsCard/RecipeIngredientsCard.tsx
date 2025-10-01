@@ -100,7 +100,7 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
         const response = await getCachedIngredients({
           page: 1,
           itemPerPage: 1000,
-          search: debouncedSearchTerm,
+          name: debouncedSearchTerm,
         });
         setSearchResults(response.data);
       } catch (error) {

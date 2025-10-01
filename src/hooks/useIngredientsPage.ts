@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { fetchIngredientsRequest } from '../store/slices/ingredientsSlice';
 import { fetchCategoriesRequest } from '../store/slices/categoriesSlice';
+import { getCachedIngredients, getIngredients } from '../services/api/ingredients';
+import { clearCache } from '../services/api';
+import { addNotification } from '../store/slices/uiSlice';
+import { Ingredient } from '../types/ingredients';
 import { useDebounce } from './useDebounce';
 
 /**
@@ -23,17 +26,17 @@ export const useIngredientsPage = () => {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedIngredientId, setSelectedIngredientId] = useState<string | null>(null);
 
+  // Estados para ingredientes (similar ao useRecipesPage)
+  const [loading, setLoading] = useState(true);
+  const [ingredientsList, setIngredientsList] = useState<Ingredient[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+
   // Refs para controle de sincronização
   const previousTotal = useRef(0);
   const isInitialLoad = useRef(true);
 
-  // Redux state
-  const {
-    items: allIngredients,
-    loading: ingredientsLoading,
-    total,
-  } = useSelector((state: RootState) => state.ingredients);
-
+  // Redux state apenas para categorias
   const { items: categories, loading: categoriesLoading } = useSelector(
     (state: RootState) => state.categories,
   );
@@ -42,28 +45,68 @@ export const useIngredientsPage = () => {
   const debouncedSearchTerm = useDebounce(searchInput, 300);
 
   // Constantes
-  const itemsPerPage = 10;
+  const itemsPerPage = 1000;
 
-  // Função para carregar ingredientes com parâmetros otimizados
+  // Função para carregar ingredientes com parâmetros otimizados (similar ao useRecipesPage)
   const loadIngredients = useCallback(
-    (
+    async (
       params: {
         search?: string;
         category?: string;
         forceRefresh?: boolean;
+        showNotification?: boolean;
       } = {},
     ) => {
-      dispatch(
-        fetchIngredientsRequest({
-          page: 1,
-          itemPerPage: 1000, // Carrega muitos ingredientes para filtros frontend
-          search: params.search,
-          category: params.category,
-          forceRefresh: params.forceRefresh,
-        }),
-      );
+      setLoading(true);
+      try {
+        let response;
+
+        if (params.forceRefresh) {
+          // Limpa completamente o cache antes de fazer a nova requisição
+          clearCache('/v1/users/me/ingredient');
+
+          response = await getIngredients({
+            page: currentPage,
+            itemPerPage: itemsPerPage,
+            name: params.search,
+            category: params.category,
+          });
+        } else {
+          response = await getCachedIngredients({
+            page: currentPage,
+            itemPerPage: itemsPerPage,
+            name: params.search,
+            category: params.category,
+          });
+        }
+
+        setIngredientsList(response.data);
+        setTotalPages(Math.ceil(response.total / itemsPerPage));
+        setTotalItems(response.total);
+
+        if (params.showNotification !== false) {
+          dispatch(
+            addNotification({
+              message: 'Ingredientes carregados com sucesso!',
+              type: 'success',
+              duration: 4000,
+            }),
+          );
+        }
+      } catch (error) {
+        dispatch(
+          addNotification({
+            message: 'Erro ao carregar ingredientes.',
+            type: 'error',
+            duration: 5000,
+          }),
+        );
+        setIngredientsList([]);
+      } finally {
+        setLoading(false);
+      }
     },
-    [dispatch],
+    [currentPage, itemsPerPage, dispatch],
   );
 
   // Carregar dados iniciais
@@ -86,13 +129,25 @@ export const useIngredientsPage = () => {
       loadIngredients({
         search: debouncedSearchTerm,
         category: selectedCategory || undefined,
+        showNotification: false,
       });
     }
   }, [debouncedSearchTerm, selectedCategory, loadIngredients]);
 
+  // Carregar ingredientes quando página mudar
+  useEffect(() => {
+    if (!isInitialLoad.current) {
+      loadIngredients({
+        search: debouncedSearchTerm,
+        category: selectedCategory || undefined,
+        showNotification: false,
+      });
+    }
+  }, [currentPage, loadIngredients, debouncedSearchTerm, selectedCategory]);
+
   // Detectar mudanças na lista de ingredientes e resetar página se necessário
   useEffect(() => {
-    const currentTotal = allIngredients.length;
+    const currentTotal = ingredientsList.length;
 
     // Se houve mudança no total de ingredientes (criação/exclusão)
     // e não estamos na primeira página, reseta para página 1
@@ -101,7 +156,7 @@ export const useIngredientsPage = () => {
     }
 
     previousTotal.current = currentTotal;
-  }, [allIngredients.length, currentPage]);
+  }, [ingredientsList.length, currentPage]);
 
   // Reset página quando filtros mudarem
   useEffect(() => {
@@ -191,12 +246,13 @@ export const useIngredientsPage = () => {
     debouncedSearchTerm,
     itemsPerPage,
 
-    // Dados do Redux
-    allIngredients,
-    ingredientsLoading,
+    // Dados dos ingredientes
+    allIngredients: ingredientsList,
+    ingredientsLoading: loading,
     categories,
     categoriesLoading,
-    total,
+    total: totalItems,
+    totalPages,
 
     // Handlers
     handleSearchChange,

@@ -66,14 +66,6 @@ export const IngredientsStats: React.FC<IngredientsStatsProps> = ({
                 color="primary"
               />
             )}
-            {searchTerm && (
-              <Chip
-                label={`Busca: "${searchTerm}"`}
-                size="small"
-                variant="outlined"
-                color="secondary"
-              />
-            )}
           </Box>
         )}
       </Box>
