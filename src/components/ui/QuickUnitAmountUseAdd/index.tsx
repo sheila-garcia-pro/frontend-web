@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -10,11 +10,18 @@ import {
   DialogActions,
   Typography,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
 } from '@mui/material';
 import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { addNotification } from '../../../store/slices/uiSlice';
 import { createUnitAmountUse } from '../../../services/api/unitsAmountUse';
+import { getUnitMeasures } from '../../../services/api/unitMeasure';
+import { UnitMeasure } from '../../../types/unitMeasure';
 
 interface QuickUnitAmountUseAddProps {
   onUnitAdded?: (unitId: string, unitName: string, quantity: string, unitMeasure: string) => void;
@@ -26,6 +33,8 @@ const QuickUnitAmountUseAdd: React.FC<QuickUnitAmountUseAddProps> = ({ onUnitAdd
   const [quantity, setQuantity] = useState('');
   const [unitMeasure, setUnitMeasure] = useState('');
   const [loading, setLoading] = useState(false);
+  const [unitMeasures, setUnitMeasures] = useState<UnitMeasure[]>([]);
+  const [loadingUnitMeasures, setLoadingUnitMeasures] = useState(false);
   const [errors, setErrors] = useState({
     name: '',
     quantity: '',
@@ -33,6 +42,32 @@ const QuickUnitAmountUseAdd: React.FC<QuickUnitAmountUseAddProps> = ({ onUnitAdd
   });
 
   const dispatch = useDispatch();
+
+  // Carregar unidades de medida quando o modal abrir
+  useEffect(() => {
+    if (modalOpen) {
+      loadUnitMeasures();
+    }
+  }, [modalOpen]);
+
+  const loadUnitMeasures = async () => {
+    try {
+      setLoadingUnitMeasures(true);
+      const units = await getUnitMeasures();
+      setUnitMeasures(units);
+    } catch (error) {
+      console.error('Erro ao carregar unidades de medida:', error);
+      dispatch(
+        addNotification({
+          message: 'Erro ao carregar unidades de medida',
+          type: 'error',
+          duration: 4000,
+        }),
+      );
+    } finally {
+      setLoadingUnitMeasures(false);
+    }
+  };
 
   const handleOpenModal = useCallback(() => {
     setModalOpen(true);
@@ -43,6 +78,7 @@ const QuickUnitAmountUseAdd: React.FC<QuickUnitAmountUseAddProps> = ({ onUnitAdd
     setName('');
     setQuantity('');
     setUnitMeasure('');
+    setUnitMeasures([]);
     setErrors({ name: '', quantity: '', unitMeasure: '' });
   }, []);
 
@@ -246,18 +282,36 @@ const QuickUnitAmountUseAdd: React.FC<QuickUnitAmountUseAddProps> = ({ onUnitAdd
               disabled={loading}
               sx={{ flex: 1 }}
             />
-            <TextField
-              label="Unidade de Medida"
-              value={unitMeasure}
-              onChange={(e) => handleChange('unitMeasure', e.target.value)}
-              onKeyPress={handleKeyPress}
-              required
-              variant="outlined"
-              error={!!errors.unitMeasure}
-              helperText={errors.unitMeasure || 'Ex: ml, g, kg, unidades...'}
-              disabled={loading}
-              sx={{ flex: 1 }}
-            />
+
+            <FormControl sx={{ flex: 1 }} required error={!!errors.unitMeasure} disabled={loading}>
+              <InputLabel id="unit-measure-label">Unidade de Medida</InputLabel>
+              <Select
+                labelId="unit-measure-label"
+                value={unitMeasure}
+                onChange={(e) => handleChange('unitMeasure', e.target.value)}
+                label="Unidade de Medida"
+                disabled={loading || loadingUnitMeasures}
+              >
+                {loadingUnitMeasures ? (
+                  <MenuItem value="" disabled>
+                    <CircularProgress size={20} sx={{ mr: 1 }} />
+                    Carregando...
+                  </MenuItem>
+                ) : (
+                  unitMeasures.map((unit) => (
+                    <MenuItem key={unit._id} value={unit.name}>
+                      {unit.name} ({unit.acronym})
+                    </MenuItem>
+                  ))
+                )}
+                {!loadingUnitMeasures && unitMeasures.length === 0 && (
+                  <MenuItem value="" disabled>
+                    Nenhuma unidade disponível
+                  </MenuItem>
+                )}
+              </Select>
+              {errors.unitMeasure && <FormHelperText error>{errors.unitMeasure}</FormHelperText>}
+            </FormControl>
           </Box>
         </DialogContent>
 

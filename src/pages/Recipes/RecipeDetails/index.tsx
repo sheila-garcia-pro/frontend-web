@@ -40,6 +40,7 @@ import {
   convertAPIIngredientsToRecipeIngredients,
 } from '../../../types/recipeIngredients';
 import RecipeStepsCard from '../../../components/ui/RecipeStepsCard';
+import NutritionalInfoSection from '../../../components/ui/NutritionalInfoSection';
 import RecipeSaveManager from '../../../components/ui/RecipeSaveManager';
 import RecipeAvatar from '../../../components/ui/RecipeAvatar';
 
@@ -745,6 +746,35 @@ const RecipeDetailsPage: FC = () => {
             }}
           />
         </Box>
+
+        {/* Card de Informações Nutricionais */}
+        {recipeIngredients.length > 0 && (
+          <Box sx={{ mt: 3 }}>
+            <Card sx={{ borderRadius: 3 }}>
+              <CardContent sx={{ p: 3 }}>
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{
+                    fontWeight: 600,
+                    color: 'primary.main',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    mb: 2,
+                  }}
+                >
+                  🍎 Rótulo Nutricional
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Informações nutricionais calculadas baseadas nos ingredientes desta receita
+                </Typography>
+
+                <NutritionalInfoSection recipe={recipe} recipeIngredients={recipeIngredients} />
+              </CardContent>
+            </Card>
+          </Box>
+        )}
 
         {/* Botão Salvar */}
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
