@@ -39,8 +39,7 @@ import { IngredientPriceHistory, RecipeIngredient } from '../../../types/recipeI
 import { getCachedIngredientPriceHistory } from '../../../services/api/ingredients';
 import { getNutritionalTable } from '../../../services/api/nutritionalTable';
 import { NutritionalTable } from '../../../types/nutritionalTable';
-import { getCachedUnitMeasures } from '../../../services/api/unitMeasure';
-import { UnitMeasure } from '../../../types/unitMeasure';
+import { useUnits } from '../../../hooks/useUnits';
 import { calculatePricePerPortion } from '../../../utils/unitConversion';
 
 interface IngredientDetailModalProps {
@@ -83,8 +82,14 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
   const [loadingPriceHistory, setLoadingPriceHistory] = useState(false);
   const [loadingNutritional, setLoadingNutritional] = useState(false);
   const [currentTab, setCurrentTab] = useState(0);
-  const [unitMeasures, setUnitMeasures] = useState<UnitMeasure[]>([]);
-  const [loadingUnits, setLoadingUnits] = useState(false);
+
+  // Usar o hook de unidades robusto
+  const {
+    normalizedUnits,
+    loading: loadingUnits,
+    error: unitsError,
+    validateUnitConsistency,
+  } = useUnits();
 
   // Função para carregar histórico de preços
   const loadPriceHistory = useCallback(async (ingredientId: string) => {
@@ -112,19 +117,6 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
       console.error('Erro ao carregar tabela nutricional:', error);
     } finally {
       setLoadingNutritional(false);
-    }
-  }, []);
-
-  // Função para carregar unidades de medida
-  const loadUnitMeasures = useCallback(async () => {
-    setLoadingUnits(true);
-    try {
-      const data = await getCachedUnitMeasures();
-      setUnitMeasures(data || []);
-    } catch (error) {
-      console.error('Erro ao carregar unidades de medida:', error);
-    } finally {
-      setLoadingUnits(false);
     }
   }, []);
 
@@ -163,9 +155,6 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
   // Resetar campos quando o ingrediente mudar ou quando houver dados existentes
   useEffect(() => {
     if (ingredient) {
-      // Carregar unidades de medida
-      loadUnitMeasures();
-
       // Se há dados existentes (modo edição), usar esses dados
       if (existingData) {
         setQuantity(existingData.quantity.toString());
@@ -197,7 +186,7 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
       loadPriceHistory(ingredient._id);
       loadNutritionalTables(ingredient.name);
     }
-  }, [ingredient, existingData, loadPriceHistory, loadNutritionalTables, loadUnitMeasures]);
+  }, [ingredient, existingData, loadPriceHistory, loadNutritionalTables]);
 
   // Calcular custo estimado
   const calculateEstimatedCost = () => {
@@ -355,9 +344,12 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
                             Carregando unidades...
                           </MenuItem>
                         ) : (
-                          unitMeasures.map((unit) => (
-                            <MenuItem key={unit._id} value={unit.name}>
-                              {unit.name} ({unit.acronym})
+                          normalizedUnits.map((unit) => (
+                            <MenuItem key={unit.id} value={unit.name}>
+                              {unit.name} {unit.acronym && `(${unit.acronym})`}
+                              {unit.type === 'amount-use' &&
+                                unit.baseUnitName &&
+                                ` - Base: ${unit.baseUnitName}`}
                             </MenuItem>
                           ))
                         )}
@@ -501,9 +493,12 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
                               Carregando unidades...
                             </MenuItem>
                           ) : (
-                            unitMeasures.map((unit) => (
-                              <MenuItem key={unit._id} value={unit.name}>
-                                {unit.name} ({unit.acronym})
+                            normalizedUnits.map((unit) => (
+                              <MenuItem key={unit.id} value={unit.name}>
+                                {unit.name} {unit.acronym && `(${unit.acronym})`}
+                                {unit.type === 'amount-use' &&
+                                  unit.baseUnitName &&
+                                  ` - Base: ${unit.baseUnitName}`}
                               </MenuItem>
                             ))
                           )}

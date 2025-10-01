@@ -21,10 +21,16 @@ export interface Recipe {
   descripition: string;
   ingredients: RecipeIngredientAPI[];
   modePreparation?: string[];
-  // Campos financeiros
-  sellingPrice?: number; // Preço de venda
-  costPrice?: number; // Preço de custo
-  profit?: number; // Lucro
+  // Campos financeiros atualizados
+  priceSale?: number;
+  priceCost?: number;
+  priceProfit?: number;
+  costDirect?: CostItem[];
+  costIndirect?: CostItem[];
+  // Campos antigos para compatibilidade
+  sellingPrice?: number;
+  costPrice?: number;
+  profit?: number;
 }
 
 export interface RecipesResponse {
@@ -45,6 +51,13 @@ export interface SearchParams {
   search?: string;
 }
 
+// Interface para custos diretos e indiretos
+export interface CostItem {
+  name: string;
+  cost: number;
+  description: string;
+}
+
 export interface CreateRecipeParams {
   name: string;
   sku?: string;
@@ -56,10 +69,16 @@ export interface CreateRecipeParams {
   weightRecipe: string;
   typeWeightRecipe: string;
   descripition: string;
-  ingredients?: RecipeIngredientAPI[];
+  ingredients: RecipeIngredientAPI[];
   modePreparation?: string[];
-  // Campos financeiros
-  sellingPrice?: number; // Preço de venda
-  costPrice?: number; // Preço de custo
-  profit?: number; // Lucro
+  // Novos campos financeiros obrigatórios
+  priceSale: number;
+  priceCost: number;
+  priceProfit: number;
+  costDirect: CostItem[];
+  costIndirect: CostItem[];
+  // Campos antigos para compatibilidade
+  sellingPrice?: number;
+  costPrice?: number;
+  profit?: number;
 }

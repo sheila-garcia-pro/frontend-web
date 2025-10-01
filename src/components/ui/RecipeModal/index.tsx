@@ -25,16 +25,21 @@ import { Schedule as ScheduleIcon, Scale as ScaleIcon } from '@mui/icons-materia
 import { Dayjs } from 'dayjs';
 import 'dayjs/locale/pt-br';
 import { useDispatch } from 'react-redux';
-import { CreateRecipeParams } from '../../../types/recipes';
+import { CreateRecipeParams, CostItem } from '../../../types/recipes';
 import { addNotification } from '../../../store/slices/uiSlice';
 import { createRecipe } from '../../../services/api/recipes';
 import { getUserRecipeCategories, RecipeCategory } from '../../../services/api/recipeCategories';
 import { getYieldsRecipes } from '../../../services/api/yields';
 import { getUnitMeasures } from '../../../services/api/unitMeasure';
+import { getUserUnitsAmountUse } from '../../../services/api/unitsAmountUse';
 import { UnitMeasure } from '../../../types/unitMeasure';
+import { UnitAmountUse } from '../../../types/unitAmountUse';
 import { RecipeIngredient } from '../../../types/recipeIngredients';
 import RecipeIngredientsCard from '../RecipeIngredientsCard';
+import RecipeStepsCard from '../RecipeStepsCard';
 import QuickCategoryAdd from '../QuickCategoryAdd';
+import QuickUnitAmountUseAdd from '../QuickUnitAmountUseAdd';
+import EnhancedFinancialSection from '../EnhancedFinancialSection';
 import api from '../../../services/api';
 
 interface RecipeModalProps {
@@ -64,6 +69,13 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
     weightRecipe: '',
     typeWeightRecipe: '',
     descripition: '',
+    ingredients: [],
+    modePreparation: [],
+    priceSale: 0,
+    priceCost: 0,
+    priceProfit: 0,
+    costDirect: [],
+    costIndirect: [],
     sellingPrice: undefined,
     costPrice: undefined,
     profit: undefined,
@@ -75,14 +87,17 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preparationTimeValue, setPreparationTimeValue] = useState<Dayjs | null>(null);
   const [recipeIngredients, setRecipeIngredients] = useState<RecipeIngredient[]>([]);
+  const [recipeSteps, setRecipeSteps] = useState<string[]>([]);
 
   const [userCategories, setUserCategories] = useState<RecipeCategory[]>([]);
   const [yields, setYields] = useState<YieldItem[]>([]);
   const [unitMeasures, setUnitMeasures] = useState<UnitMeasure[]>([]);
+  const [userUnitsAmountUse, setUserUnitsAmountUse] = useState<UnitAmountUse[]>([]);
 
   const [loadingUserCategories, setLoadingUserCategories] = useState(false);
   const [loadingYields, setLoadingYields] = useState(false);
   const [loadingUnitMeasures, setLoadingUnitMeasures] = useState(false);
+  const [loadingUserUnits, setLoadingUserUnits] = useState(false);
   const [updatingCategories, setUpdatingCategories] = useState(false);
 
   const loadUserCategories = useCallback(async () => {
@@ -149,13 +164,33 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
     }
   }, [dispatch]);
 
+  const loadUserUnitsAmountUse = useCallback(async () => {
+    try {
+      setLoadingUserUnits(true);
+      const units = await getUserUnitsAmountUse();
+      setUserUnitsAmountUse(units);
+    } catch (error) {
+      console.error('Erro ao carregar unidades personalizadas do usuário:', error);
+      dispatch(
+        addNotification({
+          message: 'Erro ao carregar unidades personalizadas',
+          type: 'error',
+          duration: 4000,
+        }),
+      );
+    } finally {
+      setLoadingUserUnits(false);
+    }
+  }, [dispatch]);
+
   useEffect(() => {
     if (open) {
       loadUserCategories();
       loadYields();
       loadUnitMeasures();
+      loadUserUnitsAmountUse();
     }
-  }, [open, loadUserCategories, loadYields, loadUnitMeasures]);
+  }, [open, loadUserCategories, loadYields, loadUnitMeasures, loadUserUnitsAmountUse]);
 
   useEffect(() => {
     if (!open) {
@@ -170,12 +205,20 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
         weightRecipe: '',
         typeWeightRecipe: '',
         descripition: '',
+        ingredients: [],
+        modePreparation: [],
+        priceSale: 0,
+        priceCost: 0,
+        priceProfit: 0,
+        costDirect: [],
+        costIndirect: [],
       });
       setErrors({});
       setSelectedFile(null);
       setSubmitting(false);
       setPreparationTimeValue(null);
       setRecipeIngredients([]);
+      setRecipeSteps([]);
     }
   }, [open]);
 
@@ -223,6 +266,10 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
     setRecipeIngredients(ingredients);
   };
 
+  const handleStepsUpdate = (steps: string[]) => {
+    setRecipeSteps(steps);
+  };
+
   const handleCategoryAdded = async (categoryId: string, categoryName: string) => {
     try {
       setUpdatingCategories(true);
@@ -265,6 +312,63 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
       );
     } finally {
       setUpdatingCategories(false);
+    }
+  };
+
+  const handleUnitAdded = async (
+    unitId: string,
+    unitName: string,
+    quantity: string,
+    unitMeasure: string,
+  ) => {
+    try {
+      // Recarrega a lista completa de unidades da API
+      await loadUserUnitsAmountUse();
+
+      // Converte a nova unidade para o formato esperado pelo select
+      // Usamos o nome completo como valor para compatibilidade
+      const unitDisplayName = `${unitName} (${quantity} ${unitMeasure})`;
+
+      // Seleciona automaticamente a nova unidade
+      setFormData((prev) => ({ ...prev, typeWeightRecipe: unitDisplayName }));
+
+      // Remove erro de unidade se existir
+      if (errors.typeWeightRecipe) {
+        setErrors((prev) => ({ ...prev, typeWeightRecipe: '' }));
+      }
+
+      dispatch(
+        addNotification({
+          message: 'Lista de unidades atualizada!',
+          type: 'success',
+          duration: 2000,
+        }),
+      );
+    } catch (error) {
+      console.error('Erro ao recarregar unidades:', error);
+      // Fallback: adiciona apenas localmente se a recarga falhar
+      const newUnit = {
+        id: unitId,
+        name: unitName,
+        quantity: quantity,
+        unitMeasure: unitMeasure,
+      };
+      setUserUnitsAmountUse((prev) => [...prev, newUnit]);
+
+      const unitDisplayName = `${unitName} (${quantity} ${unitMeasure})`;
+      setFormData((prev) => ({ ...prev, typeWeightRecipe: unitDisplayName }));
+
+      if (errors.typeWeightRecipe) {
+        setErrors((prev) => ({ ...prev, typeWeightRecipe: '' }));
+      }
+
+      dispatch(
+        addNotification({
+          message: 'Unidade adicionada localmente',
+          type: 'warning',
+          duration: 3000,
+        }),
+      );
     }
   };
 
@@ -389,29 +493,45 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
       const selectedCategory = userCategories.find((cat) => cat.id === formData.category);
       const categoryName = selectedCategory ? selectedCategory.name : formData.category;
 
-      // Find the weight unit from the selected unit ID
+      // Find the weight unit from the selected unit ID or custom unit
+      let weightUnitName;
       const selectedWeightUnit = unitMeasures.find(
         (unit) => unit._id === formData.typeWeightRecipe,
       );
-      const weightUnitName = selectedWeightUnit
-        ? selectedWeightUnit.name
-        : formData.typeWeightRecipe;
+
+      if (selectedWeightUnit) {
+        // É uma unidade do sistema
+        weightUnitName = selectedWeightUnit.name;
+      } else {
+        // É uma unidade personalizada - usa o valor diretamente já que contém toda a informação
+        weightUnitName = formData.typeWeightRecipe;
+      }
 
       // Create the submission data with proper format
       const submissionData = {
         ...formData,
         category: categoryName,
-        yieldRecipe: formData.yieldRecipe, // This is now a free text field
-        typeYield: formData.typeYield, // This is now the name directly
+        yieldRecipe: formData.yieldRecipe,
+        typeYield: formData.typeYield,
         typeWeightRecipe: weightUnitName,
         ingredients: recipeIngredients.map((ri) => ({
           idIngredient: ri.ingredient._id,
           quantityIngredientRecipe: ri.quantity.toString(),
+          // Use the unit name directly, not the ID
           unitAmountUseIngredient: ri.unitMeasure,
-          priceQuantityIngredient: ri.ingredient.price?.price || 0,
-          unitMeasure: ri.ingredient.price?.unitMeasure || ri.unitMeasure,
         })),
+        modePreparation: recipeSteps.length > 0 ? recipeSteps : [],
+        // Ensure required financial fields are included
+        priceSale: formData.priceSale || 0,
+        priceCost: formData.priceCost || 0,
+        priceProfit: formData.priceProfit || 0,
+        costDirect: formData.costDirect || [],
+        costIndirect: formData.costIndirect || [],
       };
+
+      // Debug: Log payload before sending
+      console.log('Payload being sent:', submissionData);
+      console.log('Recipe ingredients:', recipeIngredients);
 
       await createRecipe(submissionData);
 
@@ -427,16 +547,25 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
       onClose();
     } catch (error: unknown) {
       console.error('Erro ao criar receita:', error);
-      const errorMessage =
-        error instanceof Error && 'response' in error && error.response
-          ? (error.response as { data?: { message?: string } })?.data?.message ||
-            'Erro ao criar receita'
-          : 'Erro ao criar receita';
+
+      let errorMessage = 'Erro ao criar receita';
+
+      if (error instanceof Error && 'response' in error && error.response) {
+        const responseData = (error.response as { data?: { message?: string; error?: string } })
+          ?.data;
+
+        if (responseData?.message?.includes('Unidade de quantidade de uso não existe')) {
+          errorMessage = `Erro: A unidade de medida "${recipeIngredients.find((ri) => !ri.unitMeasure)?.unitMeasure || 'desconhecida'}" não é válida. Verifique se as unidades dos ingredientes estão corretas.`;
+        } else {
+          errorMessage = responseData?.message || responseData?.error || errorMessage;
+        }
+      }
+
       dispatch(
         addNotification({
           message: errorMessage,
           type: 'error',
-          duration: 5000,
+          duration: 8000,
         }),
       );
     } finally {
@@ -450,17 +579,51 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="sm"
-      fullWidth
+      maxWidth={false}
+      fullWidth={false}
       PaperProps={{
         elevation: 5,
-        sx: { borderRadius: 2 },
+        sx: {
+          borderRadius: 2,
+          width: '66.67vw', // 2/3 da largura da viewport
+          maxWidth: '66.67vw',
+          height: '90vh',
+          maxHeight: '90vh',
+          margin: 'auto', // Centraliza horizontalmente
+          overflow: 'hidden', // Evita scroll horizontal
+        },
       }}
     >
-      <DialogTitle>Nova Receita</DialogTitle>
-      <DialogContent dividers>
-        <Box sx={{ py: 2 }}>
-          <Stack spacing={3}>
+      <DialogTitle sx={{ pb: 2 }}>
+        <Typography variant="h5" sx={{ fontWeight: 600 }}>
+          Nova Receita
+        </Typography>
+      </DialogTitle>
+      <DialogContent
+        dividers
+        sx={{
+          px: 3,
+          py: 2,
+          overflow: 'auto', // Permite scroll vertical apenas
+          maxHeight: 'calc(90vh - 120px)', // Reserva espaço para header e footer
+          '&::-webkit-scrollbar': {
+            width: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            backgroundColor: 'rgba(0,0,0,0.1)',
+            borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: 'rgba(0,0,0,0.3)',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: 'rgba(0,0,0,0.5)',
+            },
+          },
+        }}
+      >
+        <Box sx={{ py: 1, width: '100%', boxSizing: 'border-box' }}>
+          <Stack spacing={4}>
             <TextField
               label="Nome da Receita"
               name="name"
@@ -701,64 +864,169 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
               />
             </LocalizationProvider>
 
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <TextField
-                label="Peso da Receita"
-                name="weightRecipe"
-                value={formData.weightRecipe}
-                onChange={handleWeightChange}
-                fullWidth
-                required
-                variant="outlined"
-                error={!!errors.weightRecipe}
-                helperText={errors.weightRecipe || 'Digite apenas números (ex: 1.5, 250)'}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <ScaleIcon />
-                    </InputAdornment>
-                  ),
-                  inputProps: {
-                    inputMode: 'decimal',
-                    pattern: '[0-9]*[.,]?[0-9]*',
-                  },
+            <Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'end',
+                  mb: 1,
                 }}
-                placeholder="Ex: 1.5, 250, 0.5"
-                sx={{ flex: 2 }}
-              />
+              >
+                <QuickUnitAmountUseAdd onUnitAdded={handleUnitAdded} />
+              </Box>
 
-              <FormControl fullWidth required error={!!errors.typeWeightRecipe} sx={{ flex: 1 }}>
-                <InputLabel id="weight-type-label">Unidade</InputLabel>
-                <Select
-                  labelId="weight-type-label"
-                  name="typeWeightRecipe"
-                  value={formData.typeWeightRecipe}
-                  onChange={handleChange}
-                  label="Unidade"
-                  disabled={loadingUnitMeasures}
-                >
-                  {loadingUnitMeasures ? (
-                    <MenuItem value="" disabled>
-                      <CircularProgress size={20} sx={{ mr: 1 }} />
-                      Carregando unidades...
-                    </MenuItem>
-                  ) : (
-                    unitMeasures.map((unit) => (
-                      <MenuItem key={unit._id} value={unit._id}>
-                        {unit.name} ({unit.acronym})
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  label="Peso da Receita"
+                  name="weightRecipe"
+                  value={formData.weightRecipe}
+                  onChange={handleWeightChange}
+                  fullWidth
+                  required
+                  variant="outlined"
+                  error={!!errors.weightRecipe}
+                  helperText={errors.weightRecipe || 'Digite apenas números (ex: 1.5, 250)'}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <ScaleIcon />
+                      </InputAdornment>
+                    ),
+                    inputProps: {
+                      inputMode: 'decimal',
+                      pattern: '[0-9]*[.,]?[0-9]*',
+                    },
+                  }}
+                  placeholder="Ex: 1.5, 250, 0.5"
+                  sx={{ flex: 2 }}
+                />
+
+                <FormControl sx={{ flex: 1 }} fullWidth required error={!!errors.typeWeightRecipe}>
+                  <InputLabel id="weight-type-label">Unidade</InputLabel>
+                  <Select
+                    labelId="weight-type-label"
+                    name="typeWeightRecipe"
+                    value={formData.typeWeightRecipe}
+                    onChange={handleChange}
+                    label="Unidade"
+                    disabled={loadingUnitMeasures || loadingUserUnits}
+                    MenuProps={{
+                      PaperProps: {
+                        style: {
+                          maxHeight: 300,
+                          borderRadius: 8,
+                        },
+                        sx: {
+                          '& .MuiMenu-list': {
+                            paddingTop: 1,
+                            paddingBottom: 1,
+                            // Customização da scrollbar
+                            '&::-webkit-scrollbar': {
+                              width: '6px',
+                            },
+                            '&::-webkit-scrollbar-track': {
+                              backgroundColor: 'rgba(0,0,0,.1)',
+                              borderRadius: '3px',
+                            },
+                            '&::-webkit-scrollbar-thumb': {
+                              backgroundColor: 'rgba(0,0,0,.3)',
+                              borderRadius: '3px',
+                              '&:hover': {
+                                backgroundColor: 'rgba(0,0,0,.5)',
+                              },
+                            },
+                          },
+                          '& .MuiMenuItem-root': {
+                            borderRadius: 1,
+                            margin: '0 8px',
+                            marginBottom: '2px',
+                            transition: 'all 0.2s ease-in-out',
+                            '&:hover': {
+                              backgroundColor: 'primary.light',
+                              color: 'primary.contrastText',
+                              transform: 'translateX(2px)',
+                            },
+                            '&.Mui-selected': {
+                              backgroundColor: 'primary.main',
+                              color: 'primary.contrastText',
+                              fontWeight: 600,
+                              '&:hover': {
+                                backgroundColor: 'primary.dark',
+                              },
+                            },
+                          },
+                        },
+                      },
+                    }}
+                  >
+                    {loadingUnitMeasures || loadingUserUnits ? (
+                      <MenuItem value="" disabled>
+                        <CircularProgress size={20} sx={{ mr: 1 }} />
+                        Carregando unidades...
                       </MenuItem>
-                    ))
+                    ) : (
+                      <>
+                        {/* Unidades padrão do sistema */}
+                        {unitMeasures.length > 0 && (
+                          <>
+                            <MenuItem disabled sx={{ opacity: 0.7 }}>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontWeight: 600 }}
+                              >
+                                Unidades do Sistema
+                              </Typography>
+                            </MenuItem>
+                            {unitMeasures.map((unit) => (
+                              <MenuItem key={unit._id} value={unit._id}>
+                                {unit.name} ({unit.acronym})
+                              </MenuItem>
+                            ))}
+                          </>
+                        )}
+
+                        {/* Unidades personalizadas do usuário */}
+                        {userUnitsAmountUse.length > 0 && (
+                          <>
+                            {unitMeasures.length > 0 && (
+                              <MenuItem disabled sx={{ opacity: 0.7 }}>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ fontWeight: 600 }}
+                                >
+                                  Minhas Unidades Personalizadas
+                                </Typography>
+                              </MenuItem>
+                            )}
+                            {userUnitsAmountUse.map((unit) => (
+                              <MenuItem
+                                key={unit.id}
+                                value={`${unit.name} (${unit.quantity} ${unit.unitMeasure})`}
+                              >
+                                {unit.name} ({unit.quantity} {unit.unitMeasure})
+                              </MenuItem>
+                            ))}
+                          </>
+                        )}
+                      </>
+                    )}
+                    {!loadingUnitMeasures &&
+                      !loadingUserUnits &&
+                      unitMeasures.length === 0 &&
+                      userUnitsAmountUse.length === 0 && (
+                        <MenuItem value="" disabled>
+                          Nenhuma unidade disponível
+                        </MenuItem>
+                      )}
+                  </Select>
+                  {errors.typeWeightRecipe && (
+                    <FormHelperText error>{errors.typeWeightRecipe}</FormHelperText>
                   )}
-                  {!loadingUnitMeasures && unitMeasures.length === 0 && (
-                    <MenuItem value="" disabled>
-                      Nenhuma unidade disponível
-                    </MenuItem>
-                  )}
-                </Select>
-                {errors.typeWeightRecipe && (
-                  <FormHelperText error>{errors.typeWeightRecipe}</FormHelperText>
-                )}
-              </FormControl>
+                </FormControl>
+              </Box>
             </Box>
 
             {formData.weightRecipe && formData.typeWeightRecipe && (
@@ -767,9 +1035,18 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
                   Peso total:{' '}
                   <strong>
                     {formData.weightRecipe}{' '}
-                    {unitMeasures
-                      .find((u) => u._id === formData.typeWeightRecipe)
-                      ?.name.toLowerCase()}
+                    {(() => {
+                      // Primeiro, verifica se é uma unidade do sistema
+                      const systemUnit = unitMeasures.find(
+                        (u) => u._id === formData.typeWeightRecipe,
+                      );
+                      if (systemUnit) {
+                        return systemUnit.name.toLowerCase();
+                      }
+
+                      // Se não encontrou, é uma unidade personalizada (o valor já contém a descrição completa)
+                      return formData.typeWeightRecipe.toLowerCase();
+                    })()}
                   </strong>
                 </Typography>
               </Box>
@@ -802,7 +1079,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
                   gap: 1,
                 }}
               >
-                🥘 Ingredientes da Receita (Opcional)
+                🥘 Ingredientes da Receita
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 Adicione os ingredientes que serão utilizados nesta receita para calcular custos
@@ -840,10 +1117,10 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
                     borderColor: 'success.main',
                   }}
                 >
-                  <Typography variant="body2" color="success.dark" sx={{ fontWeight: 500 }}>
+                  <Typography variant="body2" color="textPrimary" sx={{ fontWeight: 500 }}>
                     ✓ {recipeIngredients.length} ingrediente(s) adicionado(s)
                   </Typography>
-                  <Typography variant="caption" color="success.dark">
+                  <Typography variant="caption" color="textSecondary">
                     Custo total estimado: R${' '}
                     {recipeIngredients
                       .reduce((total, ingredient) => total + ingredient.totalCost, 0)
@@ -853,174 +1130,83 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
               )}
             </Box>
 
-            {/* Seção de Informações Financeiras */}
+            {/* Seção de Modo de Preparo */}
             <Box sx={{ mt: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
-                💰 Informações Financeiras (Opcional)
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{
+                  fontWeight: 600,
+                  color: 'primary.main',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}
+              >
+                👨‍🍳 Modo de Preparo (Opcional)
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Defina os passos para preparar esta receita
               </Typography>
 
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <TextField
-                  label="Preço de Venda"
-                  name="sellingPrice"
-                  value={formData.sellingPrice || ''}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    const sellingPrice = value ? parseFloat(value) : undefined;
-
-                    setFormData((prev) => {
-                      const newFormData = {
-                        ...prev,
-                        sellingPrice,
-                      };
-
-                      // Calcular lucro automaticamente se tiver preço de venda e custo
-                      if (sellingPrice && prev.costPrice) {
-                        newFormData.profit = sellingPrice - prev.costPrice;
-                      } else if (!sellingPrice || !prev.costPrice) {
-                        newFormData.profit = undefined;
-                      }
-
-                      return newFormData;
-                    });
-                  }}
-                  type="number"
-                  fullWidth
-                  variant="outlined"
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-                  }}
-                  inputProps={{ min: 0, step: 0.01 }}
-                  placeholder="Ex: 25,00"
-                  sx={{
-                    flex: 1,
-                    '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
-                      {
-                        WebkitAppearance: 'none',
-                        margin: 0,
-                      },
-                    '& input[type="number"]': {
-                      MozAppearance: 'textfield',
-                    },
-                  }}
-                />
-
-                <TextField
-                  label="Preço de Custo"
-                  name="costPrice"
-                  value={formData.costPrice || ''}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    const costPrice = value ? parseFloat(value) : undefined;
-
-                    setFormData((prev) => {
-                      const newFormData = {
-                        ...prev,
-                        costPrice,
-                      };
-
-                      // Calcular lucro automaticamente se tiver preço de venda e custo
-                      if (prev.sellingPrice && costPrice) {
-                        newFormData.profit = prev.sellingPrice - costPrice;
-                      } else if (!prev.sellingPrice || !costPrice) {
-                        newFormData.profit = undefined;
-                      }
-
-                      return newFormData;
-                    });
-                  }}
-                  onFocus={() => {
-                    // Auto-preencher com o custo dos ingredientes se não tiver valor e houver ingredientes
-                    if (!formData.costPrice && recipeIngredients.length > 0) {
-                      const totalCost = recipeIngredients.reduce(
-                        (total, ingredient) => total + ingredient.totalCost,
-                        0,
-                      );
-                      setFormData((prev) => ({
-                        ...prev,
-                        costPrice: totalCost,
-                        profit: prev.sellingPrice ? prev.sellingPrice - totalCost : undefined,
-                      }));
-                    }
-                  }}
-                  type="number"
-                  fullWidth
-                  variant="outlined"
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-                  }}
-                  inputProps={{ min: 0, step: 0.01 }}
-                  placeholder="Ex: 15,00"
-                  helperText={
-                    recipeIngredients.length > 0 && !formData.costPrice
-                      ? `Clique para preencher automaticamente com R$ ${recipeIngredients.reduce((total, ingredient) => total + ingredient.totalCost, 0).toFixed(2)}`
-                      : undefined
-                  }
-                  sx={{
-                    flex: 1,
-                    '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
-                      {
-                        WebkitAppearance: 'none',
-                        margin: 0,
-                      },
-                    '& input[type="number"]': {
-                      MozAppearance: 'textfield',
-                    },
-                  }}
-                />
-
-                <TextField
-                  label="Lucro"
-                  name="profit"
-                  value={formData.profit !== undefined ? formData.profit.toFixed(2) : ''}
-                  type="number"
-                  fullWidth
-                  variant="outlined"
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-                    readOnly: true,
-                  }}
-                  placeholder="Calculado automaticamente"
-                  sx={{
-                    flex: 1,
-                    '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
-                      {
-                        WebkitAppearance: 'none',
-                        margin: 0,
-                      },
-                    '& input[type="number"]': {
-                      MozAppearance: 'textfield',
-                    },
-                    '& .MuiInputBase-input': {
-                      backgroundColor: (theme) =>
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(255, 255, 255, 0.05)'
-                          : 'rgba(0, 0, 0, 0.03)',
-                      cursor: 'not-allowed',
-                    },
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: (theme) =>
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(255, 255, 255, 0.2)'
-                            : 'rgba(0, 0, 0, 0.2)',
-                      },
-                    },
-                  }}
+              <Box
+                sx={{
+                  border: '1px solid',
+                  borderColor: (theme) =>
+                    theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'divider',
+                  borderRadius: 2,
+                  p: 1,
+                  bgcolor: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(255, 255, 255, 0.02)'
+                      : 'background.paper',
+                }}
+              >
+                <RecipeStepsCard
+                  recipeId="new"
+                  initialSteps={recipeSteps}
+                  onStepsUpdate={handleStepsUpdate}
                 />
               </Box>
 
-              {recipeIngredients.length > 0 && !formData.costPrice && (
-                <Box sx={{ mt: 1, p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
-                  <Typography variant="caption" color="info.dark">
-                    💰 Sugestão: Baseado nos ingredientes adicionados, o custo estimado é R${' '}
-                    {recipeIngredients
-                      .reduce((total, ingredient) => total + ingredient.totalCost, 0)
-                      .toFixed(2)}
+              {recipeSteps.length > 0 && (
+                <Box
+                  sx={{
+                    mt: 2,
+                    p: 2,
+                    bgcolor: 'info.light',
+                    borderRadius: 1,
+                    border: '1px solid',
+                    borderColor: 'info.main',
+                  }}
+                >
+                  <Typography variant="body2" color="background.default" sx={{ fontWeight: 500 }}>
+                    ✓ {recipeSteps.length} passo(s) definido(s)
+                  </Typography>
+                  <Typography variant="caption" color="background.default">
+                    Os passos ajudarão na preparação da receita
                   </Typography>
                 </Box>
               )}
             </Box>
+
+            {/* Seção de Informações Financeiras */}
+            <EnhancedFinancialSection
+              recipeIngredients={recipeIngredients}
+              totalYield={parseInt(formData.yieldRecipe) || 1}
+              onFinancialDataChange={(financialData) => {
+                // Atualizar dados financeiros no formData
+                setFormData((prev) => ({
+                  ...prev,
+                  priceSale: financialData.totalSalePrice || 0,
+                  priceCost: financialData.ingredientsCost || 0,
+                  priceProfit:
+                    (financialData.totalSalePrice || 0) - (financialData.ingredientsCost || 0),
+                  sellingPrice: financialData.totalSalePrice || prev.sellingPrice,
+                  costPrice: financialData.ingredientsCost || prev.costPrice,
+                }));
+              }}
+            />
 
             {/* Upload de Imagem */}
             <Box>
@@ -1065,8 +1251,8 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
           </Stack>
         </Box>
       </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} color="inherit" disabled={submitting}>
+      <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+        <Button onClick={onClose} color="inherit" disabled={submitting} size="large">
           Cancelar
         </Button>
         <Button
@@ -1074,6 +1260,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
           variant="contained"
           disabled={uploading || submitting}
           startIcon={submitting ? <CircularProgress size={20} /> : null}
+          size="large"
         >
           {submitting ? 'Salvando...' : 'Salvar'}
         </Button>

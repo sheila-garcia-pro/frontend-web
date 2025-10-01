@@ -14,6 +14,7 @@ export { default as RecipeDeleteModal } from './RecipeDeleteModal';
 export { default as RecipeCategoryMenu } from './RecipeCategoryMenu';
 export { default as RecipeCategoryMenuConsolidated } from './RecipeCategoryMenuConsolidated';
 export { default as RecipeIngredientsCard } from './RecipeIngredientsCard';
+export { default as RecipeStepsCard } from './RecipeStepsCard';
 export { default as RecipeFinancialCard } from './RecipeFinancialCard';
 
 // Componentes de Upload

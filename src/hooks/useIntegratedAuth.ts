@@ -33,7 +33,7 @@ export function useIntegratedAuth() {
         try {
           rbacAuth.login(token);
         } catch (error) {
-          console.warn('Erro ao sincronizar token com RBAC:', error);
+          // Ignorar erro de sincronização RBAC - não crítico
         }
       }
     }

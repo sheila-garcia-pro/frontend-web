@@ -81,7 +81,6 @@ export const useRecipesPage = () => {
           );
         }
       } catch (error) {
-        console.error('Erro ao carregar receitas:', error);
         dispatch(
           addNotification({
             message: 'Erro ao carregar receitas.',

@@ -123,9 +123,6 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
 
         // Don't auto-select any table - let user choose explicitly
         // This prevents interference with manual selection
-        if (!selectedTable && systemTables.length === 0 && userTables.length === 0) {
-          setSelectedTable(null);
-        }
       } catch (error) {
         dispatch(
           addNotification({
@@ -262,8 +259,8 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
       try {
         const data = await ingredientsService.getIngredientById(id);
         setIngredient(data);
-        if (data && data.name && data.name.trim()) {
-          await loadNutritionalTables(data.name);
+        if (data?.name?.trim()) {
+          await loadNutritionalTables(data.name.trim());
         }
       } catch (error) {
         dispatch(

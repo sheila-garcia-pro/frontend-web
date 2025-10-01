@@ -21,16 +21,17 @@ import {
   CircularProgress,
   Autocomplete,
   Paper,
+  Alert,
 } from '@mui/material';
 import { Search, Delete, Edit, Save, Cancel, Restaurant, AttachMoney } from '@mui/icons-material';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { getCachedIngredients, updateIngredient } from '../../../services/api/ingredients';
-import { getCachedUnitMeasures } from '../../../services/api/unitMeasure';
-import { UnitMeasure } from '../../../types/unitMeasure';
+import { useUnits } from '../../../hooks/useUnits';
 import { Ingredient } from '../../../types/ingredients';
 import { convertToGrams } from '../../../utils/unitConversion';
 import { RecipeIngredient, IngredientSearchResult } from '../../../types/recipeIngredients';
 import IngredientDetailModal from '../IngredientDetailModal/IngredientDetailModal';
+import { UnitConsistencyValidator } from '../UnitConsistencyValidator';
 import IngredientAvatarDisplay from '../IngredientAvatarDisplay';
 
 interface RecipeIngredientsCardProps {
@@ -59,8 +60,21 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editQuantity, setEditQuantity] = useState('');
   const [editUnit, setEditUnit] = useState('');
-  const [unitMeasures, setUnitMeasures] = useState<UnitMeasure[]>([]);
-  const [loadingUnits, setLoadingUnits] = useState(false);
+
+  // Usar o hook de unidades robusto
+  const {
+    normalizedUnits,
+    loading: loadingUnits,
+    error: unitsError,
+    validateUnitConsistency,
+  } = useUnits();
+
+  // Adicionar aviso sobre inconsistências das unidades
+  useEffect(() => {
+    if (unitsError) {
+      console.error('⚠️ Erro ao carregar unidades de medida:', unitsError);
+    }
+  }, [unitsError]);
 
   // Debounce para busca
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -72,23 +86,6 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
       onIngredientsUpdate?.(initialIngredients);
     }
   }, [initialIngredients, onIngredientsUpdate]);
-
-  // Carregar unidades de medida da API
-  useEffect(() => {
-    const loadUnitMeasures = async () => {
-      setLoadingUnits(true);
-      try {
-        const data = await getCachedUnitMeasures();
-        setUnitMeasures(data || []);
-      } catch (error) {
-        console.error('Erro ao carregar unidades de medida:', error);
-      } finally {
-        setLoadingUnits(false);
-      }
-    };
-
-    loadUnitMeasures();
-  }, []);
 
   // Buscar ingredientes
   useEffect(() => {
@@ -307,6 +304,21 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
           </Typography>
         </Box>
 
+        {/* Alerta de inconsistências */}
+        {unitsError && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            ⚠️ Problema ao carregar unidades: {unitsError}
+          </Alert>
+        )}
+
+        {/* Validador de consistência das unidades */}
+        <UnitConsistencyValidator
+          units={normalizedUnits}
+          onInconsistencyFound={(inconsistencies) => {
+            console.warn('🔍 Inconsistências encontradas nas unidades:', inconsistencies);
+          }}
+        />
+
         {/* Campo de busca */}
         <Box sx={{ mb: 3 }}>
           <Autocomplete
@@ -450,9 +462,12 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
                                   Carregando...
                                 </MenuItem>
                               ) : (
-                                unitMeasures.map((unit) => (
-                                  <MenuItem key={unit._id} value={unit.name}>
-                                    {unit.name} ({unit.acronym})
+                                normalizedUnits.map((unit) => (
+                                  <MenuItem key={unit.id} value={unit.name}>
+                                    {unit.name} {unit.acronym && `(${unit.acronym})`}
+                                    {unit.type === 'amount-use' &&
+                                      unit.baseUnitName &&
+                                      ` - Base: ${unit.baseUnitName}`}
                                   </MenuItem>
                                 ))
                               )}

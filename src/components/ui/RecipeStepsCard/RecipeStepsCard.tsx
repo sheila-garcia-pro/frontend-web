@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -26,7 +26,7 @@ interface RecipeStepsCardProps {
   onStepsUpdate?: (steps: string[]) => void;
 }
 
-const RecipeStepsCard: React.FC<RecipeStepsCardProps> = ({
+const RecipeStepsCardComponent: React.FC<RecipeStepsCardProps> = ({
   recipeId: _recipeId,
   initialSteps = [],
   onStepsUpdate,
@@ -37,24 +37,30 @@ const RecipeStepsCard: React.FC<RecipeStepsCardProps> = ({
   const [editingText, setEditingText] = useState('');
 
   useEffect(() => {
-    setSteps(initialSteps);
-  }, [initialSteps]);
+    // Só atualizar se realmente mudou (evita re-renders desnecessários)
+    if (JSON.stringify(initialSteps) !== JSON.stringify(steps)) {
+      setSteps(initialSteps);
+    }
+  }, [initialSteps]); // Removido steps das dependências
 
-  const handleAddStep = () => {
+  const handleAddStep = useCallback(() => {
     if (newStep.trim()) {
       const updatedSteps = [...steps, newStep.trim()];
       setSteps(updatedSteps);
       setNewStep('');
       onStepsUpdate?.(updatedSteps);
     }
-  };
+  }, [newStep, steps, onStepsUpdate]);
 
-  const handleEditStep = (index: number) => {
-    setEditingIndex(index);
-    setEditingText(steps[index]);
-  };
+  const handleEditStep = useCallback(
+    (index: number) => {
+      setEditingIndex(index);
+      setEditingText(steps[index]);
+    },
+    [steps],
+  );
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = useCallback(() => {
     if (editingIndex !== null && editingText.trim()) {
       const updatedSteps = [...steps];
       updatedSteps[editingIndex] = editingText.trim();
@@ -63,28 +69,34 @@ const RecipeStepsCard: React.FC<RecipeStepsCardProps> = ({
       setEditingText('');
       onStepsUpdate?.(updatedSteps);
     }
-  };
+  }, [editingIndex, editingText, steps, onStepsUpdate]);
 
-  const handleCancelEdit = () => {
+  const handleCancelEdit = useCallback(() => {
     setEditingIndex(null);
     setEditingText('');
-  };
+  }, []);
 
-  const handleDeleteStep = (index: number) => {
-    const updatedSteps = steps.filter((_, i) => i !== index);
-    setSteps(updatedSteps);
-    onStepsUpdate?.(updatedSteps);
-  };
+  const handleDeleteStep = useCallback(
+    (index: number) => {
+      const updatedSteps = steps.filter((_, i) => i !== index);
+      setSteps(updatedSteps);
+      onStepsUpdate?.(updatedSteps);
+    },
+    [steps, onStepsUpdate],
+  );
 
-  const handleKeyPress = (event: React.KeyboardEvent, action: 'add' | 'edit') => {
-    if (event.key === 'Enter') {
-      if (action === 'add') {
-        handleAddStep();
-      } else {
-        handleSaveEdit();
+  const handleKeyPress = useCallback(
+    (event: React.KeyboardEvent, action: 'add' | 'edit') => {
+      if (event.key === 'Enter') {
+        if (action === 'add') {
+          handleAddStep();
+        } else {
+          handleSaveEdit();
+        }
       }
-    }
-  };
+    },
+    [handleAddStep, handleSaveEdit],
+  );
 
   return (
     <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
@@ -214,5 +226,8 @@ const RecipeStepsCard: React.FC<RecipeStepsCardProps> = ({
     </Paper>
   );
 };
+
+// Exportar com React.memo para otimização
+const RecipeStepsCard = React.memo(RecipeStepsCardComponent);
 
 export default RecipeStepsCard;

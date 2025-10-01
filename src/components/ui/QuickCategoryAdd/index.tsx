@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Button,
@@ -21,7 +21,7 @@ interface QuickCategoryAddProps {
   onCategoryAdded?: (categoryId: string, categoryName: string) => void;
 }
 
-const QuickCategoryAdd: React.FC<QuickCategoryAddProps> = ({ onCategoryAdded }) => {
+const QuickCategoryAddComponent: React.FC<QuickCategoryAddProps> = ({ onCategoryAdded }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [categoryName, setCategoryName] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,17 +29,17 @@ const QuickCategoryAdd: React.FC<QuickCategoryAddProps> = ({ onCategoryAdded }) 
 
   const dispatch = useDispatch();
 
-  const handleOpenModal = () => {
+  const handleOpenModal = useCallback(() => {
     setModalOpen(true);
-  };
+  }, []);
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setModalOpen(false);
     setCategoryName('');
     setError('');
-  };
+  }, []);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!categoryName.trim()) {
       setError('O nome da categoria é obrigatório');
       return;
@@ -69,7 +69,6 @@ const QuickCategoryAdd: React.FC<QuickCategoryAddProps> = ({ onCategoryAdded }) 
 
       handleCloseModal();
     } catch (error: unknown) {
-      console.error('Erro ao criar categoria:', error);
       const errorMessage =
         error instanceof Error && 'response' in error && error.response
           ? (error.response as { data?: { message?: string } })?.data?.message ||
@@ -86,18 +85,24 @@ const QuickCategoryAdd: React.FC<QuickCategoryAddProps> = ({ onCategoryAdded }) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [categoryName, dispatch, onCategoryAdded, handleCloseModal]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCategoryName(e.target.value);
-    if (error) setError('');
-  };
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setCategoryName(e.target.value);
+      if (error) setError('');
+    },
+    [error],
+  );
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSubmit();
-    }
-  };
+  const handleKeyPress = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        handleSubmit();
+      }
+    },
+    [handleSubmit],
+  );
 
   return (
     <>
@@ -246,5 +251,8 @@ const QuickCategoryAdd: React.FC<QuickCategoryAddProps> = ({ onCategoryAdded }) 
     </>
   );
 };
+
+// Exportar com React.memo para otimização
+const QuickCategoryAdd = React.memo(QuickCategoryAddComponent);
 
 export default QuickCategoryAdd;
