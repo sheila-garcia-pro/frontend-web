@@ -59,9 +59,14 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
     weightRecipe: '',
     typeWeightRecipe: '',
     descripition: '',
+    ingredients: [],
+    modePreparation: [],
     sellingPrice: undefined,
     costPrice: undefined,
     profit: undefined,
+    priceSale: undefined,
+    priceCost: undefined,
+    priceProfit: undefined,
   });
 
   // Preencher o formulário quando a receita for carregada
@@ -82,6 +87,10 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
         sellingPrice: recipe.sellingPrice,
         costPrice: recipe.costPrice,
         profit: recipe.profit,
+        priceSale: undefined,
+        priceCost: undefined,
+        costDirect: undefined,
+        costIndirect: undefined,
       });
 
       // Carregar passos da receita

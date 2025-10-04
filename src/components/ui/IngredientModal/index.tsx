@@ -138,7 +138,6 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
         fetchCategoriesRequest({
           page: 1,
           itemPerPage: 100,
-          search: '',
         }),
       );
     }
