@@ -100,40 +100,26 @@ const ImageUploadComponent: React.FC<ImageUploadProps> = ({
       setDeletionStatus(null);
       setShowDeletionFeedback(false);
 
-      // Callback para receber feedback da exclusão da imagem antiga
-      const handleOldImageDeleted = (result: any) => {
-        setDeletionStatus(
-          result.success
-            ? `✅ Imagem anterior removida: ${result.message}`
-            : `⚠️ Aviso: ${result.message} (não afeta o upload)`,
-        );
-        setShowDeletionFeedback(true);
-
-        // Auto-hide feedback após 5 segundos
-        setTimeout(() => {
-          setShowDeletionFeedback(false);
-        }, 5000);
-      };
-
-      const result = await imageUploadService.replaceImage(value, file, type, {
-        waitForDeletion: false, // Não aguarda, mas recebe callback
-        onOldImageDeleted: handleOldImageDeleted,
-      });
+      // Usar o método uploadImage com a URL da imagem atual
+      const result = await imageUploadService.uploadImage(file, type, value || null);
 
       if (result.success) {
         onChange(result.url);
 
-        // Mostrar feedback imediato se houve tentativa de exclusão
-        if (value && result.deletionMessage) {
-          setDeletionStatus(`🗑️ ${result.deletionMessage}`);
-          setShowDeletionFeedback(true);
-        }
+        // Mostrar feedback sobre a operação realizada
+        setDeletionStatus('✅ Nova imagem enviada com sucesso');
+        setShowDeletionFeedback(true);
+
+        // Auto-hide feedback após 4 segundos
+        setTimeout(() => {
+          setShowDeletionFeedback(false);
+          setDeletionStatus(null);
+        }, 4000);
       } else {
         setUploadError(result.message || 'Erro no upload');
       }
-    } catch (error) {
-      console.error('Erro no upload:', error);
-      setUploadError('Erro inesperado no upload');
+    } catch (error: any) {
+      setUploadError(error.message || 'Erro inesperado no upload');
     } finally {
       setUploading(false);
       setSelectedFile(null);
@@ -165,7 +151,6 @@ const ImageUploadComponent: React.FC<ImageUploadProps> = ({
         setDeletionStatus(null);
       }, 3000);
     } catch (error) {
-      console.error('Erro ao remover imagem:', error);
       setDeletionStatus('❌ Erro ao remover imagem do servidor');
 
       // Mesmo com erro, remover localmente

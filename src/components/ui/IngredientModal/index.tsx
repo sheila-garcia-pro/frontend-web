@@ -67,7 +67,7 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
       const data = await getUnitMeasures();
       setUnitMeasures(data);
     } catch (error) {
-      console.error('Erro ao carregar unidades de medida:', error);
+      // Erro ao carregar unidades de medida
     } finally {
       setLoadingUnitMeasures(false);
     }

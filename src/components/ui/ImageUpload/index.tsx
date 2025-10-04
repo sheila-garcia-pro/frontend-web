@@ -11,6 +11,7 @@ import {
   Stack,
 } from '@mui/material';
 import { CloudUpload, Delete, Edit, ImageNotSupported } from '@mui/icons-material';
+import imageUploadService from '../../../services/imageUploadService';
 
 interface ImageUploadComponentProps {
   value: string | null;
@@ -43,32 +44,17 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
 
       try {
         setUploading(true);
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('type', 'recipes');
 
-        const token = localStorage.getItem(
-          import.meta.env.VITE_TOKEN_KEY || '@sheila-garcia-pro-token',
-        );
+        // Usar o método uploadImage com a URL da imagem atual
+        const result = await imageUploadService.uploadImage(file, 'recipes', value || null);
 
-        const response = await fetch('https://sgpro-api.squareweb.app/v1/upload/image', {
-          method: 'POST',
-          body: formData,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const data = await response.json();
-        if (data.url) {
-          onChange(data.url);
+        if (result.success) {
+          onChange(result.url);
         } else {
-          console.error('Erro no upload:', data);
           // Se houver erro, voltar ao estado anterior
           onChange(value);
         }
-      } catch (error) {
-        console.error('Erro no upload:', error);
+      } catch (error: any) {
         // Se houver erro, voltar ao estado anterior
         onChange(value);
       } finally {

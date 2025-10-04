@@ -54,7 +54,7 @@ const NutritionalInfoSection: React.FC<NutritionalInfoSectionProps> = ({
           data={nutritionalData}
           loading={loading}
           onDownload={() => {
-            console.log('Rótulo nutricional baixado com sucesso!');
+            // Download concluído
           }}
         />
       ) : (

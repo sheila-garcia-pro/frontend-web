@@ -15,11 +15,10 @@ import { Camera, Delete } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { RootState } from '@store/index';
-import { uploadUserImage } from '@services/api/auth';
 import useNotification from '@hooks/useNotification';
 import { useTheme } from '../../contexts/ThemeContext';
 import { updateUserRequest } from '@store/slices/authSlice';
-import imageUploadService, { ImageDeleteResponse } from '@services/imageUploadService';
+import imageUploadService from '@services/imageUploadService';
 
 const ProfilePage: React.FC = () => {
   const { t } = useTranslation();
@@ -30,6 +29,7 @@ const ProfilePage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [removingImage, setRemovingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Função para aplicar máscara de telefone
@@ -69,7 +69,7 @@ const ProfilePage: React.FC = () => {
     name: user?.name || '',
     email: user?.email || '',
     phone: user?.phone ? applyPhoneMask(user.phone) : '',
-    image: user?.image === undefined ? '' : user.image,
+    image: user?.image && user.image.trim() !== '' ? user.image : '',
     dateOfBirth: user?.dateOfBirth || '',
   });
 
@@ -264,16 +264,20 @@ const ProfilePage: React.FC = () => {
         updateData.password = passwordData.password;
         updateData.newPassword = passwordData.newPassword;
       }
-      await dispatch(updateUserRequest(updateData)); // Verifica se houve mudança na imagem para mostrar notificação apropriada
+      await dispatch(updateUserRequest(updateData));
+
+      // Feedback específico para mudanças de imagem
       const hadImage = user.image && user.image.trim() !== '';
       const hasImage = formData.image && formData.image.trim() !== '';
 
       if (hadImage && !hasImage) {
-        notification.showSuccess(t('profile.messages.imageRemoved'));
+        notification.showSuccess('Perfil atualizado! Foto removida com sucesso.');
       } else if (!hadImage && hasImage) {
-        notification.showSuccess(t('profile.messages.imageAdded'));
+        notification.showSuccess('Perfil atualizado! Foto adicionada com sucesso.');
       } else if (hadImage && hasImage && formData.image !== user.image) {
-        notification.showSuccess(t('profile.messages.imageUpdated'));
+        notification.showSuccess('Perfil atualizado! Foto alterada com sucesso.');
+      } else {
+        notification.showSuccess('Perfil atualizado com sucesso!');
       }
 
       setIsEditing(false);
@@ -281,6 +285,47 @@ const ProfilePage: React.FC = () => {
       setPasswordData({ password: '', newPassword: '', confirmPassword: '' });
     } catch (error) {
       notification.showError(t('profile.messages.updateError'));
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (!formData.image || formData.image.trim() === '') {
+      return;
+    }
+
+    try {
+      setRemovingImage(true);
+
+      // Usar API DELETE para remover a imagem do servidor imediatamente
+      const result = await imageUploadService.deleteImage(formData.image);
+
+      if (result.success) {
+        // Marcar imagem como removida localmente
+        setFormData((prev) => ({
+          ...prev,
+          image: '', // Define explicitamente como string vazia para remover
+        }));
+
+        notification.showSuccess('Foto removida com sucesso!');
+      } else {
+        // Mesmo se der erro no servidor, permitir remoção local
+        setFormData((prev) => ({
+          ...prev,
+          image: '',
+        }));
+        notification.showWarning(
+          `Foto removida localmente. ${result.message || 'Erro ao remover do servidor'}`,
+        );
+      }
+    } catch (error: any) {
+      // Mesmo com erro, permitir remoção local para não travar UX
+      setFormData((prev) => ({
+        ...prev,
+        image: '',
+      }));
+      notification.showWarning('Foto removida localmente. Erro ao comunicar com servidor.');
+    } finally {
+      setRemovingImage(false);
     }
   };
 
@@ -295,32 +340,23 @@ const ProfilePage: React.FC = () => {
     try {
       setUploading(true);
 
-      // Usar o novo serviço de upload que cuida da exclusão automática
-      const result = await imageUploadService.replaceImage(
-        formData.image || null, // URL da imagem atual
-        file,
-        'users', // Tipo de upload para usuários
-        {
-          waitForDeletion: false, // Não bloquear UX - delete em background
-          onOldImageDeleted: (deleteResult) => {
-            // Log silencioso para debugging - sem feedback visual
-          },
-        },
-      );
+      // Usar o método uploadImage com a URL da imagem atual
+      const result = await imageUploadService.uploadImage(file, 'users', formData.image || null);
 
       if (result.success) {
         setFormData((prev) => ({ ...prev, image: result.url }));
-        notification.showSuccess(
-          t('profile.messages.imageUploaded') || 'Foto atualizada com sucesso!',
-        );
+        notification.showSuccess(result.message || 'Foto atualizada com sucesso!');
       } else {
         throw new Error(result.message || 'Erro no upload');
       }
     } catch (error: any) {
-      console.error('❌ [PROFILE] Erro no upload da imagem:', error);
       notification.showError(error.message || t('profile.messages.imageUploadError'));
     } finally {
       setUploading(false);
+      // Limpar o input para permitir seleção do mesmo arquivo novamente se necessário
+      if (event.target) {
+        event.target.value = '';
+      }
     }
   };
 
@@ -379,15 +415,10 @@ const ProfilePage: React.FC = () => {
                           boxShadow: 1,
                           '&:hover': { bgcolor: 'error.dark' },
                         }}
-                        onClick={() => {
-                          setFormData((prev) => ({
-                            ...prev,
-                            image: '', // Define explicitamente como string vazia para remover
-                          }));
-                        }}
-                        disabled={uploading}
+                        onClick={handleRemoveImage}
+                        disabled={uploading || removingImage}
                       >
-                        {uploading ? <CircularProgress size={24} /> : <Delete />}
+                        {removingImage ? <CircularProgress size={20} /> : <Delete />}
                       </IconButton>
                     </Tooltip>
                   )}
@@ -399,9 +430,9 @@ const ProfilePage: React.FC = () => {
                         '&:hover': { bgcolor: 'primary.main', color: 'white' },
                       }}
                       onClick={handleImageClick}
-                      disabled={uploading}
+                      disabled={uploading || removingImage}
                     >
-                      {uploading ? <CircularProgress size={24} /> : <Camera />}
+                      {uploading ? <CircularProgress size={20} /> : <Camera />}
                     </IconButton>
                   </Tooltip>
                 </Box>
@@ -510,7 +541,7 @@ const ProfilePage: React.FC = () => {
                       name: user?.name || '',
                       email: user?.email || '',
                       phone: user?.phone ? applyPhoneMask(user.phone) : '',
-                      image: user?.image === undefined ? '' : user.image,
+                      image: user?.image && user.image.trim() !== '' ? user.image : '',
                       dateOfBirth: user?.dateOfBirth || '',
                     });
                   }}

@@ -89,7 +89,7 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
         const units = await getUnitMeasures();
         setUnitMeasures(units);
       } catch (error) {
-        console.error('Erro ao buscar unidades de medida:', error);
+        // Erro ao buscar unidades de medida
       } finally {
         setLoadingUnitMeasures(false);
       }
@@ -221,7 +221,6 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
         onClose();
         setIsSubmitted(false);
       } catch (error) {
-        console.error('Erro ao atualizar ingrediente:', error);
         setIsSubmitted(false);
       }
     }

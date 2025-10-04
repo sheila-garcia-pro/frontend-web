@@ -52,6 +52,7 @@ import NutritionLabel from '../NutritionLabel';
 import NutritionalInfoSection from '../NutritionalInfoSection';
 import { useNutritionalInfo } from '../../../hooks/useNutritionalInfo';
 import api from '../../../services/api';
+import imageUploadService from '../../../services/imageUploadService';
 
 interface RecipeModalProps {
   open: boolean;
@@ -122,7 +123,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
       const categories = await getUserRecipeCategories();
       setUserCategories(categories);
     } catch (error) {
-      console.error('Erro ao carregar categorias do usuário:', error);
       dispatch(
         addNotification({
           message: 'Erro ao carregar categorias do usuário',
@@ -148,7 +148,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
 
       setYields(mappedYields);
     } catch (error) {
-      console.error('Erro ao carregar rendimentos:', error);
       dispatch(
         addNotification({
           message: 'Erro ao carregar tipos de rendimento',
@@ -167,7 +166,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
       const unitMeasuresData = await getUnitMeasures();
       setUnitMeasures(unitMeasuresData);
     } catch (error) {
-      console.error('Erro ao carregar unidades de medida:', error);
       dispatch(
         addNotification({
           message: 'Erro ao carregar unidades de medida',
@@ -186,7 +184,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
       const units = await getUserUnitsAmountUse();
       setUserUnitsAmountUse(units);
     } catch (error) {
-      console.error('Erro ao carregar unidades personalizadas do usuário:', error);
       dispatch(
         addNotification({
           message: 'Erro ao carregar unidades personalizadas',
@@ -309,7 +306,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
         }),
       );
     } catch (error) {
-      console.error('Erro ao recarregar categorias:', error);
       // Fallback: adiciona apenas localmente se a recarga falhar
       const newCategory = { id: categoryId, name: categoryName };
       setUserCategories((prev) => [...prev, newCategory]);
@@ -361,7 +357,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
         }),
       );
     } catch (error) {
-      console.error('Erro ao recarregar unidades:', error);
       // Fallback: adiciona apenas localmente se a recarga falhar
       const newUnit = {
         id: unitId,
@@ -448,37 +443,30 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
       setSelectedFile(file);
       try {
         setUploading(true);
-        const formDataUpload = new FormData();
-        formDataUpload.append('file', file);
-        formDataUpload.append('type', 'recipes');
 
-        const response = await api.post('/v1/upload/image', formDataUpload, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+        // Usar o método uploadImage com a URL da imagem atual
+        const result = await imageUploadService.uploadImage(
+          file,
+          'recipes',
+          formData.image || null,
+        );
 
-        if (response.data?.url) {
-          setFormData((prev) => ({ ...prev, image: response.data.url }));
+        if (result.success) {
+          setFormData((prev) => ({ ...prev, image: result.url }));
           setErrors((prev) => ({ ...prev, image: '' }));
+
           dispatch(
             addNotification({
-              message: 'Imagem enviada com sucesso!',
+              message: result.message || 'Imagem enviada com sucesso!',
               type: 'success',
               duration: 3000,
             }),
           );
         } else {
-          const errorMessage = response.data?.message || 'Erro ao fazer upload da imagem';
-          setErrors((prev) => ({ ...prev, image: errorMessage }));
+          throw new Error(result.message || 'Erro ao fazer upload da imagem');
         }
-      } catch (error: unknown) {
-        console.error('Erro no upload:', error);
-        const errorMessage =
-          error instanceof Error && 'response' in error && error.response
-            ? (error.response as { data?: { message?: string } })?.data?.message ||
-              'Erro ao fazer upload da imagem'
-            : 'Erro ao fazer upload da imagem';
+      } catch (error: any) {
+        const errorMessage = error.message || 'Erro ao fazer upload da imagem';
         setErrors((prev) => ({ ...prev, image: errorMessage }));
         dispatch(
           addNotification({
@@ -574,10 +562,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
         costIndirect: formData.costIndirect || [],
       };
 
-      // Debug: Log payload before sending
-      console.log('Payload being sent:', submissionData);
-      console.log('Recipe ingredients:', recipeIngredients);
-
       await createRecipe(submissionData);
 
       dispatch(
@@ -591,8 +575,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
       onRecipeCreated?.();
       onClose();
     } catch (error: unknown) {
-      console.error('Erro ao criar receita:', error);
-
       let errorMessage = 'Erro ao criar receita';
 
       if (error instanceof Error && 'response' in error && error.response) {

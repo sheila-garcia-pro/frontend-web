@@ -101,7 +101,6 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
             );
             setRecipeIngredients(convertedIngredients);
           } catch (error) {
-            console.error('Erro ao converter ingredientes:', error);
             setRecipeIngredients([]);
           }
         } else {
@@ -149,7 +148,6 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
 
   const handleSubmit = async () => {
     if (!recipe) {
-      console.error('❌ Recipe is null or undefined');
       return;
     }
 
@@ -166,7 +164,6 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
     }
 
     if (!recipe._id) {
-      console.error('❌ Recipe ID is undefined');
       dispatch(
         addNotification({
           message: 'Erro: ID da receita não encontrado!',
@@ -184,7 +181,7 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
         try {
           await syncIngredientsWithAPI(recipeIngredients);
         } catch (error) {
-          console.error('❌ Erro ao atualizar alguns ingredientes:', error);
+          // Erro ao atualizar ingredientes - continua operação
           // Continua com a receita mesmo se houver erro nos ingredientes
         }
       }
@@ -209,7 +206,6 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
       onRecipeUpdated(updatedRecipe);
       onClose();
     } catch (error) {
-      console.error('Erro ao atualizar receita:', error);
       dispatch(
         addNotification({
           message: 'Erro ao atualizar receita. Tente novamente.',
@@ -406,9 +402,6 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
 
             {/* Upload de Imagem */}
             <Box>
-              <Typography variant="body2" color="text.primary" sx={{ fontWeight: 500, mb: 1 }}>
-                Imagem da Receita (Opcional)
-              </Typography>
               <ImageUploadComponent
                 value={formData.image || null}
                 onChange={handleImageChange}
