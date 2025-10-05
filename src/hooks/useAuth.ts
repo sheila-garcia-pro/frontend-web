@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import {
@@ -10,8 +10,16 @@ import {
 } from '@store/slices/authSlice';
 import * as authService from '@services/api/auth';
 import { addNotification } from '@store/slices/uiSlice';
+import {
+  parseToken,
+  hasRole,
+  hasPermission,
+  hasAnyPermission,
+  hasAllPermissions,
+} from '../security/auth';
+import { Role, Permission, JwtPayload } from '../security/permissions';
+import tokenManager from '@utils/tokenManager';
 
-// Interface para credenciais de login compatível com o authSlice
 interface LoginCredentials {
   email: string;
   password: string;
@@ -34,13 +42,26 @@ interface UseAuthReturn {
   register: (credentials: RegisterCredentials) => void;
   logout: () => void;
   checkAuth: () => void;
+  jwtPayload: JwtPayload | null;
+  hasRole: (role: Role) => boolean;
+  hasPermission: (permission: Permission) => boolean;
+  hasAnyPermission: (permissions: Permission[]) => boolean;
+  hasAllPermissions: (permissions: Permission[]) => boolean;
 }
 
 export const useAuth = (): UseAuthReturn => {
   const dispatch = useDispatch();
   const { user, isAuthenticated, loading, error } = useSelector((state: RootState) => state.auth);
 
-  // Login usando o Redux
+  const jwtPayload = useMemo(() => {
+    if (!isAuthenticated) return null;
+
+    const token = tokenManager.getToken();
+    if (!token) return null;
+
+    return parseToken(token);
+  }, [isAuthenticated]);
+
   const login = useCallback(
     (credentials: LoginCredentials) => {
       dispatch(loginRequest(credentials));
@@ -48,37 +69,42 @@ export const useAuth = (): UseAuthReturn => {
     [dispatch],
   );
 
-  // Registro usando o Redux
   const register = useCallback(
     (credentials: RegisterCredentials) => {
-      // Enviar todas as credenciais, incluindo o phone
       dispatch(registerRequest(credentials));
     },
     [dispatch],
   );
 
-  // Logout usando o Redux
   const logout = useCallback(() => {
-    // Chamada direta ao serviço para limpar o localStorage
     authService.logout();
-
-    // Atualiza o estado do Redux
     dispatch(logoutAction());
-
-    // Notificação de sucesso
     dispatch(
       addNotification({
         message: 'Logout realizado com sucesso!',
         type: 'success',
       }),
     );
-
-    // Redireciona para a página de login
     window.location.href = '/login';
-  }, [dispatch]); // Verificação de autenticação - apenas dispatch, sem verificar token
+  }, [dispatch]);
+
   const checkAuth = useCallback(() => {
     dispatch(checkAuthRequest());
   }, [dispatch]);
+
+  const hasRoleCallback = useCallback((role: Role) => hasRole(jwtPayload, role), [jwtPayload]);
+  const hasPermissionCallback = useCallback(
+    (permission: Permission) => hasPermission(jwtPayload, permission),
+    [jwtPayload],
+  );
+  const hasAnyPermissionCallback = useCallback(
+    (permissions: Permission[]) => hasAnyPermission(jwtPayload, permissions),
+    [jwtPayload],
+  );
+  const hasAllPermissionsCallback = useCallback(
+    (permissions: Permission[]) => hasAllPermissions(jwtPayload, permissions),
+    [jwtPayload],
+  );
 
   return {
     isAuthenticated,
@@ -89,5 +115,10 @@ export const useAuth = (): UseAuthReturn => {
     register,
     logout,
     checkAuth,
+    jwtPayload,
+    hasRole: hasRoleCallback,
+    hasPermission: hasPermissionCallback,
+    hasAnyPermission: hasAnyPermissionCallback,
+    hasAllPermissions: hasAllPermissionsCallback,
   };
 };
