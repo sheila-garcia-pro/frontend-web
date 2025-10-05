@@ -12,6 +12,7 @@ import {
   Button,
   Avatar,
   Tooltip,
+  useMediaQuery,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -45,6 +46,8 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
   const { t } = useTranslation();
   const { logout } = useAuth();
 
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
+
   // Estado do menu de usuário
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
@@ -67,8 +70,14 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
     <AppBar
       position="fixed"
       sx={{
-        width: { sm: `calc(100% - ${open ? drawerWidth : 0}px)` },
-        ml: { sm: `${open ? drawerWidth : 0}px` },
+        width: {
+          xs: '100%',
+          md: `calc(100% - ${open ? drawerWidth : 0}px)`,
+        },
+        ml: {
+          xs: 0,
+          md: `${open ? drawerWidth : 0}px`,
+        },
         borderRadius: 0,
         transition: muiTheme.transitions.create(['margin', 'width'], {
           easing: muiTheme.transitions.easing.sharp,
@@ -84,17 +93,30 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
       }}
     >
       <Toolbar sx={{ height: '64px' }}>
-        {' '}
-        {/* Logo */}
+        <IconButton
+          color="inherit"
+          aria-label="abrir menu"
+          edge="start"
+          onClick={handleDrawerToggle}
+          sx={{
+            mr: 2,
+            display: { md: 'none' },
+            '&:hover': {
+              backgroundColor:
+                mode === 'light' ? 'rgba(245, 243, 231, 0.2)' : 'rgba(232, 237, 170, 0.2)',
+            },
+          }}
+        >
+          <MenuIcon />
+        </IconButton>
+
         <Box
           sx={{ flexGrow: 1, display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}
         ></Box>
-        {/* Ações da direita */}
+
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          {' '}
-          {/* Seletor de Idioma */}
           <LanguageSelector />
-          {/* Botão de tema */}
+
           <Tooltip title={`Mudar para tema ${mode === 'light' ? 'escuro' : 'claro'}`}>
             <IconButton
               color="inherit"
@@ -110,7 +132,7 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
               {mode === 'light' ? <DarkModeIcon /> : <LightModeIcon />}
             </IconButton>
           </Tooltip>
-          {/* Menu de usuário */}
+
           <Box sx={{ ml: 0.5 }}>
             <Tooltip title="Opções da conta">
               <IconButton
@@ -130,7 +152,6 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
                   },
                 }}
               >
-                {' '}
                 {user ? (
                   <Avatar
                     alt={user.name}
@@ -177,7 +198,6 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
                 },
               }}
             >
-              {' '}
               <MenuItem component={RouterLink} to="/profile" onClick={handleCloseMenu}>
                 <Avatar
                   sx={{

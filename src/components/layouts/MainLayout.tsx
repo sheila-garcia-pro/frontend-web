@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Box, CssBaseline, Container, Toolbar, useMediaQuery, styled } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@store/index';
-import { toggleSidebar } from '@store/slices/uiSlice';
+import { toggleSidebar, setSidebarOpen } from '@store/slices/uiSlice';
 
 // Componentes
 import Navbar from '@components/ui/Navbar';
@@ -33,7 +33,7 @@ const Main = styled('main', {
   marginLeft: isMobile
     ? 0
     : open
-      ? 0  // Sempre 0 quando o sidebar está aberto, independente se está colapsado ou não
+      ? 0 // Sempre 0 quando o sidebar está aberto, independente se está colapsado ou não
       : `-${DRAWER_WIDTH}px`,
   ...(open && {
     transition: theme.transitions.create('margin', {
@@ -51,6 +51,12 @@ const MainLayout: React.FC = () => {
   // Responsividade
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  useEffect(() => {
+    if (isMobile) {
+      dispatch(setSidebarOpen(false));
+    }
+  }, []);
 
   // Handler para toggle do sidebar
   const handleDrawerToggle = () => {

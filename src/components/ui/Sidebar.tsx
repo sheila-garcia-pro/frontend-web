@@ -164,6 +164,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.enteringScreen,
           }),
+          zIndex: isMobile ? theme.zIndex.drawer + 2 : 'auto',
         },
       }}
       variant={isMobile ? 'temporary' : 'persistent'}

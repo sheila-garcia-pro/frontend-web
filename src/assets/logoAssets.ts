@@ -20,10 +20,6 @@ import logoFullBeige from './logos/logo-full-beige.png'; // Bege
 import logoFullBlack from './logos/logo-full-black.png'; // Preto
 import logoFullWhite from './logos/logo-full-white.png'; // Branco
 
-// Logo original completo - Versões para welcome
-import logoOriginalGreen from './logo_original_green.png'; // Verde original
-import logoOriginalWhite from './logo_original_white.png'; // Branco original
-
 // ==================== CONFIGURAÇÕES POR TEMA ====================
 
 export const LOGO_ASSETS = {
@@ -31,7 +27,7 @@ export const LOGO_ASSETS = {
   light: {
     symbol: logoSymbolGreen, // Símbolo verde para light mode (logo_green.png)
     full: logoFullGreen, // Logo completo verde para light mode
-    original: logoOriginalGreen, // Logo original verde para light mode
+    original: logoFullGreen, // Usando logo completo verde como original para light mode
     fallback: logoSymbolGreen, // Fallback
   },
 
@@ -39,7 +35,7 @@ export const LOGO_ASSETS = {
   dark: {
     symbol: logoSymbolWhite, // Símbolo branco para dark mode (logo_white.png)
     full: logoFullWhite, // Logo completo branco para dark mode
-    original: logoOriginalWhite, // Logo original branco para dark mode
+    original: logoFullWhite, // Usando logo completo branco como original para dark mode
     fallback: logoSymbolWhite, // Fallback
   },
 
