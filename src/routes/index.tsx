@@ -117,21 +117,19 @@ const AppRoutesContent: React.FC = () => {
         {/* Perfil - acesso básico */}
         <Route path="profile" element={<ProfilePage />} />
 
-        {/* Ingredientes - com permissões específicas */}
         <Route
           path="ingredients"
           element={
-            <PermissionRoute required={['get_ingredient']}>
+            <PermissionRoute required={['get_ingredient', 'get_user_ingredient']} any={true}>
               <IngredientsPage />
             </PermissionRoute>
           }
         />
 
-        {/* Receitas - com permissões específicas */}
         <Route
           path="recipes"
           element={
-            <PermissionRoute required={['get_recipe']}>
+            <PermissionRoute required={['get_recipe', 'get_user_recipe']} any={true}>
               <RecipesPage />
             </PermissionRoute>
           }
@@ -139,17 +137,16 @@ const AppRoutesContent: React.FC = () => {
         <Route
           path="recipes/:id"
           element={
-            <PermissionRoute required={['get_recipe']}>
+            <PermissionRoute required={['get_recipe', 'get_user_recipe']} any={true}>
               <RecipeDetailsPage />
             </PermissionRoute>
           }
         />
 
-        {/* Cardápios/Menu - com permissões específicas */}
         <Route
           path="menu"
           element={
-            <PermissionRoute required={['get_menu']}>
+            <PermissionRoute required={['get_menu', 'get_user_menu']} any={true}>
               <MenuPage />
             </PermissionRoute>
           }
@@ -157,7 +154,7 @@ const AppRoutesContent: React.FC = () => {
         <Route
           path="menu/:id"
           element={
-            <PermissionRoute required={['get_menu']}>
+            <PermissionRoute required={['get_menu', 'get_user_menu']} any={true}>
               <MenuDetailsPage />
             </PermissionRoute>
           }

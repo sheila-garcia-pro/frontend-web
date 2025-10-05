@@ -1,34 +1,21 @@
-/**
- * Guards de rota para RBAC
- *
- * Componentes para proteger rotas baseado em autenticação e permissões.
- */
-
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth as useMainAuth } from '@hooks/useAuth';
-import { hasAnySimplePermission, hasAllSimplePermissions } from './simpleRBAC';
+import { useAuth } from '@hooks/useAuth';
 import { Permission } from './permissions';
 
-// Props para ProtectedRoute
 interface ProtectedRouteProps {
   children: React.ReactElement;
 }
 
-// Props para PermissionRoute
 interface PermissionRouteProps {
   required: Permission[];
-  any?: boolean; // Se true, precisa de apenas uma das permissões. Se false, precisa de todas.
+  any?: boolean;
   children: React.ReactElement;
 }
 
-/**
- * Guard básico - protege rota exigindo usuário autenticado
- */
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, loading, isAuthenticated } = useMainAuth();
+  const { user, loading, isAuthenticated } = useAuth();
 
-  // Mostrar loading enquanto verifica autenticação
   if (loading) {
     return (
       <div
@@ -46,22 +33,16 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // Redirecionar para login se não autenticado
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Renderizar conteúdo se autenticado
   return children;
 }
 
-/**
- * Guard avançado - protege rota exigindo permissões específicas
- */
 export function PermissionRoute({ required, any = false, children }: PermissionRouteProps) {
-  const { user, loading, isAuthenticated } = useMainAuth();
+  const { user, loading, isAuthenticated, hasAnyPermission, hasAllPermissions } = useAuth();
 
-  // Mostrar loading enquanto verifica autenticação
   if (loading) {
     return (
       <div
@@ -79,21 +60,15 @@ export function PermissionRoute({ required, any = false, children }: PermissionR
     );
   }
 
-  // Redirecionar para login se não autenticado
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Verificar permissões usando o sistema simplificado
-  const hasRequiredPermissions = any
-    ? hasAnySimplePermission(user, required)
-    : hasAllSimplePermissions(user, required);
+  const hasRequiredPermissions = any ? hasAnyPermission(required) : hasAllPermissions(required);
 
-  // Redirecionar para 403 se não tem permissões
   if (!hasRequiredPermissions) {
-    return <Navigate to="/not-found" replace />;
+    return <Navigate to="/not-authorized" replace />;
   }
 
-  // Renderizar conteúdo se tem permissões
   return children;
 }

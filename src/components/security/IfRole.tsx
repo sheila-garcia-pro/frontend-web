@@ -1,13 +1,5 @@
-/**
- * Componente IfRole
- *
- * Renderiza condicionalmente baseado no role do usuário.
- * Útil para mostrar funcionalidades específicas para admin ou outros roles.
- */
-
 import React from 'react';
-import { useAuth } from '../../security/AuthProvider';
-import { hasRole } from '../../security/auth';
+import { useAuth } from '../../hooks/useAuth';
 import { Role } from '../../security/permissions';
 
 interface IfRoleProps {
@@ -16,15 +8,14 @@ interface IfRoleProps {
   fallback?: React.ReactNode;
 }
 
-/**
- * Renderiza children apenas se o usuário tiver o role especificado
- */
 export function IfRole({ role, children, fallback = null }: IfRoleProps) {
-  const { user } = useAuth();
+  const { hasRole } = useAuth();
 
-  const hasRequiredRole = hasRole(user, role);
+  if (hasRole(role)) {
+    return <>{children}</>;
+  }
 
-  return <>{hasRequiredRole ? children : fallback}</>;
+  return <>{fallback}</>;
 }
 
 export default IfRole;
