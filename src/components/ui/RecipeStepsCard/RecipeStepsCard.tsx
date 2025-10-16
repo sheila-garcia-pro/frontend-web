@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -36,67 +36,72 @@ const RecipeStepsCardComponent: React.FC<RecipeStepsCardProps> = ({
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingText, setEditingText] = useState('');
 
+  // Ref para rastrear inicialização (evita loop)
+  const isInitializedRef = useRef(false);
+
   useEffect(() => {
-    // Só atualizar se realmente mudou (evita re-renders desnecessários)
-    if (JSON.stringify(initialSteps) !== JSON.stringify(steps)) {
+    // Só atualiza se não foi inicializado OU se o tamanho mudou
+    if (!isInitializedRef.current || initialSteps.length !== steps.length) {
       setSteps(initialSteps);
+      isInitializedRef.current = true;
     }
-  }, [initialSteps]); // Removido steps das dependências
+  }, [initialSteps.length]); // Depende apenas do LENGTH!
 
-  const handleAddStep = useCallback(() => {
+  // Usar funções normais em vez de useCallback para simplicidade
+  const handleAddStep = () => {
     if (newStep.trim()) {
-      const updatedSteps = [...steps, newStep.trim()];
-      setSteps(updatedSteps);
+      // Usar setState funcional para evitar dependências
+      setSteps((prevSteps) => {
+        const updatedSteps = [...prevSteps, newStep.trim()];
+        // Chamar callback de forma segura
+        setTimeout(() => onStepsUpdate?.(updatedSteps), 0);
+        return updatedSteps;
+      });
       setNewStep('');
-      onStepsUpdate?.(updatedSteps);
     }
-  }, [newStep, steps, onStepsUpdate]);
+  };
 
-  const handleEditStep = useCallback(
-    (index: number) => {
-      setEditingIndex(index);
-      setEditingText(steps[index]);
-    },
-    [steps],
-  );
+  const handleEditStep = (index: number) => {
+    setEditingIndex(index);
+    setEditingText(steps[index]);
+  };
 
-  const handleSaveEdit = useCallback(() => {
+  const handleSaveEdit = () => {
     if (editingIndex !== null && editingText.trim()) {
-      const updatedSteps = [...steps];
-      updatedSteps[editingIndex] = editingText.trim();
-      setSteps(updatedSteps);
+      setSteps((prevSteps) => {
+        const updatedSteps = [...prevSteps];
+        updatedSteps[editingIndex] = editingText.trim();
+        setTimeout(() => onStepsUpdate?.(updatedSteps), 0);
+        return updatedSteps;
+      });
       setEditingIndex(null);
       setEditingText('');
-      onStepsUpdate?.(updatedSteps);
     }
-  }, [editingIndex, editingText, steps, onStepsUpdate]);
+  };
 
-  const handleCancelEdit = useCallback(() => {
+  const handleCancelEdit = () => {
     setEditingIndex(null);
     setEditingText('');
-  }, []);
+  };
 
-  const handleDeleteStep = useCallback(
-    (index: number) => {
-      const updatedSteps = steps.filter((_, i) => i !== index);
-      setSteps(updatedSteps);
-      onStepsUpdate?.(updatedSteps);
-    },
-    [steps, onStepsUpdate],
-  );
+  const handleDeleteStep = (index: number) => {
+    setSteps((prevSteps) => {
+      const updatedSteps = prevSteps.filter((_, i) => i !== index);
+      setTimeout(() => onStepsUpdate?.(updatedSteps), 0);
+      return updatedSteps;
+    });
+  };
 
-  const handleKeyPress = useCallback(
-    (event: React.KeyboardEvent, action: 'add' | 'edit') => {
-      if (event.key === 'Enter') {
-        if (action === 'add') {
-          handleAddStep();
-        } else {
-          handleSaveEdit();
-        }
+  const handleKeyPress = (event: React.KeyboardEvent, action: 'add' | 'edit') => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      if (action === 'add') {
+        handleAddStep();
+      } else {
+        handleSaveEdit();
       }
-    },
-    [handleAddStep, handleSaveEdit],
-  );
+    }
+  };
 
   return (
     <Paper elevation={2} sx={{ p: 3, mb: 3 }}>

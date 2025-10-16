@@ -38,17 +38,29 @@ export const useNutritionalInfo = (
     } finally {
       setLoading(false);
     }
-  }, [recipe, recipeIngredients]);
+  }, [
+    recipe?.id,
+    recipeIngredients.length,
+    recipeIngredients.map((i) => i.ingredient._id).join(','),
+  ]); // 🔥 Dependências específicas para evitar loops
 
-  // Recalcular quando recipe ou ingredientes mudarem
+  // 🔥 DEBOUNCE: Recalcular apenas após um delay para evitar múltiplas chamadas
   useEffect(() => {
-    if (recipe && recipeIngredients.length > 0) {
-      calculateNutritionalInfo();
-    } else {
-      setNutritionalData(null);
-      setError(null);
-    }
-  }, [calculateNutritionalInfo]);
+    const timeoutId = setTimeout(() => {
+      if (recipe && recipeIngredients.length > 0) {
+        calculateNutritionalInfo();
+      } else {
+        setNutritionalData(null);
+        setError(null);
+      }
+    }, 500); // 500ms de delay
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    recipe?.id,
+    recipeIngredients.length,
+    recipeIngredients.map((i) => i.ingredient._id).join(','),
+  ]); // 🔥 Mesmas dependências específicas
 
   const refresh = useCallback(() => {
     calculateNutritionalInfo();

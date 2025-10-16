@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   Card,
   CardContent,
@@ -61,6 +61,23 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
   const [editQuantity, setEditQuantity] = useState('');
   const [editUnit, setEditUnit] = useState('');
 
+  // 🔥 SOLUÇÃO RADICAL: Usar ref para todos os estados críticos e evitar re-renders
+  const selectedIngredientsRef = useRef<RecipeIngredient[]>([]);
+  const callbackDisabledRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  // Sincronizar ref com estado (mas sem causar re-render)
+  useEffect(() => {
+    selectedIngredientsRef.current = selectedIngredients;
+  }, [selectedIngredients]);
+
+  // Cleanup no unmount
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   // Usar o hook de unidades robusto
   const {
     normalizedUnits,
@@ -79,16 +96,97 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
   // Debounce para busca
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // Carregar ingredientes iniciais
-  useEffect(() => {
-    if (initialIngredients.length > 0) {
-      setSelectedIngredients(initialIngredients);
-      onIngredientsUpdate?.(initialIngredients);
-    }
-  }, [initialIngredients, onIngredientsUpdate]);
+  // Usar ref para evitar loops com onIngredientsUpdate
+  const onIngredientsUpdateRef = useRef(onIngredientsUpdate);
 
-  // Buscar ingredientes
+  // 🔥 NUNCA atualizar o ref do callback (causa loops)
+  // onIngredientsUpdateRef.current = onIngredientsUpdate sempre igual
+
+  // 🔥 INICIALIZAÇÃO CORRIGIDA - APENAS UMA VEZ
+  const hasInitializedRef = useRef(false);
+
+  // 🔥 SOLUÇÃO DEFINITIVA: Uma única inicialização sem dependências que causam loops
   useEffect(() => {
+    console.log(
+      '[RecipeIngredientsCard] useEffect inicialização - hasInitialized:',
+      hasInitializedRef.current,
+      'initialIngredients.length:',
+      initialIngredients.length,
+    );
+
+    if (!hasInitializedRef.current) {
+      console.log('[RecipeIngredientsCard] PRIMEIRA E ÚNICA INICIALIZAÇÃO');
+
+      if (initialIngredients.length > 0) {
+        console.log(
+          '[RecipeIngredientsCard] Inicializando com:',
+          initialIngredients.length,
+          'ingredientes',
+        );
+        setSelectedIngredients(initialIngredients);
+        selectedIngredientsRef.current = initialIngredients;
+
+        // Notificar o pai imediatamente na inicialização
+        if (onIngredientsUpdate) {
+          console.log('[RecipeIngredientsCard] Notificando pai na inicialização');
+          onIngredientsUpdate(initialIngredients);
+        }
+      } else {
+        console.log('[RecipeIngredientsCard] Inicialização sem ingredientes');
+        setSelectedIngredients([]);
+        selectedIngredientsRef.current = [];
+      }
+
+      hasInitializedRef.current = true;
+    }
+  }, []); // 🔥 DEPENDÊNCIAS VAZIAS - NUNCA MAIS EXECUTA
+
+  // 🔥 FUNÇÃO SEGURA que NUNCA causa loop
+  const safeCallParentUpdate = useCallback(
+    (newIngredients: RecipeIngredient[]) => {
+      console.log(
+        '[RecipeIngredientsCard] safeCallParentUpdate chamada com:',
+        newIngredients.length,
+        'ingredientes',
+      );
+      console.log('[RecipeIngredientsCard] Dados dos ingredientes:', newIngredients);
+
+      // 🔥 REMOVIDO: mountedRef.current check que estava bloqueando
+      if (callbackDisabledRef.current) {
+        console.log('[RecipeIngredientsCard] Callback temporariamente desabilitado');
+        return;
+      }
+
+      // Desabilita temporariamente para evitar cascata
+      callbackDisabledRef.current = true;
+      console.log('[RecipeIngredientsCard] Executando callback com delay...');
+
+      // Chama o pai de forma segura
+      setTimeout(() => {
+        if (onIngredientsUpdate) {
+          console.log(
+            '[RecipeIngredientsCard] Notificando pai com:',
+            newIngredients.length,
+            'ingredientes',
+          );
+          console.log(
+            '[RecipeIngredientsCard] Ingredientes sendo enviados:',
+            newIngredients.map((ing) => ({ name: ing.ingredient.name, quantity: ing.quantity })),
+          );
+          onIngredientsUpdate(newIngredients);
+        }
+        // Re-habilita após delay
+        setTimeout(() => {
+          callbackDisabledRef.current = false;
+          console.log('[RecipeIngredientsCard] Callback re-habilitado');
+        }, 100);
+      }, 50);
+    },
+    [onIngredientsUpdate],
+  );
+  useEffect(() => {
+    let isCancelled = false; // Flag para cancelar requisições antigas
+
     const searchIngredients = async () => {
       if (!debouncedSearchTerm.trim()) {
         setSearchResults([]);
@@ -99,19 +197,32 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
       try {
         const response = await getCachedIngredients({
           page: 1,
-          itemPerPage: 1000,
+          itemPerPage: 50, // ⚠️ REDUZIDO de 1000 para 50! Muito mais rápido
           name: debouncedSearchTerm,
         });
-        setSearchResults(response.data);
+
+        // Só atualiza se não foi cancelado
+        if (!isCancelled) {
+          setSearchResults(response.data);
+        }
       } catch (error) {
-        console.error('Erro ao buscar ingredientes:', error);
-        setSearchResults([]);
+        if (!isCancelled) {
+          console.error('Erro ao buscar ingredientes:', error);
+          setSearchResults([]);
+        }
       } finally {
-        setIsSearching(false);
+        if (!isCancelled) {
+          setIsSearching(false);
+        }
       }
     };
 
     searchIngredients();
+
+    // Cleanup: cancela a requisição se o componente desmontar ou termo mudar
+    return () => {
+      isCancelled = true;
+    };
   }, [debouncedSearchTerm]);
 
   // Calcular totais
@@ -239,7 +350,7 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
     }
 
     setSelectedIngredients(updatedIngredients);
-    onIngredientsUpdate?.(updatedIngredients);
+    safeCallParentUpdate(updatedIngredients);
 
     // Limpar estados
     setDetailModalOpen(false);
@@ -253,7 +364,7 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
   const handleRemoveIngredient = (index: number) => {
     const updatedIngredients = selectedIngredients.filter((_, i) => i !== index);
     setSelectedIngredients(updatedIngredients);
-    onIngredientsUpdate?.(updatedIngredients);
+    safeCallParentUpdate(updatedIngredients);
   };
 
   // Editar ingrediente
@@ -282,7 +393,7 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
     };
 
     setSelectedIngredients(updatedIngredients);
-    onIngredientsUpdate?.(updatedIngredients);
+    safeCallParentUpdate(updatedIngredients);
     setEditingId(null);
   };
 
@@ -302,6 +413,21 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
           <Typography variant="h5" component="h3" sx={{ fontWeight: 600 }}>
             Ingredientes da Receita
           </Typography>
+          {/* 🔍 DEBUG: Indicador visual do estado */}
+          <Box
+            sx={{
+              ml: 2,
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+              bgcolor: selectedIngredients.length > 0 ? 'success.light' : 'error.light',
+              color: selectedIngredients.length > 0 ? 'success.contrastText' : 'error.contrastText',
+            }}
+          >
+            <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+              DEBUG: {selectedIngredients.length} ingredientes no estado
+            </Typography>
+          </Box>
         </Box>
 
         {/* Alerta de inconsistências */}
@@ -361,12 +487,10 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
                       <Search />
                     </InputAdornment>
                   ),
-                  endAdornment: (
-                    <>
-                      {isSearching && <CircularProgress size={20} />}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
+                  endAdornment: [
+                    isSearching && <CircularProgress key="loading" size={20} />,
+                    params.InputProps.endAdornment,
+                  ].filter(Boolean),
                 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -429,9 +553,7 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
                   <ListItemText
                     primary={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                          {recipeIngredient.ingredient.name}
-                        </Typography>
+                        <span style={{ fontWeight: 500 }}>{recipeIngredient.ingredient.name}</span>
                         <Chip
                           label={recipeIngredient.ingredient.category}
                           size="small"
@@ -486,20 +608,26 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
                         </Box>
                       ) : (
                         <Box>
-                          <Typography variant="body2" color="text.secondary">
+                          <span style={{ fontSize: '0.875rem', color: 'gray' }}>
                             {recipeIngredient.quantity} {recipeIngredient.unitMeasure}
-                          </Typography>
-                          <Typography variant="body2" color="success.main" sx={{ fontWeight: 500 }}>
+                          </span>
+                          <br />
+                          <span style={{ fontSize: '0.875rem', color: 'green', fontWeight: 500 }}>
                             R$ {recipeIngredient.totalCost.toFixed(2)}
-                          </Typography>
+                          </span>
                           {recipeIngredient.costPerPortion && (
-                            <Typography variant="caption" color="text.secondary">
-                              R$ {recipeIngredient.costPerPortion.toFixed(2)}/porção
-                            </Typography>
+                            <>
+                              <br />
+                              <span style={{ fontSize: '0.75rem', color: 'gray' }}>
+                                R$ {recipeIngredient.costPerPortion.toFixed(2)}/porção
+                              </span>
+                            </>
                           )}
                         </Box>
                       )
                     }
+                    primaryTypographyProps={{ component: 'div' }}
+                    secondaryTypographyProps={{ component: 'div' }}
                   />
                   <ListItemSecondaryAction>
                     {editingId !== recipeIngredient.ingredient._id && (

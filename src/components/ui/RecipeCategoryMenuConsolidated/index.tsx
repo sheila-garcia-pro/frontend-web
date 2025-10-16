@@ -289,16 +289,14 @@ const RecipeCategoryMenu: React.FC<RecipeCategoryMenuProps> = ({ onCategoryUpdat
           </ListItemIcon>
           <ListItemText>Nova Categoria</ListItemText>
         </MenuItem>
-        {categories.length > 0 && (
-          <>
-            <Divider />
-            <Box sx={{ px: 2, py: 1 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                CATEGORIAS EXISTENTES
-              </Typography>
-            </Box>
-          </>
-        )}{' '}
+        {categories.length > 0 && [
+          <Divider key="divider" />,
+          <Box key="header" sx={{ px: 2, py: 1 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+              CATEGORIAS EXISTENTES
+            </Typography>
+          </Box>,
+        ]}{' '}
         <Divider /> {/* Container com scroll para as categorias */}
         <Box
           sx={{

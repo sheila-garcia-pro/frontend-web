@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -64,14 +64,22 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
     sellingPrice: undefined,
     costPrice: undefined,
     profit: undefined,
-    priceSale: undefined,
-    priceCost: undefined,
-    priceProfit: undefined,
+    priceSale: 0,
+    priceCost: 0,
+    priceProfit: 0,
+    costDirect: [],
+    costIndirect: [],
   });
+
+  // Ref para rastrear o ID da receita carregada (evita re-carregar a mesma receita)
+  const loadedRecipeIdRef = useRef<string | null>(null);
 
   // Preencher o formulário quando a receita for carregada
   useEffect(() => {
-    if (recipe) {
+    // Só carrega se a receita mudou (previne re-loads desnecessários)
+    if (recipe && recipe._id !== loadedRecipeIdRef.current) {
+      loadedRecipeIdRef.current = recipe._id;
+
       setFormData({
         name: recipe.name,
         category: recipe.category,
@@ -87,21 +95,27 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
         sellingPrice: recipe.sellingPrice,
         costPrice: recipe.costPrice,
         profit: recipe.profit,
-        priceSale: undefined,
-        priceCost: undefined,
-        costDirect: undefined,
-        costIndirect: undefined,
+        priceSale: recipe.priceSale || 0,
+        priceCost: recipe.priceCost || 0,
+        priceProfit: recipe.priceProfit || 0,
+        costDirect: recipe.costDirect || [],
+        costIndirect: recipe.costIndirect || [],
       });
 
       // Carregar passos da receita
+      isUpdatingStepsRef.current = true;
       if (recipe.modePreparation && recipe.modePreparation.length > 0) {
         setRecipeSteps(recipe.modePreparation);
       } else {
         setRecipeSteps([]);
       }
+      setTimeout(() => {
+        isUpdatingStepsRef.current = false;
+      }, 0);
 
       // Carregar ingredientes da receita
       const loadRecipeIngredients = async () => {
+        isUpdatingIngredientsRef.current = true;
         if (recipe.ingredients && recipe.ingredients.length > 0) {
           try {
             const convertedIngredients = await convertAPIIngredientsToRecipeIngredients(
@@ -115,11 +129,14 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
         } else {
           setRecipeIngredients([]);
         }
+        setTimeout(() => {
+          isUpdatingIngredientsRef.current = false;
+        }, 0);
       };
 
       loadRecipeIngredients();
     }
-  }, [recipe]);
+  }, [recipe?._id]); // ⚠️ Depende apenas do ID, não do objeto inteiro!
   const handleInputChange =
     (field: keyof CreateRecipeParams) =>
     (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -145,15 +162,139 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
       }));
     };
 
+  // Função para atualizar preço de venda e calcular lucro
+  const handleSellingPriceChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const sellingPrice = value ? parseFloat(value) : undefined;
+
+    setFormData((prev) => {
+      const newFormData = {
+        ...prev,
+        sellingPrice,
+      };
+
+      // Calcular lucro automaticamente se tiver preço de venda e custo
+      if (sellingPrice && prev.costPrice) {
+        newFormData.profit = sellingPrice - prev.costPrice;
+      } else if (!sellingPrice || !prev.costPrice) {
+        newFormData.profit = undefined;
+      }
+
+      return newFormData;
+    });
+  }, []);
+
+  // Função para atualizar preço de custo e calcular lucro
+  const handleCostPriceChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const costPrice = value ? parseFloat(value) : undefined;
+
+    setFormData((prev) => {
+      const newFormData = {
+        ...prev,
+        costPrice,
+      };
+
+      // Calcular lucro automaticamente se tiver preço de venda e custo
+      if (prev.sellingPrice && costPrice) {
+        newFormData.profit = prev.sellingPrice - costPrice;
+      } else if (!prev.sellingPrice || !costPrice) {
+        newFormData.profit = undefined;
+      }
+
+      return newFormData;
+    });
+  }, []);
+
+  // Função para auto-preencher preço de custo
+  const handleCostPriceFocus = useCallback(() => {
+    // Auto-preencher com o custo dos ingredientes se não tiver valor e houver ingredientes
+    if (!formData.costPrice && recipeIngredients.length > 0) {
+      const totalCost = recipeIngredients.reduce(
+        (total, ingredient) => total + ingredient.totalCost,
+        0,
+      );
+      setFormData((prev) => ({
+        ...prev,
+        costPrice: totalCost,
+        profit: prev.sellingPrice ? prev.sellingPrice - totalCost : undefined,
+      }));
+    }
+  }, [formData.costPrice, recipeIngredients]);
+
+  // Ref para controlar se está atualizando (evita ciclos)
+  const isUpdatingIngredientsRef = useRef(false);
+  const isUpdatingStepsRef = useRef(false);
+  const updateCountRef = useRef(0);
+
   // Função para atualizar ingredientes da receita
-  const handleIngredientsUpdate = (ingredients: RecipeIngredient[]) => {
+  const handleIngredientsUpdate = useCallback((ingredients: RecipeIngredient[]) => {
+    console.log(
+      '[RecipeEditModal] handleIngredientsUpdate chamada com:',
+      ingredients.length,
+      'ingredientes',
+    );
+    console.log(
+      '[RecipeEditModal] Ingredientes recebidos:',
+      ingredients.map((ing) => ({ name: ing.ingredient.name, quantity: ing.quantity })),
+    );
+
+    // Previne atualizações circulares
+    if (isUpdatingIngredientsRef.current) {
+      console.warn('[RecipeEditModal] Bloqueou atualização circular de ingredientes');
+      return;
+    }
+
+    updateCountRef.current++;
+    console.log(
+      '[RecipeEditModal] Atualizando ingredientes (#',
+      updateCountRef.current,
+      '):',
+      ingredients.length,
+    );
+
+    isUpdatingIngredientsRef.current = true;
     setRecipeIngredients(ingredients);
-  };
+    console.log(
+      '[RecipeEditModal] Estado recipeIngredients atualizado para:',
+      ingredients.length,
+      'ingredientes',
+    );
+
+    // Reseta a flag após o próximo render
+    setTimeout(() => {
+      isUpdatingIngredientsRef.current = false;
+    }, 0);
+  }, []);
 
   // Função para atualizar passos da receita
-  const handleStepsUpdate = (steps: string[]) => {
+  const handleStepsUpdate = useCallback((steps: string[]) => {
+    // Previne atualizações circulares
+    if (isUpdatingStepsRef.current) return;
+
+    isUpdatingStepsRef.current = true;
     setRecipeSteps(steps);
-  };
+    // Reseta a flag após o próximo render
+    setTimeout(() => {
+      isUpdatingStepsRef.current = false;
+    }, 0);
+  }, []);
+
+  // Memoizar ingredientes para evitar re-renders desnecessários
+  // Só muda se o tamanho ou IDs mudarem
+  const memoizedIngredients = useMemo(() => {
+    console.log('[RecipeEditModal] Memoizando ingredientes:', recipeIngredients.length);
+    return recipeIngredients;
+  }, [
+    recipeIngredients.length,
+    // Criar uma string com todos os IDs para comparação
+    recipeIngredients.map((ing) => ing.ingredient._id).join(','),
+  ]);
+
+  // Memoizar passos para evitar re-renders desnecessários
+  const memoizedSteps = useMemo(() => {
+    return recipeSteps;
+  }, [recipeSteps.length, recipeSteps.join('|')]);
 
   const handleSubmit = async () => {
     if (!recipe) {
@@ -171,6 +312,36 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
       );
       return;
     }
+
+    console.log('[RecipeEditModal] handleSave - Iniciando validação');
+    console.log(
+      '[RecipeEditModal] Estado atual recipeIngredients:',
+      recipeIngredients.length,
+      'ingredientes',
+    );
+    console.log(
+      '[RecipeEditModal] Dados dos ingredientes:',
+      recipeIngredients.map((ing) => ({ name: ing.ingredient.name, quantity: ing.quantity })),
+    );
+
+    // Validação obrigatória para ingredientes
+    if (recipeIngredients.length === 0) {
+      console.error('[RecipeEditModal] ERRO: Nenhum ingrediente encontrado no estado!');
+      dispatch(
+        addNotification({
+          message: 'Adicione pelo menos um ingrediente à receita!',
+          type: 'error',
+          duration: 4000,
+        }),
+      );
+      return;
+    }
+
+    console.log(
+      '[RecipeEditModal] Validação de ingredientes PASSOU - encontrados:',
+      recipeIngredients.length,
+      'ingredientes',
+    );
 
     if (!recipe._id) {
       dispatch(
@@ -369,7 +540,7 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
                 sx={{ flex: 2 }}
               />
 
-              <FormControl fullWidth required sx={{ flex: 1 }}>
+              <FormControl fullWidth sx={{ flex: 1 }}>
                 <InputLabel>Unidade de Peso</InputLabel>
                 <Select
                   value={formData.typeWeightRecipe}
@@ -400,12 +571,12 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
             {/* Descrição */}
             <TextField
               fullWidth
-              label="Descrição (Opcional)"
+              label="Descrição"
               value={formData.descripition}
               onChange={handleInputChange('descripition')}
               multiline
               rows={4}
-              placeholder="Descreva os detalhes da receita (opcional)..."
+              placeholder="Descreva os detalhes da receita..."
               disabled={loading}
             />
 
@@ -434,10 +605,24 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
                     gap: 1,
                   }}
                 >
-                  🥘 Ingredientes da Receita
+                  🥘 Ingredientes da Receita *{/* 🔍 DEBUG: Indicador do estado no modal pai */}
+                  <Box
+                    sx={{
+                      ml: 2,
+                      px: 1,
+                      py: 0.5,
+                      borderRadius: 1,
+                      bgcolor: recipeIngredients.length > 0 ? 'success.light' : 'warning.light',
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    DEBUG PAI: {recipeIngredients.length}
+                  </Box>
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Gerencie os ingredientes utilizados nesta receita
+                  Gerencie os ingredientes utilizados nesta receita (pelo menos um ingrediente é
+                  obrigatório)
                 </Typography>
 
                 <Box
@@ -455,7 +640,7 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
                 >
                   <RecipeIngredientsCard
                     recipeId={recipe._id}
-                    initialIngredients={recipeIngredients}
+                    initialIngredients={memoizedIngredients}
                     onIngredientsUpdate={handleIngredientsUpdate}
                   />
                 </Box>
@@ -520,7 +705,7 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
                 >
                   <RecipeStepsCard
                     recipeId={recipe._id}
-                    initialSteps={recipeSteps}
+                    initialSteps={memoizedSteps}
                     onStepsUpdate={handleStepsUpdate}
                   />
                 </Box>
@@ -530,7 +715,7 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
             {/* Seção de Informações Financeiras */}
             <Box>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
-                💰 Informações Financeiras (Opcional)
+                💰 Informações Financeiras
               </Typography>
 
               <Box sx={{ display: 'flex', gap: 2 }}>
@@ -538,26 +723,7 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
                   fullWidth
                   label="Preço de Venda"
                   value={formData.sellingPrice || ''}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    const sellingPrice = value ? parseFloat(value) : undefined;
-
-                    setFormData((prev) => {
-                      const newFormData = {
-                        ...prev,
-                        sellingPrice,
-                      };
-
-                      // Calcular lucro automaticamente se tiver preço de venda e custo
-                      if (sellingPrice && prev.costPrice) {
-                        newFormData.profit = sellingPrice - prev.costPrice;
-                      } else if (!sellingPrice || !prev.costPrice) {
-                        newFormData.profit = undefined;
-                      }
-
-                      return newFormData;
-                    });
-                  }}
+                  onChange={handleSellingPriceChange}
                   type="number"
                   InputProps={{
                     startAdornment: <InputAdornment position="start">R$</InputAdornment>,
@@ -582,40 +748,8 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
                   fullWidth
                   label="Preço de Custo"
                   value={formData.costPrice || ''}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    const costPrice = value ? parseFloat(value) : undefined;
-
-                    setFormData((prev) => {
-                      const newFormData = {
-                        ...prev,
-                        costPrice,
-                      };
-
-                      // Calcular lucro automaticamente se tiver preço de venda e custo
-                      if (prev.sellingPrice && costPrice) {
-                        newFormData.profit = prev.sellingPrice - costPrice;
-                      } else if (!prev.sellingPrice || !costPrice) {
-                        newFormData.profit = undefined;
-                      }
-
-                      return newFormData;
-                    });
-                  }}
-                  onFocus={() => {
-                    // Auto-preencher com o custo dos ingredientes se não tiver valor e houver ingredientes
-                    if (!formData.costPrice && recipeIngredients.length > 0) {
-                      const totalCost = recipeIngredients.reduce(
-                        (total, ingredient) => total + ingredient.totalCost,
-                        0,
-                      );
-                      setFormData((prev) => ({
-                        ...prev,
-                        costPrice: totalCost,
-                        profit: prev.sellingPrice ? prev.sellingPrice - totalCost : undefined,
-                      }));
-                    }
-                  }}
+                  onChange={handleCostPriceChange}
+                  onFocus={handleCostPriceFocus}
                   type="number"
                   InputProps={{
                     startAdornment: <InputAdornment position="start">R$</InputAdornment>,

@@ -3,6 +3,11 @@ import { Recipe } from '../types/recipes';
 import { NutritionalTable } from '../types/nutritionalTable';
 import { getNutritionalTable } from './api/nutritionalTable';
 
+// 🔥 CACHE para evitar requisições desnecessárias
+const nutritionalCache = new Map<string, NutritionalTable | null>();
+const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutos
+const cacheTimestamps = new Map<string, number>();
+
 /**
  * Interface para informações nutricionais calculadas da receita
  */
@@ -91,16 +96,41 @@ const parseNutritionalValue = (value: string | undefined): number => {
 };
 
 /**
- * Busca informações nutricionais de um ingrediente
+ * Busca informações nutricionais de um ingrediente com cache
  */
 const getIngredientNutritionalInfo = async (
   ingredientName: string,
 ): Promise<NutritionalTable | null> => {
+  const cacheKey = ingredientName.toLowerCase().trim();
+  const now = Date.now();
+
+  // 🔥 Verificar cache primeiro
+  if (nutritionalCache.has(cacheKey)) {
+    const cacheTime = cacheTimestamps.get(cacheKey) || 0;
+    if (now - cacheTime < CACHE_EXPIRY) {
+      console.log(`[CACHE HIT] Informações nutricionais para: ${ingredientName}`);
+      return nutritionalCache.get(cacheKey) || null;
+    }
+  }
+
+  console.log(`[API CALL] Buscando informações nutricionais para: ${ingredientName}`);
+
   try {
     const tables = await getNutritionalTable(ingredientName);
-    return tables.length > 0 ? tables[0] : null;
+    const result = tables.length > 0 ? tables[0] : null;
+
+    // 🔥 Armazenar no cache
+    nutritionalCache.set(cacheKey, result);
+    cacheTimestamps.set(cacheKey, now);
+
+    return result;
   } catch (error) {
     console.warn(`Não foi possível obter informações nutricionais para: ${ingredientName}`);
+
+    // 🔥 Cache negativo para evitar requisições repetidas
+    nutritionalCache.set(cacheKey, null);
+    cacheTimestamps.set(cacheKey, now);
+
     return null;
   }
 };

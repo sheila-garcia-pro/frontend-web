@@ -22,69 +22,82 @@ export const UnitConsistencyValidator: React.FC<UnitConsistencyValidatorProps> =
   units,
   onInconsistencyFound,
 }) => {
-  const [inconsistencies, setInconsistencies] = React.useState<UnitInconsistency[]>([]);
+  const [hasChecked, setHasChecked] = React.useState(false);
+  const onInconsistencyFoundRef = React.useRef(onInconsistencyFound);
+
+  // Atualizar a ref sempre que a prop mudar
+  React.useEffect(() => {
+    onInconsistencyFoundRef.current = onInconsistencyFound;
+  }, [onInconsistencyFound]);
+
+  // Memoizar as inconsistências para evitar recálculos desnecessários
+  const inconsistencies = React.useMemo(() => {
+    const issues: UnitInconsistency[] = [];
+
+    units.forEach((unit) => {
+      if (unit.type === 'amount-use') {
+        // Verificar se a descrição bate com a unidade base
+        const nameL = unit.name.toLowerCase();
+        const baseUnitL = unit.baseUnitName?.toLowerCase() || '';
+
+        // Casos específicos de inconsistência
+        if (nameL.includes('gr') && !baseUnitL.includes('gram')) {
+          issues.push({
+            unit,
+            issue: `Unidade "${unit.name}" sugere gramas mas está mapeada para "${unit.baseUnitName}"`,
+            severity: 'warning',
+            suggestion: 'Deveria estar mapeada para "Gramas"',
+          });
+        }
+
+        if (
+          nameL.includes('kg') &&
+          !baseUnitL.includes('kilograma') &&
+          !baseUnitL.includes('quilograma')
+        ) {
+          issues.push({
+            unit,
+            issue: `Unidade "${unit.name}" sugere quilogramas mas está mapeada para "${unit.baseUnitName}"`,
+            severity: 'warning',
+            suggestion: 'Deveria estar mapeada para "Quilogramas"',
+          });
+        }
+
+        if (nameL.includes('ml') && !baseUnitL.includes('mililitro')) {
+          issues.push({
+            unit,
+            issue: `Unidade "${unit.name}" sugere mililitros mas está mapeada para "${unit.baseUnitName}"`,
+            severity: 'warning',
+            suggestion: 'Deveria estar mapeada para "Mililitros"',
+          });
+        }
+
+        if (nameL.includes('litro') && !baseUnitL.includes('litro')) {
+          issues.push({
+            unit,
+            issue: `Unidade "${unit.name}" sugere litros mas está mapeada para "${unit.baseUnitName}"`,
+            severity: 'warning',
+            suggestion: 'Deveria estar mapeada para "Litros"',
+          });
+        }
+      }
+    });
+
+    return issues;
+  }, [units]);
 
   React.useEffect(() => {
-    const checkConsistency = () => {
-      const issues: UnitInconsistency[] = [];
-
-      units.forEach((unit) => {
-        if (unit.type === 'amount-use') {
-          // Verificar se a descrição bate com a unidade base
-          const nameL = unit.name.toLowerCase();
-          const baseUnitL = unit.baseUnitName?.toLowerCase() || '';
-
-          // Casos específicos de inconsistência
-          if (nameL.includes('gr') && !baseUnitL.includes('gram')) {
-            issues.push({
-              unit,
-              issue: `Unidade "${unit.name}" sugere gramas mas está mapeada para "${unit.baseUnitName}"`,
-              severity: 'warning',
-              suggestion: 'Deveria estar mapeada para "Gramas"',
-            });
-          }
-
-          if (
-            nameL.includes('kg') &&
-            !baseUnitL.includes('kilograma') &&
-            !baseUnitL.includes('quilograma')
-          ) {
-            issues.push({
-              unit,
-              issue: `Unidade "${unit.name}" sugere quilogramas mas está mapeada para "${unit.baseUnitName}"`,
-              severity: 'warning',
-              suggestion: 'Deveria estar mapeada para "Quilogramas"',
-            });
-          }
-
-          if (nameL.includes('ml') && !baseUnitL.includes('mililitro')) {
-            issues.push({
-              unit,
-              issue: `Unidade "${unit.name}" sugere mililitros mas está mapeada para "${unit.baseUnitName}"`,
-              severity: 'warning',
-              suggestion: 'Deveria estar mapeada para "Mililitros"',
-            });
-          }
-
-          if (nameL.includes('litro') && !baseUnitL.includes('litro')) {
-            issues.push({
-              unit,
-              issue: `Unidade "${unit.name}" sugere litros mas está mapeada para "${unit.baseUnitName}"`,
-              severity: 'warning',
-              suggestion: 'Deveria estar mapeada para "Litros"',
-            });
-          }
-        }
-      });
-
-      setInconsistencies(issues);
-      onInconsistencyFound?.(issues);
-    };
-
-    if (units.length > 0) {
-      checkConsistency();
+    // Só chamar onInconsistencyFound se houver inconsistências e ainda não foi verificado
+    if (inconsistencies.length > 0 && !hasChecked) {
+      if (
+        onInconsistencyFoundRef.current &&
+        typeof onInconsistencyFoundRef.current === 'function'
+      ) {
+        onInconsistencyFoundRef.current(inconsistencies);
+      }
+      setHasChecked(true);
     }
-  }, [units, onInconsistencyFound]);
+  }, [inconsistencies, hasChecked]); // Removido callback das dependências
 
   if (inconsistencies.length === 0) {
     return null;

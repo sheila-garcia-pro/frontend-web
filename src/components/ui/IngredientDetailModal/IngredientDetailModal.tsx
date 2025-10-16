@@ -39,8 +39,9 @@ import { IngredientPriceHistory, RecipeIngredient } from '../../../types/recipeI
 import { getCachedIngredientPriceHistory } from '../../../services/api/ingredients';
 import { getNutritionalTable } from '../../../services/api/nutritionalTable';
 import { NutritionalTable } from '../../../types/nutritionalTable';
-import { useUnits } from '../../../hooks/useUnits';
 import { calculatePricePerPortion } from '../../../utils/unitConversion';
+import { getUserUnitsAmountUse } from '../../../services/api/unitsAmountUse';
+import { UnitAmountUse } from '../../../types/unitAmountUse';
 
 interface IngredientDetailModalProps {
   open: boolean;
@@ -83,13 +84,9 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
   const [loadingNutritional, setLoadingNutritional] = useState(false);
   const [currentTab, setCurrentTab] = useState(0);
 
-  // Usar o hook de unidades robusto
-  const {
-    normalizedUnits,
-    loading: loadingUnits,
-    error: unitsError,
-    validateUnitConsistency,
-  } = useUnits();
+  // Estados para unidades de peso (mesmo sistema das receitas)
+  const [userUnitsAmountUse, setUserUnitsAmountUse] = useState<UnitAmountUse[]>([]);
+  const [loadingWeightUnits, setLoadingWeightUnits] = useState(false);
 
   // Função para carregar histórico de preços
   const loadPriceHistory = useCallback(async (ingredientId: string) => {
@@ -117,6 +114,19 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
       console.error('Erro ao carregar tabela nutricional:', error);
     } finally {
       setLoadingNutritional(false);
+    }
+  }, []);
+
+  // Função para carregar unidades de peso (mesmo sistema das receitas)
+  const loadWeightUnits = useCallback(async () => {
+    setLoadingWeightUnits(true);
+    try {
+      const units = await getUserUnitsAmountUse();
+      setUserUnitsAmountUse(units);
+    } catch (error) {
+      console.error('Erro ao carregar unidades de peso:', error);
+    } finally {
+      setLoadingWeightUnits(false);
     }
   }, []);
 
@@ -185,8 +195,9 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
       // Carregar dados adicionais
       loadPriceHistory(ingredient._id);
       loadNutritionalTables(ingredient.name);
+      loadWeightUnits();
     }
-  }, [ingredient, existingData, loadPriceHistory, loadNutritionalTables]);
+  }, [ingredient, existingData, loadPriceHistory, loadNutritionalTables, loadWeightUnits]);
 
   // Calcular custo estimado
   const calculateEstimatedCost = () => {
@@ -338,20 +349,20 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
                         label="Unidade"
                         onChange={(e) => setUnitMeasure(e.target.value)}
                       >
-                        {loadingUnits ? (
+                        {loadingWeightUnits ? (
                           <MenuItem disabled>
                             <CircularProgress size={20} />
                             Carregando unidades...
                           </MenuItem>
                         ) : (
-                          normalizedUnits.map((unit) => (
-                            <MenuItem key={unit.id} value={unit.name}>
-                              {unit.name} {unit.acronym && `(${unit.acronym})`}
-                              {unit.type === 'amount-use' &&
-                                unit.baseUnitName &&
-                                ` - Base: ${unit.baseUnitName}`}
-                            </MenuItem>
-                          ))
+                          userUnitsAmountUse?.map((unit, index) => {
+                            const itemValue = unit.id || unit.name || `unit-${index}`;
+                            return (
+                              <MenuItem key={itemValue} value={unit.name}>
+                                {unit.name}
+                              </MenuItem>
+                            );
+                          }) || []
                         )}
                       </Select>
                     </FormControl>
@@ -485,22 +496,22 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
                           value={purchaseUnit}
                           label="Unidade de Compra"
                           onChange={(e) => setPurchaseUnit(e.target.value)}
-                          disabled={loadingUnits}
+                          disabled={loadingWeightUnits}
                         >
-                          {loadingUnits ? (
+                          {loadingWeightUnits ? (
                             <MenuItem disabled>
                               <CircularProgress size={20} />
                               Carregando unidades...
                             </MenuItem>
                           ) : (
-                            normalizedUnits.map((unit) => (
-                              <MenuItem key={unit.id} value={unit.name}>
-                                {unit.name} {unit.acronym && `(${unit.acronym})`}
-                                {unit.type === 'amount-use' &&
-                                  unit.baseUnitName &&
-                                  ` - Base: ${unit.baseUnitName}`}
-                              </MenuItem>
-                            ))
+                            userUnitsAmountUse?.map((unit, index) => {
+                              const itemValue = unit.id || unit.name || `unit-${index}`;
+                              return (
+                                <MenuItem key={itemValue} value={unit.name}>
+                                  {unit.name}
+                                </MenuItem>
+                              );
+                            }) || []
                           )}
                         </Select>
                       </FormControl>

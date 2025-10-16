@@ -120,7 +120,7 @@ const RecipeDeleteModal: React.FC<RecipeDeleteModalProps> = ({
             {recipe.name}
           </Typography>
           <Typography variant="body2" color="text.primary" sx={{ opacity: 0.8 }}>
-            SKU: {recipe.sku} • Categoria: {recipe.category}
+            Categoria: {recipe.category}
           </Typography>
         </Box>{' '}
         <Typography variant="body2" color="text.primary" sx={{ mt: 2, opacity: 0.9 }}>

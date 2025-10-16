@@ -30,7 +30,6 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
     category,
     preparationTime,
     descripition,
-    sku: '',
     yieldRecipe: '',
     typeYield: '',
     weightRecipe: '',

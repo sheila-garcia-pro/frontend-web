@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -41,6 +42,8 @@ interface SortOption {
 // - Após excluir uma receita: navega de volta com state.reloadList = true
 // - Refresh manual: usa handleRefreshList (com cache)
 const RecipesPage: FC = () => {
+  const navigate = useNavigate();
+
   // Usar o hook personalizado para gerenciar todo o estado
   const {
     // Estados
@@ -90,6 +93,11 @@ const RecipesPage: FC = () => {
     currentPage,
     itemsPerPage,
   );
+
+  // Handler para navegar para criação de receita
+  const handleCreateRecipe = () => {
+    navigate('/recipes/create');
+  };
 
   // Obter tipos de pratos únicos para o filtro
   const dishTypes =
@@ -144,7 +152,7 @@ const RecipesPage: FC = () => {
                 variant="contained"
                 color="primary"
                 startIcon={<Add />}
-                onClick={handleOpenModal}
+                onClick={handleCreateRecipe}
                 sx={{ borderRadius: 3, px: 3 }}
               >
                 Nova Receita

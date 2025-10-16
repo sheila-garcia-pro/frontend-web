@@ -116,7 +116,6 @@ const RecipeSaveManager: React.FC<RecipeSaveManagerProps> = ({
 
       const recipeData: Partial<CreateRecipeParams> = {
         name: recipe.name,
-        sku: recipe.sku,
         category: recipe.category,
         image: recipe.image,
         yieldRecipe: recipe.yieldRecipe,

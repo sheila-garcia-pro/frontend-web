@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -72,7 +72,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
 
   const [formData, setFormData] = useState<CreateRecipeParams>({
     name: '',
-    sku: '',
     category: '',
     image: '',
     yieldRecipe: '',
@@ -209,7 +208,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
     if (!open) {
       setFormData({
         name: '',
-        sku: '',
         category: '',
         image: '',
         yieldRecipe: '',
@@ -275,13 +273,48 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
     }
   };
 
-  const handleIngredientsUpdate = (ingredients: RecipeIngredient[]) => {
-    setRecipeIngredients(ingredients);
-  };
+  // Refs para controlar atualizações e prevenir loops
+  const isUpdatingIngredientsRef = useRef(false);
+  const isUpdatingStepsRef = useRef(false);
 
-  const handleStepsUpdate = (steps: string[]) => {
+  const handleIngredientsUpdate = useCallback((ingredients: RecipeIngredient[]) => {
+    console.log(
+      '[RecipeModal] handleIngredientsUpdate chamada com:',
+      ingredients.length,
+      'ingredientes',
+    );
+    console.log(
+      '[RecipeModal] Ingredientes recebidos:',
+      ingredients.map((ing) => ({ name: ing.ingredient.name, quantity: ing.quantity })),
+    );
+
+    if (isUpdatingIngredientsRef.current) {
+      console.warn('[RecipeModal] Bloqueou atualização circular de ingredientes');
+      return;
+    }
+
+    isUpdatingIngredientsRef.current = true;
+    setRecipeIngredients(ingredients);
+    console.log(
+      '[RecipeModal] Estado recipeIngredients atualizado para:',
+      ingredients.length,
+      'ingredientes',
+    );
+
+    setTimeout(() => {
+      isUpdatingIngredientsRef.current = false;
+    }, 0);
+  }, []);
+
+  const handleStepsUpdate = useCallback((steps: string[]) => {
+    if (isUpdatingStepsRef.current) return;
+
+    isUpdatingStepsRef.current = true;
     setRecipeSteps(steps);
-  };
+    setTimeout(() => {
+      isUpdatingStepsRef.current = false;
+    }, 0);
+  }, []);
 
   const handleCategoryAdded = async (categoryId: string, categoryName: string) => {
     try {
@@ -504,13 +537,35 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
       newErrors.preparationTime = 'O tempo de preparação é obrigatório';
     }
 
-    if (!formData.weightRecipe) {
-      newErrors.weightRecipe = 'O peso da receita é obrigatório';
+    console.log(
+      '[RecipeModal] Validando ingredientes - recipeIngredients.length:',
+      recipeIngredients.length,
+    );
+    console.log(
+      '[RecipeModal] Dados dos ingredientes:',
+      recipeIngredients.map((ing) => ({ name: ing.ingredient.name, quantity: ing.quantity })),
+    );
+
+    // Validação obrigatória para ingredientes
+    if (recipeIngredients.length === 0) {
+      console.error('[RecipeModal] ERRO: Nenhum ingrediente encontrado!');
+      newErrors.ingredients = 'Adicione pelo menos um ingrediente à receita';
+    } else {
+      console.log(
+        '[RecipeModal] Validação de ingredientes PASSOU - encontrados:',
+        recipeIngredients.length,
+        'ingredientes',
+      );
     }
 
-    if (!formData.typeWeightRecipe) {
-      newErrors.typeWeightRecipe = 'O tipo de peso é obrigatório';
-    }
+    // Peso da receita não é mais obrigatório
+    // if (!formData.weightRecipe) {
+    //   newErrors.weightRecipe = 'O peso da receita é obrigatório';
+    // }
+
+    // if (!formData.typeWeightRecipe) {
+    //   newErrors.typeWeightRecipe = 'O tipo de peso é obrigatório';
+    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -623,7 +678,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
         }}
       >
         <DialogTitle sx={{ pb: 2 }}>
-          <Typography variant="h5" sx={{ fontWeight: 600 }}>
+          <Typography variant="h5" component="div" sx={{ fontWeight: 600 }}>
             Nova Receita
           </Typography>
         </DialogTitle>
@@ -906,12 +961,11 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
 
                 <Box sx={{ display: 'flex', gap: 2 }}>
                   <TextField
-                    label="Peso da Receita"
+                    label="Peso da Receita (Opcional)"
                     name="weightRecipe"
                     value={formData.weightRecipe}
                     onChange={handleWeightChange}
                     fullWidth
-                    required
                     variant="outlined"
                     error={!!errors.weightRecipe}
                     helperText={errors.weightRecipe || 'Digite apenas números (ex: 1.5, 250)'}
@@ -930,13 +984,8 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
                     sx={{ flex: 2 }}
                   />
 
-                  <FormControl
-                    sx={{ flex: 1 }}
-                    fullWidth
-                    required
-                    error={!!errors.typeWeightRecipe}
-                  >
-                    <InputLabel id="weight-type-label">Unidade</InputLabel>
+                  <FormControl sx={{ flex: 1 }} fullWidth error={!!errors.typeWeightRecipe}>
+                    <InputLabel id="weight-type-label">Unidade (Opcional)</InputLabel>
                     <Select
                       labelId="weight-type-label"
                       name="typeWeightRecipe"
@@ -999,84 +1048,86 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
                           Carregando unidades...
                         </MenuItem>
                       ) : (
-                        <>
-                          {/* Unidades padrão do sistema */}
-                          {unitMeasures.length > 0 && (
-                            <>
-                              <MenuItem disabled sx={{ opacity: 0.7 }}>
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                  sx={{ fontWeight: 600 }}
-                                >
-                                  Unidades do Sistema
-                                </Typography>
-                              </MenuItem>
-                              {unitMeasures.map((unit) => (
-                                <MenuItem key={unit._id} value={unit._id}>
-                                  {unit.name} ({unit.acronym})
-                                </MenuItem>
-                              ))}
-                            </>
-                          )}
-
-                          {/* Unidades personalizadas do usuário */}
-                          {userUnitsAmountUse.length > 0 && (
-                            <>
-                              {unitMeasures.length > 0 && (
-                                <MenuItem disabled sx={{ opacity: 0.7 }}>
+                        [
+                          /* Unidades padrão do sistema */
+                          ...(unitMeasures.length > 0
+                            ? [
+                                <MenuItem key="system-header" disabled sx={{ opacity: 0.7 }}>
                                   <Typography
                                     variant="caption"
                                     color="text.secondary"
                                     sx={{ fontWeight: 600 }}
                                   >
-                                    Minhas Unidades Personalizadas
+                                    Unidades do Sistema
                                   </Typography>
-                                </MenuItem>
-                              )}
-                              {userUnitsAmountUse.map((unit) => (
-                                <MenuItem
-                                  key={unit.id}
-                                  value={`${unit.name} (${unit.quantity} ${unit.unitMeasure})`}
-                                  sx={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    pr: 1,
-                                  }}
-                                >
-                                  <Box sx={{ flex: 1 }}>
-                                    {unit.name} ({unit.quantity} {unit.unitMeasure})
-                                  </Box>
-                                  <Box sx={{ display: 'flex', gap: 0.5, ml: 1 }}>
-                                    <IconButton
-                                      size="small"
-                                      color="primary"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEditUnit(unit);
-                                      }}
-                                      sx={{ p: 0.5 }}
-                                    >
-                                      <EditIcon fontSize="small" />
-                                    </IconButton>
-                                    <IconButton
-                                      size="small"
-                                      color="error"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteUnit(unit);
-                                      }}
-                                      sx={{ p: 0.5 }}
-                                    >
-                                      <DeleteIcon fontSize="small" />
-                                    </IconButton>
-                                  </Box>
-                                </MenuItem>
-                              ))}
-                            </>
-                          )}
-                        </>
+                                </MenuItem>,
+                                ...unitMeasures.map((unit) => (
+                                  <MenuItem key={unit._id} value={unit._id}>
+                                    {unit.name} ({unit.acronym})
+                                  </MenuItem>
+                                )),
+                              ]
+                            : []),
+
+                          /* Unidades personalizadas do usuário */
+                          ...(userUnitsAmountUse.length > 0
+                            ? [
+                                ...(unitMeasures.length > 0
+                                  ? [
+                                      <MenuItem key="custom-header" disabled sx={{ opacity: 0.7 }}>
+                                        <Typography
+                                          variant="caption"
+                                          color="text.secondary"
+                                          sx={{ fontWeight: 600 }}
+                                        >
+                                          Minhas Unidades Personalizadas
+                                        </Typography>
+                                      </MenuItem>,
+                                    ]
+                                  : []),
+                                ...userUnitsAmountUse.map((unit) => (
+                                  <MenuItem
+                                    key={unit.id}
+                                    value={`${unit.name} (${unit.quantity} ${unit.unitMeasure})`}
+                                    sx={{
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center',
+                                      pr: 1,
+                                    }}
+                                  >
+                                    <Box sx={{ flex: 1 }}>
+                                      {unit.name} ({unit.quantity} {unit.unitMeasure})
+                                    </Box>
+                                    <Box sx={{ display: 'flex', gap: 0.5, ml: 1 }}>
+                                      <IconButton
+                                        size="small"
+                                        color="primary"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleEditUnit(unit);
+                                        }}
+                                        sx={{ p: 0.5 }}
+                                      >
+                                        <EditIcon fontSize="small" />
+                                      </IconButton>
+                                      <IconButton
+                                        size="small"
+                                        color="error"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDeleteUnit(unit);
+                                        }}
+                                        sx={{ p: 0.5 }}
+                                      >
+                                        <DeleteIcon fontSize="small" />
+                                      </IconButton>
+                                    </Box>
+                                  </MenuItem>
+                                )),
+                              ]
+                            : []),
+                        ]
                       )}
                       {!loadingUnitMeasures &&
                         !loadingUserUnits &&
@@ -1144,12 +1195,48 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
                     gap: 1,
                   }}
                 >
-                  🥘 Ingredientes da Receita
+                  🥘 Ingredientes da Receita *{/* 🔍 DEBUG: Indicador do estado no modal */}
+                  <Box
+                    sx={{
+                      ml: 2,
+                      px: 1,
+                      py: 0.5,
+                      borderRadius: 1,
+                      bgcolor: recipeIngredients.length > 0 ? 'success.light' : 'warning.light',
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    DEBUG: {recipeIngredients.length}
+                  </Box>
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   Adicione os ingredientes que serão utilizados nesta receita para calcular custos
                   automaticamente
                 </Typography>
+
+                {/* Exibição do erro de ingredientes obrigatórios */}
+                {errors.ingredients && (
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    sx={{
+                      display: 'block',
+                      mb: 2,
+                      fontWeight: 500,
+                      backgroundColor: (theme) =>
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(244, 67, 54, 0.1)'
+                          : 'rgba(244, 67, 54, 0.05)',
+                      p: 1,
+                      borderRadius: 1,
+                      border: '1px solid',
+                      borderColor: 'error.main',
+                    }}
+                  >
+                    ⚠️ {errors.ingredients}
+                  </Typography>
+                )}
 
                 <Box
                   sx={{
@@ -1292,7 +1379,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
                       recipe={{
                         _id: 'new',
                         name: formData.name || 'Nova Receita',
-                        sku: formData.sku || '',
                         category: formData.category || '',
                         image: formData.image || '',
                         yieldRecipe: formData.yieldRecipe || '1',

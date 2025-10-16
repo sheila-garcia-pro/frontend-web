@@ -124,12 +124,13 @@ export const useRecipesPage = () => {
     }
   }, [debouncedSearchTerm, selectedCategory, loadRecipes]);
 
-  // Efeito para detectar quando chegamos com estado de reload (após exclusão ou edição)
+  // Efeito para detectar quando chegamos com estado de reload (após exclusão, edição ou criação)
   useEffect(() => {
     const state = location.state as {
       reloadList?: boolean;
       deletedRecipeName?: string;
       editedRecipeName?: string;
+      createdRecipeName?: string;
     } | null;
 
     if (state?.reloadList) {
@@ -149,6 +150,14 @@ export const useRecipesPage = () => {
         dispatch(
           addNotification({
             message: `Receita "${state.editedRecipeName}" atualizada com sucesso!`,
+            type: 'success',
+            duration: 4000,
+          }),
+        );
+      } else if (state.createdRecipeName) {
+        dispatch(
+          addNotification({
+            message: `Receita "${state.createdRecipeName}" criada com sucesso!`,
             type: 'success',
             duration: 4000,
           }),

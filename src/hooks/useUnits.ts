@@ -1,8 +1,21 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getCachedUnitsAmountUse } from '../services/api/unitAmountUse';
 import { getCachedUnitMeasures } from '../services/api/unitMeasure';
 import { UnitAmountUse } from '../types/unitAmountUse';
 import { UnitMeasure } from '../types/unitMeasure';
+
+// 🔥 SINGLETON: Controle global para evitar múltiplos carregamentos
+let globalUnitsPromise: Promise<{
+  normalizedUnits: NormalizedUnit[];
+  baseUnits: UnitMeasure[];
+  amountUseUnits: UnitAmountUse[];
+}> | null = null;
+
+let globalUnitsCache: {
+  normalizedUnits: NormalizedUnit[];
+  baseUnits: UnitMeasure[];
+  amountUseUnits: UnitAmountUse[];
+} | null = null;
 
 // Interface para unidade de medida normalizada
 export interface NormalizedUnit {
@@ -26,36 +39,35 @@ export interface UseUnitsResult {
   validateUnitConsistency: (unitName: string, expectedUnit: string) => boolean;
 }
 
-/**
- * Hook para gerenciar unidades de medida de forma robusta
- * Carrega tanto units-amount-use quanto unit-measures e faz o mapeamento correto
- */
-export const useUnits = (): UseUnitsResult => {
-  const [normalizedUnits, setNormalizedUnits] = useState<NormalizedUnit[]>([]);
-  const [baseUnits, setBaseUnits] = useState<UnitMeasure[]>([]);
-  const [amountUseUnits, setAmountUseUnits] = useState<UnitAmountUse[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+// 🔥 FUNÇÃO SINGLETON para carregar unidades
+const loadUnitsGlobal = async (): Promise<{
+  normalizedUnits: NormalizedUnit[];
+  baseUnits: UnitMeasure[];
+  amountUseUnits: UnitAmountUse[];
+}> => {
+  // Se já tem cache, retorna imediatamente
+  if (globalUnitsCache) {
+    console.log('[useUnits] Retornando cache global');
+    return globalUnitsCache;
+  }
 
-  const loadUnits = useCallback(async () => {
-    // Evitar múltiplas chamadas se já estiver carregando
-    if (loading) return;
+  // Se já está carregando, retorna a promise existente
+  if (globalUnitsPromise) {
+    console.log('[useUnits] Aguardando promise global existente');
+    return globalUnitsPromise;
+  }
 
-    setLoading(true);
-    setError(null);
+  console.log('[useUnits] Iniciando carregamento global das unidades');
 
+  // Criar nova promise de carregamento
+  globalUnitsPromise = (async () => {
     try {
-      // Carregar ambas as APIs
       const [amountUseResponse, baseUnitsData] = await Promise.all([
         getCachedUnitsAmountUse(),
         getCachedUnitMeasures(),
       ]);
 
       const amountUseData = amountUseResponse.unitsAmountUse || [];
-      // baseUnitsData já é o array diretamente (UnitMeasuresResponse = UnitMeasure[])
-
-      setBaseUnits(baseUnitsData);
-      setAmountUseUnits(amountUseData);
 
       // Criar um mapa de unidades base por nome para lookup
       const baseUnitsMap = new Map<string, UnitMeasure>();
@@ -66,12 +78,9 @@ export const useUnits = (): UseUnitsResult => {
 
       // Normalizar unidades de amount-use
       const normalizedAmountUse: NormalizedUnit[] = amountUseData.map((unit) => {
-        // Tentar encontrar a unidade base correspondente
         let baseUnit = baseUnitsMap.get(unit.unitMeasure);
 
-        // Se não encontrar, tentar por variações
         if (!baseUnit) {
-          // Tentar encontrar por nome parcial (ex: "Gramas" em "200gr")
           const baseUnitEntries = Array.from(baseUnitsMap.entries());
           for (let i = 0; i < baseUnitEntries.length; i++) {
             const [key, value] = baseUnitEntries[i];
@@ -96,7 +105,7 @@ export const useUnits = (): UseUnitsResult => {
         };
       });
 
-      // Adicionar unidades base como opções também
+      // Adicionar unidades base
       const normalizedBase: NormalizedUnit[] = baseUnitsData.map((unit) => ({
         id: unit._id,
         name: unit.name,
@@ -104,24 +113,80 @@ export const useUnits = (): UseUnitsResult => {
         type: 'base-unit' as const,
       }));
 
-      const allNormalized = [...normalizedAmountUse, ...normalizedBase];
-      setNormalizedUnits(allNormalized);
-    } catch (err) {
-      // Definir apenas o erro sem log desnecessário
-      setError(
-        `Erro ao carregar unidades de medida: ${err instanceof Error ? err.message : 'Erro desconhecido'}`,
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [loading]); // Adicionar loading como dependência
+      const result = {
+        normalizedUnits: [...normalizedAmountUse, ...normalizedBase],
+        baseUnits: baseUnitsData,
+        amountUseUnits: amountUseData,
+      };
 
-  useEffect(() => {
-    // Só carregar se ainda não tem dados
-    if (normalizedUnits.length === 0) {
-      loadUnits();
+      // Armazenar no cache global
+      globalUnitsCache = result;
+      console.log('[useUnits] Carregamento global concluído');
+
+      return result;
+    } catch (error) {
+      globalUnitsPromise = null; // Reset para permitir nova tentativa
+      throw error;
     }
-  }, [loadUnits, normalizedUnits.length]);
+  })();
+
+  return globalUnitsPromise;
+};
+
+/**
+ * Hook para gerenciar unidades de medida de forma robusta
+ * Carrega tanto units-amount-use quanto unit-measures e faz o mapeamento correto
+ */
+export const useUnits = (): UseUnitsResult => {
+  console.log('[useUnits] Hook instanciado');
+
+  const [normalizedUnits, setNormalizedUnits] = useState<NormalizedUnit[]>([]);
+  const [baseUnits, setBaseUnits] = useState<UnitMeasure[]>([]);
+  const [amountUseUnits, setAmountUseUnits] = useState<UnitAmountUse[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // 🔥 CARREGAMENTO SIMPLIFICADO usando singleton
+  useEffect(() => {
+    let mounted = true;
+
+    const loadData = async () => {
+      // Se já tem dados, não carrega novamente
+      if (normalizedUnits.length > 0) {
+        console.log('[useUnits] Dados já existem, pulando carregamento');
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const data = await loadUnitsGlobal();
+
+        if (mounted) {
+          setNormalizedUnits(data.normalizedUnits);
+          setBaseUnits(data.baseUnits);
+          setAmountUseUnits(data.amountUseUnits);
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(
+            `Erro ao carregar unidades de medida: ${err instanceof Error ? err.message : 'Erro desconhecido'}`,
+          );
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadData();
+
+    return () => {
+      mounted = false;
+    };
+  }, []); // 🔥 DEPENDÊNCIAS VAZIAS - executa apenas uma vez por instância
 
   const findUnitByName = useCallback(
     (name: string): NormalizedUnit | undefined => {

@@ -310,7 +310,7 @@ const RecipeDetailsPage: FC = () => {
               </Box>
 
               <Box sx={{ p: 3, pt: 1 }}>
-                {/* Título e SKU skeleton */}
+                {/* Título skeleton */}
                 <Box sx={{ textAlign: 'center', mb: 2 }}>
                   <Skeleton variant="text" width="60%" height={50} sx={{ mx: 'auto' }} />
                   <Skeleton variant="text" width="40%" height={30} sx={{ mx: 'auto' }} />

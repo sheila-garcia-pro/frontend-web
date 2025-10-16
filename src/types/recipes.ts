@@ -10,7 +10,6 @@ export interface RecipeIngredientAPI {
 export interface Recipe {
   _id: string;
   name: string;
-  sku: string;
   category: string;
   image: string;
   yieldRecipe: string;
@@ -60,7 +59,6 @@ export interface CostItem {
 
 export interface CreateRecipeParams {
   name: string;
-  sku?: string;
   category: string;
   image?: string | null;
   yieldRecipe: string;

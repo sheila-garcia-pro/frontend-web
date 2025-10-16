@@ -22,6 +22,7 @@ import NotFoundPage from '@pages/NotFound';
 import NotAuthorizedPage from '@pages/NotAuthorized';
 import IngredientsPage from '@pages/Ingredients';
 import RecipesPage from '@pages/Recipes';
+import RecipeCreatePage from '@pages/Recipes/Create/index';
 import RecipeDetailsPage from '@pages/Recipes/RecipeDetails';
 import SuppliersPage from '@pages/Suppliers';
 import ProfilePage from '@pages/Profile';
@@ -131,6 +132,14 @@ const AppRoutesContent: React.FC = () => {
           element={
             <PermissionRoute required={['get_recipe', 'get_user_recipe']} any={true}>
               <RecipesPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="recipes/create"
+          element={
+            <PermissionRoute required={['create_recipe']}>
+              <RecipeCreatePage />
             </PermissionRoute>
           }
         />
