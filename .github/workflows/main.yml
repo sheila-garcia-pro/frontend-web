@@ -12,4 +12,4 @@ jobs:
     secrets:
       SQUARE_API_KEY: ${{ github.ref_name == 'main' && secrets.TOKEN_SQUARE_CLOUD_SHEILA || secrets.SQUARE_CLOUD_TOKEN }}
       API_ID_KEY: ${{ github.ref_name == 'main' && secrets.APP_ID_PROD || secrets.API_ID }}
-      TOKEN: ${{ secrets.GITHUB_TOKEN }
+      TOKEN: ${{ secrets.GITHUB_TOKEN }}
