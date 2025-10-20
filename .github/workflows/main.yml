@@ -6,45 +6,10 @@ on:
       - main
       - dev
       
-jobs:
-# Job 1: Prepara os valores dos secrets (seleção condicional)
-  prepare_secrets:
-    runs-on: ubuntu-latest
-    outputs:
-      # Declara as variáveis que serão o output deste job
-      SQUARE_API_KEY_FINAL: ${{ steps.set_vars.outputs.square_api_key }}
-      API_ID_KEY_FINAL: ${{ steps.set_vars.outputs.api_id_key }}
-
-    steps:
-      - name: Definir Secrets Condicionais
-        id: set_vars
-        run: |
-          # 1. Lógica para o SQUARE_API_KEY
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
-            TOKEN="${{ secrets.TOKEN_SQUARE_CLOUD_SHEILA }}"
-          else
-            TOKEN="${{ secrets.TOKEN_SQUARE_CLOUD }}"
-          fi
-          
-          # 2. Lógica para o API_ID_KEY
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
-            API_ID="${{ secrets.APP_ID_PROD }}"
-          else
-            API_ID="${{ secrets.APP_ID }}"
-          fi
-
-          # 3. Passa os valores calculados como outputs do step/job
-          # Nota: O GitHub Actions irá mascarar automaticamente se o valor corresponder a um Secret.
-          echo "square_api_key=$TOKEN" >> $GITHUB_OUTPUT
-          echo "api_id_key=$API_ID" >> $GITHUB_OUTPUT
-
-          
+jobs:     
   deploy:
-    needs: prepare_secrets
     uses: sheila-garcia-pro/pipeline-deploy/.github/workflows/deploy.yml@main
     secrets:
-      # Usa os outputs do job anterior como o valor final do secret
-      SQUARE_API_KEY: ${{ needs.prepare_secrets.outputs.SQUARE_API_KEY_FINAL }}
-      API_ID_KEY: ${{ needs.prepare_secrets.outputs.API_ID_KEY_FINAL }}
-      # O GITHUB_TOKEN é sempre passado diretamente
-      TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SQUARE_API_KEY: ${{ github.ref_name == 'main' && secrets.TOKEN_SQUARE_CLOUD_SHEILA || secrets.SQUARE_CLOUD_TOKEN }}
+      API_ID_KEY: ${{ github.ref_name == 'main' && secrets.APP_ID_PROD || secrets.API_ID }}
+      TOKEN: ${{ secrets.GITHUB_TOKEN }
