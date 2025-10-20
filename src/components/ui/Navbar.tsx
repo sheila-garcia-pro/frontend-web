@@ -26,8 +26,6 @@ import { useAuth } from '@hooks/useAuth';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
 import Logo from '@components/common/Logo';
-
-import LanguageSelector from './LanguageSelector';
 import { useTranslation } from 'react-i18next';
 
 // Interface de propriedades
@@ -72,11 +70,16 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
       sx={{
         width: {
           xs: '100%',
-          md: `calc(100% - ${open ? drawerWidth : 0}px)`,
+          md:
+            open && !collapsed
+              ? `calc(100% - ${drawerWidth}px)`
+              : collapsed
+                ? `calc(100% - 72px)`
+                : '100%',
         },
         ml: {
           xs: 0,
-          md: `${open ? drawerWidth : 0}px`,
+          md: open && !collapsed ? `${drawerWidth}px` : collapsed ? '72px' : 0,
         },
         borderRadius: 0,
         transition: muiTheme.transitions.create(['margin', 'width'], {
@@ -92,37 +95,43 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
             : '1px solid rgba(232, 237, 170, 0.2)',
       }}
     >
-      <Toolbar sx={{ height: '64px' }}>
-        <IconButton
-          color="inherit"
-          aria-label="abrir menu"
-          edge="start"
-          onClick={handleDrawerToggle}
-          sx={{
-            mr: 2,
-            display: { md: 'none' },
-            '&:hover': {
-              backgroundColor:
-                mode === 'light' ? 'rgba(245, 243, 231, 0.2)' : 'rgba(232, 237, 170, 0.2)',
-            },
-          }}
-        >
-          <MenuIcon />
-        </IconButton>
-
-        <Box
-          sx={{ flexGrow: 1, display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}
-        ></Box>
-
+      <Toolbar
+        sx={{
+          height: '64px',
+          minHeight: '64px !important',
+          px: { xs: 1, sm: 2, md: 3 },
+          justifyContent: 'space-between',
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <LanguageSelector />
+          <IconButton
+            color="inherit"
+            aria-label="abrir menu"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{
+              mr: { xs: 1, sm: 2 },
+              display: { md: 'none' },
+              '&:hover': {
+                backgroundColor:
+                  mode === 'light' ? 'rgba(245, 243, 231, 0.2)' : 'rgba(232, 237, 170, 0.2)',
+              },
+            }}
+          >
+            <MenuIcon />
+          </IconButton>
+        </Box>
 
+        <Box sx={{ flexGrow: 1 }}></Box>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, md: 1 } }}>
           <Tooltip title={`Mudar para tema ${mode === 'light' ? 'escuro' : 'claro'}`}>
             <IconButton
               color="inherit"
               onClick={toggleTheme}
               sx={{
                 borderRadius: 0,
+                mr: { xs: 0.5, sm: 1 },
                 '&:hover': {
                   backgroundColor:
                     mode === 'light' ? 'rgba(245, 243, 231, 0.2)' : 'rgba(232, 237, 170, 0.2)',
@@ -133,7 +142,7 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
             </IconButton>
           </Tooltip>
 
-          <Box sx={{ ml: 0.5 }}>
+          <Box>
             <Tooltip title="Opções da conta">
               <IconButton
                 onClick={handleMenu}
@@ -161,14 +170,15 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
                       color: mode === 'light' ? '#F5F3E7' : '#23291C',
                       fontWeight: 'bold',
                       borderRadius: '50%',
-                      width: 32,
-                      height: 32,
+                      width: { xs: 28, sm: 32 },
+                      height: { xs: 28, sm: 32 },
+                      fontSize: { xs: '0.875rem', sm: '1rem' },
                     }}
                   >
                     {!user.image && user.name ? user.name.charAt(0) : null}
                   </Avatar>
                 ) : (
-                  <AccountCircle />
+                  <AccountCircle sx={{ fontSize: { xs: 28, sm: 32 } }} />
                 )}
               </IconButton>
             </Tooltip>
@@ -190,6 +200,7 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
                 sx: {
                   borderRadius: 0,
                   mt: 1.5,
+                  minWidth: { xs: 160, sm: 180 },
                   boxShadow:
                     mode === 'light'
                       ? '0px 4px 12px rgba(58, 69, 52, 0.15)'
@@ -198,20 +209,32 @@ const Navbar: React.FC<NavbarProps> = ({ drawerWidth, open, collapsed, handleDra
                 },
               }}
             >
-              <MenuItem component={RouterLink} to="/profile" onClick={handleCloseMenu}>
+              <MenuItem
+                component={RouterLink}
+                to="/profile"
+                onClick={handleCloseMenu}
+                sx={{ py: { xs: 1, sm: 1.5 } }}
+              >
                 <Avatar
                   sx={{
-                    width: 24,
-                    height: 24,
-                    mr: 1,
+                    width: { xs: 20, sm: 24 },
+                    height: { xs: 20, sm: 24 },
+                    mr: { xs: 1, sm: 1.5 },
                     bgcolor: mode === 'light' ? '#3A4534' : '#E8EDAA',
                     color: mode === 'light' ? '#F5F3E7' : '#23291C',
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
                   }}
                 />
                 {t('navbar.profile')}
               </MenuItem>
-              <MenuItem onClick={handleLogout}>
-                <LogoutIcon fontSize="small" sx={{ mr: 1 }} />
+              <MenuItem onClick={handleLogout} sx={{ py: { xs: 1, sm: 1.5 } }}>
+                <LogoutIcon
+                  fontSize="small"
+                  sx={{
+                    mr: { xs: 1, sm: 1.5 },
+                    fontSize: { xs: 16, sm: 20 },
+                  }}
+                />
                 {t('navbar.logout')}
               </MenuItem>
             </Menu>

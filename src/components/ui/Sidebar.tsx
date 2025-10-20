@@ -22,7 +22,6 @@ import {
   Restaurant as RestaurantIcon,
   Kitchen as KitchenIcon,
   Home as HomeIcon,
-  LocalShipping as SuppliersIcon,
   MenuBook as MenuBookIcon,
 } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
@@ -118,7 +117,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const authenticatedItems = [
-    { key: 'suppliers', icon: SuppliersIcon, path: '/suppliers', label: t('menu.suppliers') },
     { key: 'profile', icon: PersonIcon, path: '/profile', label: t('menu.profile') },
   ];
 

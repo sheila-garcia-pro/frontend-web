@@ -36,7 +36,6 @@ import {
 } from '../../components/ui';
 
 // Hooks
-import { useIngredientsFilters, usePagination } from '../../hooks/useIngredientsFilters';
 import { useIngredientsPage } from '../../hooks/useIngredientsPage';
 
 // RBAC
@@ -101,7 +100,7 @@ const IngredientsPage: React.FC = () => {
     { value: 'price_desc', label: 'Preço (Maior-Menor)' },
   ];
 
-  // Usar diretamente os dados da API (sem filtros frontend)
+  // Os dados já vêm paginados do backend através do hook
   const paginatedIngredients = allIngredients;
 
   const renderSkeletons = () => {
@@ -166,7 +165,7 @@ const IngredientsPage: React.FC = () => {
             </Tooltip>
 
             {/* Botão para adicionar novo ingrediente */}
-            <IfPermission permission="create_ingredient">
+            <IfPermission permission="create_user_ingredient">
               <Button
                 variant="contained"
                 color="primary"
@@ -270,7 +269,7 @@ const IngredientsPage: React.FC = () => {
         {/* Estatísticas da lista */}
         <IngredientsStats
           totalIngredients={total}
-          filteredCount={allIngredients.length}
+          filteredCount={total}
           currentPage={currentPage}
           totalPages={totalPages}
           itemsPerPage={itemsPerPage}

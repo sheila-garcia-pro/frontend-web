@@ -138,7 +138,7 @@ const AppRoutesContent: React.FC = () => {
         <Route
           path="recipes/create"
           element={
-            <PermissionRoute required={['create_recipe']}>
+            <PermissionRoute required={['create_recipe', 'create_user_recipe']} any={true}>
               <RecipeCreatePage />
             </PermissionRoute>
           }
@@ -179,6 +179,9 @@ const AppRoutesContent: React.FC = () => {
           }
         />
       </Route>
+
+      {/* Rotas de compatibilidade */}
+      <Route path="/not-authorized" element={<Navigate to="/403" replace />} />
 
       {/* Rota 404 - Protegida por padrão */}
       <Route

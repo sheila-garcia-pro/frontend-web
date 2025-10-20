@@ -67,7 +67,7 @@ export function PermissionRoute({ required, any = false, children }: PermissionR
   const hasRequiredPermissions = any ? hasAnyPermission(required) : hasAllPermissions(required);
 
   if (!hasRequiredPermissions) {
-    return <Navigate to="/not-authorized" replace />;
+    return <Navigate to="/403" replace />;
   }
 
   return children;

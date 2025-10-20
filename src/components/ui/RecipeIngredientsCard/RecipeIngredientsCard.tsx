@@ -61,7 +61,7 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
   const [editQuantity, setEditQuantity] = useState('');
   const [editUnit, setEditUnit] = useState('');
 
-  // 🔥 SOLUÇÃO RADICAL: Usar ref para todos os estados críticos e evitar re-renders
+  // Usar ref para todos os estados críticos e evitar re-renders
   const selectedIngredientsRef = useRef<RecipeIngredient[]>([]);
   const callbackDisabledRef = useRef(false);
   const mountedRef = useRef(true);
@@ -89,7 +89,7 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
   // Adicionar aviso sobre inconsistências das unidades
   useEffect(() => {
     if (unitsError) {
-      console.error('⚠️ Erro ao carregar unidades de medida:', unitsError);
+      console.error('Erro ao carregar unidades de medida:', unitsError);
     }
   }, [unitsError]);
 
@@ -99,86 +99,50 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
   // Usar ref para evitar loops com onIngredientsUpdate
   const onIngredientsUpdateRef = useRef(onIngredientsUpdate);
 
-  // 🔥 NUNCA atualizar o ref do callback (causa loops)
+  // NUNCA atualizar o ref do callback (causa loops)
   // onIngredientsUpdateRef.current = onIngredientsUpdate sempre igual
 
-  // 🔥 INICIALIZAÇÃO CORRIGIDA - APENAS UMA VEZ
+  // INICIALIZAÇÃO CORRIGIDA - APENAS UMA VEZ
   const hasInitializedRef = useRef(false);
 
-  // 🔥 SOLUÇÃO DEFINITIVA: Uma única inicialização sem dependências que causam loops
+  // Solução: Uma única inicialização sem dependências que causam loops
   useEffect(() => {
-    console.log(
-      '[RecipeIngredientsCard] useEffect inicialização - hasInitialized:',
-      hasInitializedRef.current,
-      'initialIngredients.length:',
-      initialIngredients.length,
-    );
-
     if (!hasInitializedRef.current) {
-      console.log('[RecipeIngredientsCard] PRIMEIRA E ÚNICA INICIALIZAÇÃO');
-
       if (initialIngredients.length > 0) {
-        console.log(
-          '[RecipeIngredientsCard] Inicializando com:',
-          initialIngredients.length,
-          'ingredientes',
-        );
         setSelectedIngredients(initialIngredients);
         selectedIngredientsRef.current = initialIngredients;
 
         // Notificar o pai imediatamente na inicialização
         if (onIngredientsUpdate) {
-          console.log('[RecipeIngredientsCard] Notificando pai na inicialização');
           onIngredientsUpdate(initialIngredients);
         }
       } else {
-        console.log('[RecipeIngredientsCard] Inicialização sem ingredientes');
         setSelectedIngredients([]);
         selectedIngredientsRef.current = [];
       }
 
       hasInitializedRef.current = true;
     }
-  }, []); // 🔥 DEPENDÊNCIAS VAZIAS - NUNCA MAIS EXECUTA
+  }, []); // DEPENDÊNCIAS VAZIAS - NUNCA MAIS EXECUTA
 
-  // 🔥 FUNÇÃO SEGURA que NUNCA causa loop
+  // Função segura que NUNCA causa loop
   const safeCallParentUpdate = useCallback(
     (newIngredients: RecipeIngredient[]) => {
-      console.log(
-        '[RecipeIngredientsCard] safeCallParentUpdate chamada com:',
-        newIngredients.length,
-        'ingredientes',
-      );
-      console.log('[RecipeIngredientsCard] Dados dos ingredientes:', newIngredients);
-
-      // 🔥 REMOVIDO: mountedRef.current check que estava bloqueando
       if (callbackDisabledRef.current) {
-        console.log('[RecipeIngredientsCard] Callback temporariamente desabilitado');
         return;
       }
 
       // Desabilita temporariamente para evitar cascata
       callbackDisabledRef.current = true;
-      console.log('[RecipeIngredientsCard] Executando callback com delay...');
 
       // Chama o pai de forma segura
       setTimeout(() => {
         if (onIngredientsUpdate) {
-          console.log(
-            '[RecipeIngredientsCard] Notificando pai com:',
-            newIngredients.length,
-            'ingredientes',
-          );
-          console.log(
-            '[RecipeIngredientsCard] Ingredientes sendo enviados:',
-            newIngredients.map((ing) => ({ name: ing.ingredient.name, quantity: ing.quantity })),
-          );
           onIngredientsUpdate(newIngredients);
         }
         // Re-habilita após delay
         setTimeout(() => {
           callbackDisabledRef.current = false;
-          console.log('[RecipeIngredientsCard] Callback re-habilitado');
         }, 100);
       }, 50);
     },
@@ -197,7 +161,7 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
       try {
         const response = await getCachedIngredients({
           page: 1,
-          itemPerPage: 50, // ⚠️ REDUZIDO de 1000 para 50! Muito mais rápido
+          itemPerPage: 50, // REDUZIDO de 1000 para 50! Muito mais rápido
           name: debouncedSearchTerm,
         });
 
@@ -413,21 +377,6 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
           <Typography variant="h5" component="h3" sx={{ fontWeight: 600 }}>
             Ingredientes da Receita
           </Typography>
-          {/* 🔍 DEBUG: Indicador visual do estado */}
-          <Box
-            sx={{
-              ml: 2,
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
-              bgcolor: selectedIngredients.length > 0 ? 'success.light' : 'error.light',
-              color: selectedIngredients.length > 0 ? 'success.contrastText' : 'error.contrastText',
-            }}
-          >
-            <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
-              DEBUG: {selectedIngredients.length} ingredientes no estado
-            </Typography>
-          </Box>
         </Box>
 
         {/* Alerta de inconsistências */}
@@ -440,8 +389,8 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
         {/* Validador de consistência das unidades */}
         <UnitConsistencyValidator
           units={normalizedUnits}
-          onInconsistencyFound={(inconsistencies) => {
-            console.warn('🔍 Inconsistências encontradas nas unidades:', inconsistencies);
+          onInconsistencyFound={() => {
+            // Inconsistências detectadas - handler removido para produção
           }}
         />
 

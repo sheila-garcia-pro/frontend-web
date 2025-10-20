@@ -286,7 +286,7 @@ const MenuPage: React.FC = () => {
           )}
         </Box>
 
-        <IfPermission permission="create_menu">
+        <IfPermission permission="create_user_menu">
           <Button
             variant="contained"
             color="primary"
@@ -390,7 +390,7 @@ const MenuPage: React.FC = () => {
               : 'Crie seu primeiro cardápio para começar a organizar suas receitas e facilitar o planejamento das suas refeições.'}
           </Typography>
 
-          <IfPermission permission="create_menu">
+          <IfPermission permission="create_user_menu">
             {!debouncedSearchTerm && (
               <Button
                 variant="contained"

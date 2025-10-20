@@ -278,28 +278,12 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
   const isUpdatingStepsRef = useRef(false);
 
   const handleIngredientsUpdate = useCallback((ingredients: RecipeIngredient[]) => {
-    console.log(
-      '[RecipeModal] handleIngredientsUpdate chamada com:',
-      ingredients.length,
-      'ingredientes',
-    );
-    console.log(
-      '[RecipeModal] Ingredientes recebidos:',
-      ingredients.map((ing) => ({ name: ing.ingredient.name, quantity: ing.quantity })),
-    );
-
     if (isUpdatingIngredientsRef.current) {
-      console.warn('[RecipeModal] Bloqueou atualização circular de ingredientes');
       return;
     }
 
     isUpdatingIngredientsRef.current = true;
     setRecipeIngredients(ingredients);
-    console.log(
-      '[RecipeModal] Estado recipeIngredients atualizado para:',
-      ingredients.length,
-      'ingredientes',
-    );
 
     setTimeout(() => {
       isUpdatingIngredientsRef.current = false;
@@ -537,25 +521,9 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
       newErrors.preparationTime = 'O tempo de preparação é obrigatório';
     }
 
-    console.log(
-      '[RecipeModal] Validando ingredientes - recipeIngredients.length:',
-      recipeIngredients.length,
-    );
-    console.log(
-      '[RecipeModal] Dados dos ingredientes:',
-      recipeIngredients.map((ing) => ({ name: ing.ingredient.name, quantity: ing.quantity })),
-    );
-
     // Validação obrigatória para ingredientes
     if (recipeIngredients.length === 0) {
-      console.error('[RecipeModal] ERRO: Nenhum ingrediente encontrado!');
       newErrors.ingredients = 'Adicione pelo menos um ingrediente à receita';
-    } else {
-      console.log(
-        '[RecipeModal] Validação de ingredientes PASSOU - encontrados:',
-        recipeIngredients.length,
-        'ingredientes',
-      );
     }
 
     // Peso da receita não é mais obrigatório
@@ -1195,20 +1163,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
                     gap: 1,
                   }}
                 >
-                  🥘 Ingredientes da Receita *{/* 🔍 DEBUG: Indicador do estado no modal */}
-                  <Box
-                    sx={{
-                      ml: 2,
-                      px: 1,
-                      py: 0.5,
-                      borderRadius: 1,
-                      bgcolor: recipeIngredients.length > 0 ? 'success.light' : 'warning.light',
-                      fontSize: '0.75rem',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    DEBUG: {recipeIngredients.length}
-                  </Box>
+                  🥘 Ingredientes da Receita *
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   Adicione os ingredientes que serão utilizados nesta receita para calcular custos

@@ -147,7 +147,7 @@ const RecipesPage: FC = () => {
             <RecipeCategoryMenu onCategoryUpdated={handleForceRefreshList} />
 
             {/* Botão para adicionar nova receita */}
-            <IfPermission permission="create_recipe">
+            <IfPermission permission="create_user_recipe">
               <Button
                 variant="contained"
                 color="primary"

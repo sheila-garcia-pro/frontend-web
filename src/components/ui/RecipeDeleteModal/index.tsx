@@ -52,7 +52,7 @@ const RecipeDeleteModal: React.FC<RecipeDeleteModalProps> = ({
         onClose();
       }, 500);
     } catch (error) {
-      console.error('❌ Erro ao excluir receita:', error);
+      console.error('Erro ao excluir receita:', error);
       dispatch(
         addNotification({
           message: 'Erro ao excluir receita. Tente novamente.',
