@@ -54,6 +54,7 @@ export const useIngredientsPage = () => {
       params: {
         search?: string;
         category?: string;
+        sort?: string;
         forceRefresh?: boolean;
         showNotification?: boolean;
         page?: number;
@@ -62,6 +63,7 @@ export const useIngredientsPage = () => {
       setLoading(true);
       try {
         const pageToUse = params.page !== undefined ? params.page : currentPage;
+        const sortToUse = params.sort !== undefined ? params.sort : sortOption;
         let response;
 
         if (params.forceRefresh) {
@@ -73,6 +75,7 @@ export const useIngredientsPage = () => {
             itemPerPage: itemsPerPage,
             name: params.search,
             category: params.category,
+            sort: sortToUse,
           });
         } else {
           response = await getCachedIngredients({
@@ -80,6 +83,7 @@ export const useIngredientsPage = () => {
             itemPerPage: itemsPerPage,
             name: params.search,
             category: params.category,
+            sort: sortToUse,
           });
         }
 
@@ -109,7 +113,7 @@ export const useIngredientsPage = () => {
         setLoading(false);
       }
     },
-    [currentPage, itemsPerPage, dispatch],
+    [currentPage, itemsPerPage, dispatch, sortOption],
   );
 
   // Carregar dados iniciais
@@ -132,11 +136,12 @@ export const useIngredientsPage = () => {
       loadIngredients({
         search: debouncedSearchTerm,
         category: selectedCategory || undefined,
+        sort: sortOption,
         showNotification: false,
         page: currentPage,
       });
     }
-  }, [currentPage, debouncedSearchTerm, selectedCategory]);
+  }, [currentPage, debouncedSearchTerm, selectedCategory, sortOption]);
 
   // Reset página apenas quando filtros mudarem (não quando página muda)
   useEffect(() => {
@@ -185,10 +190,11 @@ export const useIngredientsPage = () => {
     loadIngredients({
       search: debouncedSearchTerm,
       category: selectedCategory || undefined,
+      sort: sortOption,
       forceRefresh: true,
       page: currentPage,
     });
-  }, [loadIngredients, debouncedSearchTerm, selectedCategory, currentPage]);
+  }, [loadIngredients, debouncedSearchTerm, selectedCategory, sortOption, currentPage]);
 
   // Modal handlers
   const handleOpenModal = useCallback(() => setModalOpen(true), []);
@@ -199,11 +205,12 @@ export const useIngredientsPage = () => {
       loadIngredients({
         search: debouncedSearchTerm,
         category: selectedCategory || undefined,
+        sort: sortOption,
         forceRefresh: false, // Não força refresh para não mostrar loading desnecessário
         page: currentPage,
       });
     }, 300);
-  }, [loadIngredients, debouncedSearchTerm, selectedCategory, currentPage]);
+  }, [loadIngredients, debouncedSearchTerm, selectedCategory, sortOption, currentPage]);
   const handleOpenCategoryModal = useCallback(() => setCategoryModalOpen(true), []);
   const handleCloseCategoryModal = useCallback(() => setCategoryModalOpen(false), []);
 

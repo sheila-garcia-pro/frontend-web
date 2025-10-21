@@ -40,9 +40,11 @@ interface RecipeBasicInfoProps {
   // Dados externos
   userCategories: RecipeCategory[];
   yields: Array<{ _id: string; name: string; description?: string }>;
+  unitMeasures: Array<{ _id: string; name: string; acronym?: string; description?: string }>;
   userUnitsAmountUse: Array<{ _id?: string; id?: string; name: string; description?: string }>;
   isLoadingCategories: boolean;
   loadingYields: boolean;
+  loadingUnitMeasures: boolean;
   loadingUserUnits: boolean;
 
   // Erros
@@ -70,9 +72,11 @@ const RecipeBasicInfo: React.FC<RecipeBasicInfoProps> = ({
   typeWeightRecipe,
   userCategories,
   yields,
+  unitMeasures,
   userUnitsAmountUse,
   isLoadingCategories,
   loadingYields,
+  loadingUnitMeasures,
   loadingUserUnits,
   errors,
   onFieldChange,
@@ -292,14 +296,15 @@ const RecipeBasicInfo: React.FC<RecipeBasicInfoProps> = ({
                   onFieldChange('typeWeightRecipe', value);
                 }}
                 label="Unidade de Peso"
-                disabled={loadingUserUnits}
+                disabled={loadingUnitMeasures}
               >
                 <MenuItem value=""></MenuItem>
-                {userUnitsAmountUse?.map((unit, index) => {
-                  const itemValue = unit._id || unit.id || unit.name || `unit-${index}`;
+                {unitMeasures?.map((unit, index) => {
+                  const itemKey = unit._id || `unit-measure-${index}`;
+                  const itemValue = unit.name; // Usa o nome da unidade de medida
                   return (
-                    <MenuItem key={itemValue} value={itemValue}>
-                      {unit.name}
+                    <MenuItem key={itemKey} value={itemValue}>
+                      {unit.name} {unit.acronym && `(${unit.acronym})`}
                     </MenuItem>
                   );
                 }) || []}

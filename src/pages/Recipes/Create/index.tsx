@@ -288,9 +288,11 @@ const RecipeCreatePage: React.FC = () => {
                     typeWeightRecipe={formData.typeWeightRecipe}
                     userCategories={userCategories}
                     yields={yields}
+                    unitMeasures={unitMeasures}
                     userUnitsAmountUse={userUnitsAmountUse}
                     isLoadingCategories={isLoadingCategories}
                     loadingYields={loadingYields}
+                    loadingUnitMeasures={loadingExternalData}
                     loadingUserUnits={loadingExternalData}
                     errors={errors}
                     onFieldChange={updateFormField}

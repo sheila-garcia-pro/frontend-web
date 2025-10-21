@@ -100,7 +100,43 @@ export const getCachedIngredientById = async (id: string): Promise<Ingredient> =
 
 // Criar um novo ingrediente
 export const createIngredient = async (params: CreateIngredientParams): Promise<Ingredient> => {
-  const response = await api.post<Ingredient>('/v1/users/me/ingredient', params);
+  // Se há informações de preço, converter para gramas
+  let processedParams = { ...params };
+
+  if (params.price && params.price.quantity && params.price.unitMeasure) {
+    const { convertPriceDataToGrams, getConversionDescription } = await import(
+      '../../utils/unitConversion'
+    );
+
+    const price =
+      typeof params.price.price === 'string' ? parseFloat(params.price.price) : params.price.price;
+    const quantity =
+      typeof params.price.quantity === 'string'
+        ? parseFloat(params.price.quantity)
+        : params.price.quantity;
+
+    const convertedPrice = convertPriceDataToGrams(price, quantity, params.price.unitMeasure);
+
+    // Log para debug da conversão
+    console.log('Conversão de unidades (createIngredient):', {
+      original: { price, quantity, unitMeasure: params.price.unitMeasure },
+      converted: convertedPrice,
+      description: getConversionDescription(
+        quantity,
+        params.price.unitMeasure,
+        convertedPrice.quantity,
+      ),
+    });
+
+    processedParams.price = {
+      ...params.price,
+      price: convertedPrice.price,
+      quantity: convertedPrice.quantity,
+      unitMeasure: convertedPrice.unitMeasure,
+    };
+  }
+
+  const response = await api.post<Ingredient>('/v1/users/me/ingredient', processedParams);
   // Limpa o cache de ingredientes após criar um novo
   clearCache('/v1/users/me/ingredient');
   return response.data;
@@ -111,7 +147,43 @@ export const updateIngredient = async (
   id: string,
   params: Partial<CreateIngredientParams>,
 ): Promise<Ingredient> => {
-  const response = await api.patch<Ingredient>(`/v1/users/me/ingredient/${id}`, params);
+  // Se há informações de preço, converter para gramas
+  let processedParams = { ...params };
+
+  if (params.price && params.price.quantity && params.price.unitMeasure) {
+    const { convertPriceDataToGrams, getConversionDescription } = await import(
+      '../../utils/unitConversion'
+    );
+
+    const price =
+      typeof params.price.price === 'string' ? parseFloat(params.price.price) : params.price.price;
+    const quantity =
+      typeof params.price.quantity === 'string'
+        ? parseFloat(params.price.quantity)
+        : params.price.quantity;
+
+    const convertedPrice = convertPriceDataToGrams(price, quantity, params.price.unitMeasure);
+
+    // Log para debug da conversão
+    console.log('Conversão de unidades (updateIngredient):', {
+      original: { price, quantity, unitMeasure: params.price.unitMeasure },
+      converted: convertedPrice,
+      description: getConversionDescription(
+        quantity,
+        params.price.unitMeasure,
+        convertedPrice.quantity,
+      ),
+    });
+
+    processedParams.price = {
+      ...params.price,
+      price: convertedPrice.price,
+      quantity: convertedPrice.quantity,
+      unitMeasure: convertedPrice.unitMeasure,
+    };
+  }
+
+  const response = await api.patch<Ingredient>(`/v1/users/me/ingredient/${id}`, processedParams);
   // Limpa o cache de ingredientes e do ingrediente específico
   clearCache('/v1/users/me/ingredient');
   clearCache(`/v1/users/me/ingredient/${id}`);
@@ -135,9 +207,32 @@ export const updateIngredientPriceMeasure = async (
     unitMeasure: string;
   },
 ): Promise<Ingredient> => {
+  // Importar aqui para evitar dependência circular
+  const { convertPriceDataToGrams, getConversionDescription } = await import(
+    '../../utils/unitConversion'
+  );
+
+  // Converter dados para gramas antes de enviar para a API
+  const convertedParams = convertPriceDataToGrams(
+    params.price,
+    params.quantity,
+    params.unitMeasure,
+  );
+
+  // Log para debug da conversão
+  console.log('Conversão de unidades (ingredients.ts):', {
+    original: params,
+    converted: convertedParams,
+    description: getConversionDescription(
+      params.quantity,
+      params.unitMeasure,
+      convertedParams.quantity,
+    ),
+  });
+
   const response = await api.post<Ingredient>(
     `/v1/users/me/ingredient/${id}/price-measure`,
-    params,
+    convertedParams,
   );
   // Limpa o cache de ingredientes e do ingrediente específico
   clearCache('/v1/users/me/ingredient');
