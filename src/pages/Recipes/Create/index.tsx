@@ -26,6 +26,7 @@ import 'dayjs/locale/pt-br';
 // Hooks personalizados
 import { useRecipeForm } from '../../../hooks/recipes/useRecipeForm';
 import { useRecipeExternalData } from '../../../hooks/recipes/useRecipeExternalData';
+import { useDevice } from '../../../hooks/useDevice';
 
 // Componentes da página
 import RecipeBasicInfo from './components/RecipeBasicInfo';
@@ -50,6 +51,9 @@ import EnhancedFinancialSection from '../../../components/ui/EnhancedFinancialSe
 const RecipeCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(0);
+
+  // Hook de responsividade
+  const { isMobile, isTablet, isDesktop } = useDevice();
 
   // Estilos globais para highlight de campos com erro
   const errorHighlightStyles = {
@@ -165,9 +169,35 @@ const RecipeCreatePage: React.FC = () => {
   // Loading inicial
   if (loadingExternalData) {
     return (
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-        <Container maxWidth="xl" sx={{ py: 3 }}>
-          <Typography variant="h6" sx={{ textAlign: 'center' }}>
+      <Box
+        sx={{
+          p: { xs: 1, sm: 2, md: 3 },
+          bgcolor: 'background.default',
+          minHeight: '100vh',
+          overflow: 'hidden',
+          overflowX: 'hidden',
+          width: '100%',
+          maxWidth: '100vw',
+          '& *': {
+            maxWidth: '100%',
+          },
+        }}
+      >
+        <Container
+          maxWidth={isMobile ? 'sm' : isTablet ? 'lg' : 'xl'}
+          sx={{
+            px: { xs: 1, sm: 2, md: 3 },
+            width: '100%',
+            maxWidth: '100%',
+          }}
+        >
+          <Typography
+            variant={isMobile ? 'h6' : 'h5'}
+            sx={{
+              textAlign: 'center',
+              fontSize: { xs: '1.1rem', sm: '1.25rem' },
+            }}
+          >
             Carregando dados necessários...
           </Typography>
         </Container>
@@ -178,26 +208,56 @@ const RecipeCreatePage: React.FC = () => {
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
       <GlobalStyles styles={errorHighlightStyles} />
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-        <Container maxWidth="xl" sx={{ py: 3 }}>
+      <Box
+        sx={{
+          p: { xs: 1, sm: 2, md: 3 },
+          bgcolor: 'background.default',
+          minHeight: '100vh',
+          overflow: 'hidden',
+          overflowX: 'hidden',
+          width: '100%',
+          maxWidth: '100vw',
+          '& *': {
+            maxWidth: '100%',
+          },
+        }}
+      >
+        <Container
+          maxWidth={isMobile ? 'sm' : isTablet ? 'lg' : 'xl'}
+          sx={{
+            px: { xs: 1, sm: 2, md: 3 },
+            width: '100%',
+            maxWidth: '100%',
+          }}
+        >
           {/* Header com Breadcrumbs e Navegação */}
-          <Box sx={{ mb: 4 }}>
+          <Box sx={{ mb: { xs: 3, sm: 4 } }}>
             {/* Breadcrumbs */}
-            <Breadcrumbs sx={{ mb: 2 }}>
+            <Breadcrumbs sx={{ mb: { xs: 1.5, sm: 2 } }}>
               <Link
                 component={RouterLink}
                 to="/recipes"
                 color="inherit"
-                sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                }}
               >
-                <Restaurant fontSize="small" />
+                <Restaurant fontSize={isMobile ? 'small' : 'medium'} />
                 Receitas
               </Link>
               <Typography
                 color="text.primary"
-                sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                }}
               >
-                <Add fontSize="small" />
+                <Add fontSize={isMobile ? 'small' : 'medium'} />
                 Nova Receita
               </Typography>
             </Breadcrumbs>
@@ -206,43 +266,95 @@ const RecipeCreatePage: React.FC = () => {
             <Box
               sx={{
                 display: 'flex',
-                alignItems: 'center',
-                gap: 2,
-                p: 3,
-                borderRadius: 2,
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'stretch', sm: 'center' },
+                gap: { xs: 2, sm: 2 },
+                p: { xs: 2, sm: 3 },
+                borderRadius: { xs: 1.5, sm: 2 },
                 background: (theme) =>
                   `linear-gradient(135deg, ${theme.palette.primary.light}20, ${theme.palette.primary.main}10)`,
                 border: '1px solid',
                 borderColor: 'divider',
+                width: '100%',
+                maxWidth: '100%',
+                overflow: 'hidden',
               }}
             >
-              <IconButton
-                onClick={handleGoBack}
+              {/* Botão voltar e título - Mobile: linha, Desktop: inline */}
+              <Box
                 sx={{
-                  bgcolor: 'background.paper',
-                  boxShadow: 1,
-                  '&:hover': { bgcolor: 'background.paper', boxShadow: 2 },
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  flexGrow: 1,
+                  width: '100%',
                 }}
               >
-                <ArrowBack />
-              </IconButton>
+                <IconButton
+                  onClick={handleGoBack}
+                  sx={{
+                    bgcolor: 'background.paper',
+                    boxShadow: 1,
+                    minWidth: { xs: 40, sm: 44 },
+                    minHeight: { xs: 40, sm: 44 },
+                    '&:hover': {
+                      bgcolor: 'background.paper',
+                      boxShadow: 2,
+                      transform: 'scale(1.05)',
+                    },
+                    transition: 'all 0.2s ease-in-out',
+                  }}
+                >
+                  <ArrowBack sx={{ fontSize: { xs: 20, sm: 24 } }} />
+                </IconButton>
 
-              <Box sx={{ flexGrow: 1 }}>
-                <Typography variant="h4" component="h1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                  Criar Nova Receita
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  Preencha as informações abaixo para criar uma nova receita
-                </Typography>
+                <Box sx={{ flexGrow: 1 }}>
+                  <Typography
+                    variant={isMobile ? 'h5' : 'h4'}
+                    component="h1"
+                    sx={{
+                      fontWeight: 600,
+                      mb: 0.5,
+                      fontSize: { xs: '1.5rem', sm: '2rem' },
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {isMobile ? 'Nova Receita' : 'Criar Nova Receita'}
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    color="text.secondary"
+                    sx={{
+                      fontSize: { xs: '0.875rem', sm: '1rem' },
+                      display: { xs: 'none', sm: 'block' },
+                    }}
+                  >
+                    Preencha as informações abaixo para criar uma nova receita
+                  </Typography>
+                </Box>
               </Box>
 
               {/* Ações do Header */}
-              <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: { xs: 1.5, sm: 2 },
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  width: { xs: '100%', sm: 'auto' },
+                }}
+              >
                 <Button
                   variant="outlined"
                   onClick={handleCancel}
                   disabled={submitting}
-                  startIcon={<Cancel />}
+                  startIcon={<Cancel sx={{ fontSize: { xs: 18, sm: 20 } }} />}
+                  size={isMobile ? 'large' : 'medium'}
+                  fullWidth={isMobile}
+                  sx={{
+                    minHeight: { xs: 48, sm: 42 },
+                    fontSize: { xs: '1rem', sm: '0.875rem' },
+                    fontWeight: 600,
+                  }}
                 >
                   Cancelar
                 </Button>
@@ -250,32 +362,82 @@ const RecipeCreatePage: React.FC = () => {
                   variant="contained"
                   onClick={handleSubmit}
                   disabled={submitting || loadingExternalData}
-                  startIcon={<Save />}
+                  startIcon={<Save sx={{ fontSize: { xs: 18, sm: 20 } }} />}
+                  size={isMobile ? 'large' : 'medium'}
+                  fullWidth={isMobile}
+                  sx={{
+                    minHeight: { xs: 48, sm: 42 },
+                    fontSize: { xs: '1rem', sm: '0.875rem' },
+                    fontWeight: 600,
+                  }}
                 >
-                  {submitting ? 'Salvando...' : 'Salvar Receita'}
+                  {submitting ? 'Salvando...' : isMobile ? 'Salvar' : 'Salvar Receita'}
                 </Button>
               </Box>
             </Box>
           </Box>
 
           {/* Conteúdo Principal */}
-          <Card sx={{ borderRadius: 2, overflow: 'hidden' }}>
-            <CardContent sx={{ p: 4 }}>
+          <Card
+            sx={{
+              borderRadius: { xs: 2, sm: 3 },
+              overflow: 'hidden',
+              width: '100%',
+              maxWidth: '100%',
+            }}
+          >
+            <CardContent
+              sx={{
+                p: { xs: 2, sm: 3, md: 4 },
+                '&:last-child': { pb: { xs: 2, sm: 3, md: 4 } },
+              }}
+            >
               {/* Progress Stepper */}
-              <Box sx={{ mb: 4 }}>
-                <Stepper activeStep={activeStep} alternativeLabel>
+              <Box
+                sx={{
+                  mb: { xs: 3, sm: 4 },
+                  width: '100%',
+                  overflow: 'hidden',
+                }}
+              >
+                <Stepper
+                  activeStep={activeStep}
+                  alternativeLabel={!isMobile}
+                  orientation={isMobile ? 'vertical' : 'horizontal'}
+                  sx={{
+                    '& .MuiStepLabel-label': {
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    },
+                    '& .MuiStepIcon-root': {
+                      fontSize: { xs: '1.2rem', sm: '1.5rem' },
+                    },
+                  }}
+                >
                   {steps.map((label) => (
                     <Step key={label}>
-                      <StepLabel>{label}</StepLabel>
+                      <StepLabel>{isMobile ? label.split(' ')[0] : label}</StepLabel>
                     </Step>
                   ))}
                 </Stepper>
               </Box>
 
               {/* Seções do Formulário */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: { xs: 3, sm: 4 },
+                  width: '100%',
+                  overflow: 'hidden',
+                }}
+              >
                 {/* Seção 1: Informações Básicas */}
-                <Box>
+                <Box
+                  sx={{
+                    width: '100%',
+                    overflow: 'hidden',
+                  }}
+                >
                   <RecipeBasicInfo
                     name={formData.name}
                     category={formData.category}
@@ -302,10 +464,15 @@ const RecipeCreatePage: React.FC = () => {
                   />
                 </Box>
 
-                <Divider />
+                <Divider sx={{ width: '100%' }} />
 
                 {/* Seção 2: Upload de Imagem */}
-                <Box>
+                <Box
+                  sx={{
+                    width: '100%',
+                    overflow: 'hidden',
+                  }}
+                >
                   <RecipeImageUpload
                     image={formData.image || ''}
                     selectedFile={selectedFile}
@@ -316,12 +483,18 @@ const RecipeCreatePage: React.FC = () => {
                   />
                 </Box>
 
-                <Divider />
+                <Divider sx={{ width: '100%' }} />
 
                 {/* Seção 3: Ingredientes */}
-                <Box data-testid="ingredients-section">
+                <Box
+                  data-testid="ingredients-section"
+                  sx={{
+                    width: '100%',
+                    overflow: 'hidden',
+                  }}
+                >
                   <Typography
-                    variant="h6"
+                    variant={isMobile ? 'subtitle1' : 'h6'}
                     gutterBottom
                     sx={{
                       fontWeight: 600,
@@ -329,14 +502,15 @@ const RecipeCreatePage: React.FC = () => {
                       display: 'flex',
                       alignItems: 'center',
                       gap: 1,
-                      mb: 3,
+                      mb: { xs: 2, sm: 3 },
+                      fontSize: { xs: '1.1rem', sm: '1.25rem' },
                     }}
                   >
                     🥘 Ingredientes da Receita
                   </Typography>
 
                   {errors.ingredients && (
-                    <Alert severity="error" sx={{ mb: 3 }}>
+                    <Alert severity="error" sx={{ mb: { xs: 2, sm: 3 } }}>
                       {errors.ingredients}
                     </Alert>
                   )}
@@ -348,12 +522,17 @@ const RecipeCreatePage: React.FC = () => {
                   />
                 </Box>
 
-                <Divider />
+                <Divider sx={{ width: '100%' }} />
 
                 {/* Seção 4: Modo de Preparo */}
-                <Box>
+                <Box
+                  sx={{
+                    width: '100%',
+                    overflow: 'hidden',
+                  }}
+                >
                   <Typography
-                    variant="h6"
+                    variant={isMobile ? 'subtitle1' : 'h6'}
                     gutterBottom
                     sx={{
                       fontWeight: 600,
@@ -361,7 +540,8 @@ const RecipeCreatePage: React.FC = () => {
                       display: 'flex',
                       alignItems: 'center',
                       gap: 1,
-                      mb: 3,
+                      mb: { xs: 2, sm: 3 },
+                      fontSize: { xs: '1.1rem', sm: '1.25rem' },
                     }}
                   >
                     👨‍🍳 Modo de Preparo
@@ -423,10 +603,15 @@ const RecipeCreatePage: React.FC = () => {
                 {/* Seção 6: Informações Nutricionais (se houver ingredientes) */}
                 {recipeIngredients.length > 0 && (
                   <>
-                    <Divider />
-                    <Box>
+                    <Divider sx={{ width: '100%' }} />
+                    <Box
+                      sx={{
+                        width: '100%',
+                        overflow: 'hidden',
+                      }}
+                    >
                       <Typography
-                        variant="h6"
+                        variant={isMobile ? 'subtitle1' : 'h6'}
                         gutterBottom
                         sx={{
                           fontWeight: 600,
@@ -434,7 +619,8 @@ const RecipeCreatePage: React.FC = () => {
                           display: 'flex',
                           alignItems: 'center',
                           gap: 1,
-                          mb: 3,
+                          mb: { xs: 2, sm: 3 },
+                          fontSize: { xs: '1.1rem', sm: '1.25rem' },
                         }}
                       >
                         🍎 Informações Nutricionais

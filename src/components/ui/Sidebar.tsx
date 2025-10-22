@@ -27,6 +27,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@store/index';
 import { toggleSidebarCollapsed } from '@store/slices/uiSlice';
+import { useDevice } from '@hooks/useDevice';
 import Logo from '@components/common/Logo';
 
 interface SidebarProps {
@@ -98,15 +99,22 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const { t } = useTranslation();
 
+  // Hook de responsividade para otimizações adicionais
+  const { isMobile: deviceIsMobile, isTablet, isDesktop } = useDevice();
+
   const handleNavigation = (path: string) => {
     navigate(path);
-    if (isMobile) {
+    // Fechar sidebar em dispositivos móveis e tablets após navegação
+    if (isMobile || isTablet) {
       handleDrawerToggle();
     }
   };
 
   const handleCollapsedToggle = () => {
-    dispatch(toggleSidebarCollapsed());
+    // Só permite colapso em desktop
+    if (isDesktop) {
+      dispatch(toggleSidebarCollapsed());
+    }
   };
 
   const menuItems = [
@@ -127,18 +135,67 @@ const Sidebar: React.FC<SidebarProps> = ({
         sx={{
           justifyContent: collapsed ? 'center' : 'flex-start',
           px: collapsed ? 1 : 1.5,
+          py: { xs: 1.5, sm: 1.25, md: 1 },
+          minHeight: { xs: 56, sm: 52, md: 48 },
+          borderRadius: 2,
+          mx: 0.5,
+          my: 0.25,
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          '&:hover': {
+            transform: 'translateX(4px)',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+          },
+          '&:active': {
+            transform: 'translateX(2px) scale(0.98)',
+          },
         }}
       >
-        <StyledListItemIcon sx={{ minWidth: collapsed ? '24px' : '40px' }}>
+        <StyledListItemIcon
+          sx={{
+            minWidth: collapsed ? '24px' : '40px',
+            transition: 'all 0.3s ease-in-out',
+            '& .MuiSvgIcon-root': {
+              fontSize: { xs: 22, sm: 21, md: 20 },
+            },
+          }}
+        >
           <item.icon />
         </StyledListItemIcon>
-        {!collapsed && <StyledListItemText primary={item.label} />}
+        {!collapsed && (
+          <StyledListItemText
+            primary={item.label}
+            sx={{
+              '& .MuiListItemText-primary': {
+                fontSize: { xs: '1rem', sm: '0.95rem', md: '0.875rem' },
+                fontWeight: 500,
+                transition: 'opacity 0.3s ease-in-out',
+              },
+            }}
+          />
+        )}
       </StyledListItemButton>
     );
 
-    if (collapsed) {
+    if (collapsed && isDesktop) {
       return (
-        <Tooltip title={item.label} placement="right" arrow>
+        <Tooltip
+          title={item.label}
+          placement="right"
+          arrow
+          enterDelay={300}
+          leaveDelay={100}
+          PopperProps={{
+            sx: {
+              '& .MuiTooltip-tooltip': {
+                bgcolor: theme.palette.mode === 'light' ? '#3A4534' : '#E8EDAA',
+                color: theme.palette.mode === 'light' ? '#F5F3E7' : '#23291C',
+                fontSize: '0.875rem',
+                borderRadius: 2,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              },
+            },
+          }}
+        >
           {menuItem}
         </Tooltip>
       );
@@ -158,11 +215,21 @@ const Sidebar: React.FC<SidebarProps> = ({
           borderRadius: 0,
           backgroundColor: theme.palette.background.paper,
           borderRight: `1px solid ${theme.palette.divider}`,
-          transition: theme.transitions.create('width', {
+          transition: theme.transitions.create(['width', 'transform'], {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.enteringScreen,
           }),
-          zIndex: isMobile ? theme.zIndex.drawer + 2 : 'auto',
+          zIndex: isMobile || isTablet ? theme.zIndex.drawer + 2 : 'auto',
+          // Melhor performance em mobile
+          willChange: isMobile || isTablet ? 'transform' : 'auto',
+          // Backdrop blur para mobile/tablet
+          ...((isMobile || isTablet) && {
+            backdropFilter: 'blur(8px)',
+            bgcolor:
+              theme.palette.mode === 'light'
+                ? 'rgba(255, 255, 255, 0.95)'
+                : 'rgba(35, 41, 28, 0.95)',
+          }),
         },
       }}
       variant={isMobile ? 'temporary' : 'persistent'}
@@ -183,20 +250,32 @@ const Sidebar: React.FC<SidebarProps> = ({
           </Box>
         )}
 
-        <Tooltip title={collapsed ? 'Expandir' : 'Minimizar'} placement="right">
-          <IconButton
-            onClick={handleCollapsedToggle}
-            size="small"
-            sx={{
-              color: theme.palette.text.secondary,
-              '&:hover': {
-                backgroundColor: theme.palette.action.hover,
-              },
-            }}
-          >
-            {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-          </IconButton>
-        </Tooltip>
+        {/* Botão de colapso só visível em desktop */}
+        {isDesktop && (
+          <Tooltip title={collapsed ? 'Expandir' : 'Minimizar'} placement="right" enterDelay={300}>
+            <IconButton
+              onClick={handleCollapsedToggle}
+              size={isMobile ? 'medium' : 'small'}
+              sx={{
+                color: theme.palette.text.secondary,
+                minWidth: { xs: 44, sm: 40 },
+                minHeight: { xs: 44, sm: 40 },
+                borderRadius: 2,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  backgroundColor: theme.palette.action.hover,
+                  transform: 'scale(1.1)',
+                  color: theme.palette.primary.main,
+                },
+                '&:active': {
+                  transform: 'scale(0.95)',
+                },
+              }}
+            >
+              {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+            </IconButton>
+          </Tooltip>
+        )}
       </DrawerHeader>
 
       <Divider sx={{ mx: collapsed ? 0.5 : 1 }} />

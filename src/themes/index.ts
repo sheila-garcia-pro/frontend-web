@@ -131,7 +131,7 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => {
         fontWeight: 900, // Gotham Black - Para títulos principais
         lineHeight: 1.2,
         letterSpacing: '-0.02em',
-        '@media (max-width:600px)': {
+        '@media (max-width:767px)': {
           fontSize: '2.25rem',
         },
       },
@@ -141,7 +141,7 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => {
         fontWeight: 700, // Gotham Bold - Para subtítulos importantes
         lineHeight: 1.3,
         letterSpacing: '-0.01em',
-        '@media (max-width:600px)': {
+        '@media (max-width:767px)': {
           fontSize: '1.875rem',
         },
       },
@@ -235,11 +235,12 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => {
     },
     breakpoints: {
       values: {
-        xs: 0,
-        sm: 600,
-        md: 960,
-        lg: 1280,
-        xl: 1920,
+        xs: 0, // Extra small: 0px - 479px (mobile pequeno)
+        sm: 480, // Small: 480px - 767px (mobile médio)
+        md: 768, // Medium: 768px - 1023px (tablet)
+        lg: 1024, // Large: 1024px - 1279px (desktop pequeno)
+        xl: 1280, // Extra large: 1280px - 1919px (desktop)
+        // xxl: 1920+ será tratado via custom queries quando necessário
       },
     },
     shape: {
