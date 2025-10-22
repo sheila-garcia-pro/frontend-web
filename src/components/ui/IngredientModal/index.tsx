@@ -16,7 +16,9 @@ import {
   Stack,
   Box,
   InputAdornment,
+  IconButton,
 } from '@mui/material';
+import { Close as CloseIcon } from '@mui/icons-material';
 import { getUnitMeasures } from '../../../services/api/unitMeasure';
 import { UnitMeasure } from '../../../types/unitMeasure';
 import { useDispatch, useSelector } from 'react-redux';
@@ -25,6 +27,7 @@ import { fetchCategoriesRequest } from '../../../store/slices/categoriesSlice';
 import { RootState } from '../../../store';
 import { CreateIngredientParams } from '../../../types/ingredients';
 import { useTranslation } from 'react-i18next';
+import { useDevice } from '../../../hooks/useDevice';
 import ImageUploadComponent from '../ImageUploadImproved';
 import { calculatePricePerPortion } from '../../../utils/unitConversion';
 
@@ -36,6 +39,9 @@ interface IngredientModalProps {
 const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
+
+  // Hook de responsividade
+  const { isMobile, isTablet, isDesktop } = useDevice();
   const { items: categories, loading: categoriesLoading } = useSelector(
     (state: RootState) => state.categories,
   );
@@ -240,15 +246,80 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="sm"
+      maxWidth={isMobile ? false : 'sm'}
       fullWidth
+      fullScreen={isMobile}
       PaperProps={{
-        elevation: 5,
-        sx: { borderRadius: 2 },
+        elevation: isMobile ? 0 : 5,
+        sx: {
+          borderRadius: isMobile ? 0 : 2,
+          width: isMobile ? '100vw' : isTablet ? '90vw' : undefined,
+          height: isMobile ? '100vh' : isTablet ? '90vh' : undefined,
+          maxHeight: isMobile ? '100vh' : isTablet ? '90vh' : undefined,
+          margin: isMobile ? 0 : 'auto',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        },
       }}
     >
-      <DialogTitle>{t('ingredients.newIngredient')}</DialogTitle>
-      <DialogContent dividers>
+      <DialogTitle
+        sx={{
+          px: { xs: 2, sm: 3 },
+          py: { xs: 2, sm: 3 },
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderBottom: isMobile ? '1px solid' : 'none',
+          borderColor: 'divider',
+        }}
+      >
+        <Typography
+          variant={isMobile ? 'h6' : 'h5'}
+          component="h2"
+          sx={{
+            fontWeight: 600,
+            fontSize: { xs: '1.25rem', sm: '1.5rem' },
+          }}
+        >
+          {t('ingredients.newIngredient')}
+        </Typography>
+        {isMobile && (
+          <IconButton
+            onClick={onClose}
+            sx={{
+              color: 'text.secondary',
+              '&:hover': {
+                bgcolor: 'action.hover',
+              },
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        )}
+      </DialogTitle>
+      <DialogContent
+        dividers={!isMobile}
+        sx={{
+          px: { xs: 2, sm: 3 },
+          py: { xs: 1, sm: 2 },
+          overflow: 'auto',
+          maxHeight: isMobile ? 'calc(100vh - 140px)' : isTablet ? 'calc(90vh - 140px)' : undefined,
+          // Scroll personalizado
+          '&::-webkit-scrollbar': {
+            width: isMobile ? '4px' : '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            backgroundColor: 'rgba(0,0,0,0.1)',
+            borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: 'rgba(0,0,0,0.2)',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: 'rgba(0,0,0,0.3)',
+            },
+          },
+        }}
+      >
         {/* Overlay de processamento */}
         {isProcessing && (
           <Box
@@ -471,8 +542,30 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
           </Stack>
         </Box>
       </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} color="inherit" disabled={ingredientLoading || isProcessing}>
+      <DialogActions
+        sx={{
+          px: { xs: 2, sm: 3 },
+          py: { xs: 1.5, sm: 2 },
+          borderTop: isMobile ? 'none' : '1px solid',
+          borderColor: 'divider',
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: { xs: 1, sm: 1 },
+          '& .MuiButton-root': {
+            minHeight: { xs: 48, sm: 42 },
+            fontSize: { xs: '1rem', sm: '0.875rem' },
+          },
+        }}
+      >
+        <Button
+          onClick={onClose}
+          color="inherit"
+          disabled={ingredientLoading || isProcessing}
+          size={isMobile ? 'large' : 'medium'}
+          fullWidth={isMobile}
+          sx={{
+            order: { xs: 2, sm: 1 },
+          }}
+        >
           {t('ingredients.actions.cancel')}
         </Button>
         <Button
@@ -484,6 +577,11 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
               <CircularProgress size={20} sx={{ color: 'inherit' }} />
             ) : null
           }
+          size={isMobile ? 'large' : 'medium'}
+          fullWidth={isMobile}
+          sx={{
+            order: { xs: 1, sm: 2 },
+          }}
         >
           {isProcessing
             ? processingMessage || 'Processando...'

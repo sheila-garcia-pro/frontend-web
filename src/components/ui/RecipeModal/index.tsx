@@ -27,6 +27,7 @@ import {
   Scale as ScaleIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import { Dayjs } from 'dayjs';
 import 'dayjs/locale/pt-br';
@@ -41,6 +42,7 @@ import { getUserUnitsAmountUse } from '../../../services/api/unitsAmountUse';
 import { UnitMeasure } from '../../../types/unitMeasure';
 import { UnitAmountUse } from '../../../types/unitAmountUse';
 import { RecipeIngredient } from '../../../types/recipeIngredients';
+import { useDevice } from '../../../hooks/useDevice';
 import RecipeIngredientsCard from '../RecipeIngredientsCard';
 import RecipeStepsCard from '../RecipeStepsCard';
 import QuickCategoryAdd from '../QuickCategoryAdd';
@@ -69,6 +71,9 @@ interface YieldItem {
 
 const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreated }) => {
   const dispatch = useDispatch();
+
+  // Hook de responsividade
+  const { isMobile, isTablet, isDesktop } = useDevice();
 
   const [formData, setFormData] = useState<CreateRecipeParams>({
     name: '',
@@ -631,34 +636,73 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
         open={open}
         onClose={onClose}
         maxWidth={false}
-        fullWidth={false}
+        fullWidth={isMobile || isTablet}
+        fullScreen={isMobile}
         PaperProps={{
-          elevation: 5,
+          elevation: isMobile ? 0 : 5,
           sx: {
-            borderRadius: 2,
-            width: '66.67vw', // 2/3 da largura da viewport
-            maxWidth: '66.67vw',
-            height: '90vh',
-            maxHeight: '90vh',
-            margin: 'auto', // Centraliza horizontalmente
-            overflow: 'hidden', // Evita scroll horizontal
+            borderRadius: isMobile ? 0 : 2,
+            width: isMobile ? '100vw' : isTablet ? '90vw' : '66.67vw',
+            maxWidth: isMobile ? '100vw' : isTablet ? '90vw' : '66.67vw',
+            height: isMobile ? '100vh' : isTablet ? '95vh' : '90vh',
+            maxHeight: isMobile ? '100vh' : isTablet ? '95vh' : '90vh',
+            margin: isMobile ? 0 : 'auto',
+            overflow: 'hidden',
+            // Animação suave para transições
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           },
         }}
       >
-        <DialogTitle sx={{ pb: 2 }}>
-          <Typography variant="h5" component="div" sx={{ fontWeight: 600 }}>
+        <DialogTitle
+          sx={{
+            pb: { xs: 1, sm: 2 },
+            px: { xs: 2, sm: 3 },
+            pt: { xs: 2, sm: 3 },
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderBottom: isMobile ? '1px solid' : 'none',
+            borderColor: 'divider',
+          }}
+        >
+          <Typography
+            variant={isMobile ? 'h6' : 'h5'}
+            component="div"
+            sx={{
+              fontWeight: 600,
+              fontSize: { xs: '1.25rem', sm: '1.5rem' },
+            }}
+          >
             Nova Receita
           </Typography>
+          {isMobile && (
+            <IconButton
+              onClick={onClose}
+              sx={{
+                color: 'text.secondary',
+                '&:hover': {
+                  bgcolor: 'action.hover',
+                },
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          )}
         </DialogTitle>
         <DialogContent
-          dividers
+          dividers={!isMobile}
           sx={{
-            px: 3,
-            py: 2,
-            overflow: 'auto', // Permite scroll vertical apenas
-            maxHeight: 'calc(90vh - 120px)', // Reserva espaço para header e footer
+            px: { xs: 2, sm: 3 },
+            py: { xs: 1, sm: 2 },
+            overflow: 'auto',
+            maxHeight: isMobile
+              ? 'calc(100vh - 140px)'
+              : isTablet
+                ? 'calc(95vh - 140px)'
+                : 'calc(90vh - 120px)',
+            // Scroll customizado para desktop
             '&::-webkit-scrollbar': {
-              width: '8px',
+              width: isMobile ? '4px' : '8px',
             },
             '&::-webkit-scrollbar-track': {
               backgroundColor: 'rgba(0,0,0,0.1)',
@@ -1415,8 +1459,30 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
             </Stack>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-          <Button onClick={onClose} color="inherit" disabled={submitting} size="large">
+        <DialogActions
+          sx={{
+            px: { xs: 2, sm: 3 },
+            py: { xs: 1.5, sm: 2 },
+            borderTop: isMobile ? 'none' : '1px solid',
+            borderColor: 'divider',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: { xs: 1, sm: 1 },
+            '& .MuiButton-root': {
+              minHeight: { xs: 48, sm: 42 },
+              fontSize: { xs: '1rem', sm: '0.875rem' },
+            },
+          }}
+        >
+          <Button
+            onClick={onClose}
+            color="inherit"
+            disabled={submitting}
+            size={isMobile ? 'large' : 'medium'}
+            fullWidth={isMobile}
+            sx={{
+              order: { xs: 2, sm: 1 },
+            }}
+          >
             Cancelar
           </Button>
           <Button
@@ -1424,7 +1490,11 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ open, onClose, onRecipeCreate
             variant="contained"
             disabled={uploading || submitting}
             startIcon={submitting ? <CircularProgress size={20} /> : null}
-            size="large"
+            size={isMobile ? 'large' : 'medium'}
+            fullWidth={isMobile}
+            sx={{
+              order: { xs: 1, sm: 2 },
+            }}
           >
             {submitting ? 'Salvando...' : 'Salvar'}
           </Button>

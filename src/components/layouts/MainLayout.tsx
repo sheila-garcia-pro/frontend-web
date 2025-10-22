@@ -1,10 +1,12 @@
 import React, { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Box, CssBaseline, Container, Toolbar, useMediaQuery, styled } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { Box, CssBaseline, Container, Toolbar, styled } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@store/index';
 import { toggleSidebar, setSidebarOpen } from '@store/slices/uiSlice';
+
+// Hooks
+import { useDevice } from '@hooks/useDevice';
 
 // Componentes
 import Navbar from '@components/ui/Navbar';
@@ -16,7 +18,7 @@ import GlobalLoader from '@components/common/GlobalLoader';
 const DRAWER_WIDTH = 240;
 const DRAWER_WIDTH_COLLAPSED = 64;
 
-// Estilização do container principal
+// Estilização do container principal - Mobile First
 const Main = styled('main', {
   shouldForwardProp: (prop) => prop !== 'open' && prop !== 'isMobile' && prop !== 'collapsed',
 })<{
@@ -25,16 +27,25 @@ const Main = styled('main', {
   collapsed: boolean;
 }>(({ theme, open, isMobile, collapsed }) => ({
   flexGrow: 1,
-  padding: theme.spacing(3),
+  // Mobile first: padding menor em mobile
+  padding: theme.spacing(1, 2),
+  [theme.breakpoints.up('md')]: {
+    padding: theme.spacing(3),
+  },
   transition: theme.transitions.create('margin', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
-  marginLeft: isMobile
-    ? 0
-    : open
-      ? 0 // Sempre 0 quando o sidebar está aberto, independente se está colapsado ou não
-      : `-${DRAWER_WIDTH}px`,
+  // Mobile/Tablet: sempre sem margem lateral
+  marginLeft: 0,
+  // Desktop: margem baseada no estado do sidebar
+  [theme.breakpoints.up('lg')]: {
+    marginLeft: isMobile
+      ? 0
+      : open
+        ? 0 // Sempre 0 quando o sidebar está aberto, independente se está colapsado ou não
+        : `-${DRAWER_WIDTH}px`,
+  },
   ...(open && {
     transition: theme.transitions.create('margin', {
       easing: theme.transitions.easing.easeOut,
@@ -48,15 +59,14 @@ const MainLayout: React.FC = () => {
   const dispatch = useDispatch();
   const { sidebarOpen, sidebarCollapsed } = useSelector((state: RootState) => state.ui);
 
-  // Responsividade
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  // Responsividade com hook personalizado
+  const { isMobile, isTablet, isDesktop } = useDevice();
 
   useEffect(() => {
-    if (isMobile) {
+    if (isMobile || isTablet) {
       dispatch(setSidebarOpen(false));
     }
-  }, []);
+  }, [isMobile, isTablet, dispatch]);
 
   // Handler para toggle do sidebar
   const handleDrawerToggle = () => {
@@ -81,13 +91,20 @@ const MainLayout: React.FC = () => {
         open={sidebarOpen}
         collapsed={sidebarCollapsed}
         handleDrawerToggle={handleDrawerToggle}
-        isMobile={isMobile}
+        isMobile={isMobile || isTablet}
       />
 
       {/* Conteúdo principal */}
       <Main open={sidebarOpen} isMobile={isMobile} collapsed={sidebarCollapsed}>
         <Toolbar /> {/* Espaçamento para não sobrepor à navbar */}
-        <Container maxWidth="lg" sx={{ mt: 2, mb: 4 }}>
+        <Container
+          maxWidth={isMobile ? 'sm' : isTablet ? 'md' : 'xl'}
+          sx={{
+            mt: { xs: 1, md: 2 },
+            mb: { xs: 2, md: 4 },
+            px: { xs: 1, sm: 2, md: 3 },
+          }}
+        >
           {/* Outlet renderiza as rotas filhas */}
           <Outlet />
         </Container>
