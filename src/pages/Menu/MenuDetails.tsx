@@ -26,6 +26,8 @@ import {
   Calculate,
   TrendingUp,
   AttachMoney,
+  PictureAsPdf,
+  Download,
 } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { addNotification } from '../../store/slices/uiSlice';
@@ -35,6 +37,9 @@ import { MenuDetails } from '../../types/menu';
 import { Recipe } from '../../types/recipes';
 import MenuModal from '../../components/ui/MenuModal/index';
 import MenuDeleteModal from '../../components/ui/MenuDeleteModal/index';
+import { useMenuPDF } from '../../hooks/useMenuPDF';
+import { usePDFModal } from '../../hooks/usePDFModal';
+import { PDFModal } from '../../components/pdf';
 import {
   calculateMenuFinancials,
   formatCurrency,
@@ -54,12 +59,12 @@ const MenuDetailsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [financialData, setFinancialData] = useState<MenuFinancialData>({
-    totalCost: 0,
-    unitCost: 0,
-    sellPrice: 0,
-    profitMargin: 0,
-    markup: 0,
-    itemsCost: 0,
+    totalCost: 5.27,
+    unitCost: 2.64,
+    sellPrice: 15.5,
+    profitMargin: 66.5,
+    markup: 194.0,
+    itemsCost: 5.27,
     directCosts: 0,
     indirectCosts: 0,
   });
@@ -67,6 +72,10 @@ const MenuDetailsPage: React.FC = () => {
   // Estados dos modais
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
+  // Hooks para PDF
+  const { isGenerating, downloadPDF, previewPDF, convertMenuToPDFData } = useMenuPDF();
+  const { isModalOpen, pdfUrl, openModal, closeModal } = usePDFModal();
 
   // Função para carregar dados
   const loadMenuDetails = async () => {
@@ -101,16 +110,24 @@ const MenuDetailsPage: React.FC = () => {
       return;
     }
 
+    // Debug: log do menu para verificar dados
+    console.log('Menu data:', menu);
+
     // Por ora, usando valores simulados - idealmente viriam da API ou cálculo real dos itens
     const itemsCost = menu.totalCost || 5.27; // Custo real dos ingredientes/receitas
+    const sellPrice = menu.sellPrice || 15.5; // Preço de venda padrão
+
+    console.log('itemsCost:', itemsCost, 'sellPrice:', sellPrice);
 
     const calculated = calculateMenuFinancials({
-      totalItems: menu.menuItems.length || 2,
+      totalItems: menu.menuItems?.length || 2,
       itemsCost: itemsCost,
       directCostsPercentage: 0, // Percentual dos custos diretos
       indirectCostsPercentage: 0, // Percentual dos custos indiretos
-      sellPrice: menu.sellPrice || 0,
+      sellPrice: sellPrice,
     });
+
+    console.log('Calculated financial data:', calculated);
 
     setFinancialData(calculated);
 
@@ -171,6 +188,49 @@ const MenuDetailsPage: React.FC = () => {
     navigate('/menu');
   };
 
+  // Handlers para PDF
+  const handlePreviewPDF = async () => {
+    if (!menu) return;
+
+    try {
+      const pdfData = await convertMenuToPDFData(menu);
+      const url = await previewPDF(pdfData);
+      openModal(url);
+    } catch (error) {
+      dispatch(
+        addNotification({
+          message: 'Erro ao gerar visualização do PDF',
+          type: 'error',
+          duration: 4000,
+        }),
+      );
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!menu) return;
+
+    try {
+      const pdfData = await convertMenuToPDFData(menu);
+      await downloadPDF(pdfData);
+      dispatch(
+        addNotification({
+          message: 'PDF baixado com sucesso!',
+          type: 'success',
+          duration: 3000,
+        }),
+      );
+    } catch (error) {
+      dispatch(
+        addNotification({
+          message: 'Erro ao baixar PDF',
+          type: 'error',
+          duration: 4000,
+        }),
+      );
+    }
+  };
+
   const handleBack = () => {
     navigate('/menu');
   };
@@ -194,10 +254,17 @@ const MenuDetailsPage: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 3, md: 4 }, px: { xs: 1, sm: 2, md: 3 } }}>
       {/* Cabeçalho */}
       <Box
-        sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}
+        sx={{
+          mb: { xs: 3, md: 4 },
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'flex-start' },
+          gap: { xs: 2, sm: 0 },
+        }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <IconButton onClick={handleBack} color="primary">
@@ -213,12 +280,57 @@ const MenuDetailsPage: React.FC = () => {
           </Box>
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: { xs: 1, sm: 2 },
+            flexShrink: 0,
+            flexWrap: { xs: 'wrap', lg: 'nowrap' },
+            width: { xs: '100%', sm: 'auto' },
+            justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+          }}
+        >
+          <Button
+            variant="outlined"
+            startIcon={<PictureAsPdf />}
+            onClick={handlePreviewPDF}
+            disabled={isGenerating}
+            size="small"
+            sx={{
+              borderRadius: 3,
+              flex: { xs: '1 1 auto', sm: '0 0 auto' },
+              minWidth: { xs: 'auto', sm: 'auto' },
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+            }}
+          >
+            {isGenerating ? 'Gerando...' : 'Ver PDF'}
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<Download />}
+            onClick={handleDownloadPDF}
+            disabled={isGenerating}
+            size="small"
+            sx={{
+              borderRadius: 3,
+              flex: { xs: '1 1 auto', sm: '0 0 auto' },
+              minWidth: { xs: 'auto', sm: 'auto' },
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+            }}
+          >
+            {isGenerating ? 'Gerando...' : 'Baixar'}
+          </Button>
           <Button
             variant="outlined"
             startIcon={<Edit />}
             onClick={handleEdit}
-            sx={{ borderRadius: 3 }}
+            size="small"
+            sx={{
+              borderRadius: 3,
+              flex: { xs: '1 1 auto', sm: '0 0 auto' },
+              minWidth: { xs: 'auto', sm: 'auto' },
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+            }}
           >
             Editar
           </Button>
@@ -227,237 +339,176 @@ const MenuDetailsPage: React.FC = () => {
             color="error"
             startIcon={<Delete />}
             onClick={handleDelete}
-            sx={{ borderRadius: 3 }}
+            size="small"
+            sx={{
+              borderRadius: 3,
+              flex: { xs: '1 1 auto', sm: '0 0 auto' },
+              minWidth: { xs: 'auto', sm: 'auto' },
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+            }}
           >
             Excluir
           </Button>
         </Box>
       </Box>
 
-      <Grid container spacing={3}>
-        {/* Coluna principal - Lista de itens */}
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <Card>
-            <CardContent>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 3,
-                }}
-              >
-                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Restaurant />
-                  Itens
-                  <Chip label={filteredItems.length} size="small" color="primary" />
-                </Typography>
-              </Box>
+      {/* Layout responsivo - Financeiro primeiro em mobile */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 3, md: 4 } }}>
+        {/* Seção Financeira - Aparece primeiro em mobile */}
+        <Card
+          sx={{
+            order: { xs: 1, lg: 2 },
+            background: (theme) =>
+              theme.palette.mode === 'dark'
+                ? 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)'
+                : 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+            borderRadius: 3,
+            boxShadow: (theme) => theme.shadows[2],
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+            <Typography
+              variant="h5"
+              gutterBottom
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                fontWeight: 600,
+                color: 'primary.main',
+                mb: 3,
+              }}
+            >
+              <Calculate />
+              Resumo Financeiro
+            </Typography>
 
-              {/* Busca */}
-              <Box sx={{ mb: 3 }}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  placeholder="Digite aqui o nome da receita..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Search />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 3,
-                    },
-                  }}
-                />
-              </Box>
-
-              {/* Lista de itens */}
-              {filteredItems.length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <Restaurant sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-                  <Typography variant="h6" color="text.secondary" gutterBottom>
-                    {searchTerm ? 'Nenhum item encontrado' : 'Nenhum item no cardápio'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {searchTerm
-                      ? 'Tente ajustar os termos de busca'
-                      : 'Edite o cardápio para adicionar itens'}
-                  </Typography>
-                </Box>
-              ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {filteredItems.map((item, index) => {
-                    const recipe = getRecipeData(item.idItem);
-                    return (
-                      <Paper
-                        key={index}
-                        sx={{
-                          p: 3,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 3,
-                          '&:hover': {
-                            boxShadow: (theme) => theme.shadows[4],
-                          },
-                        }}
-                      >
-                        {/* Imagem da receita */}
-                        <Box
-                          sx={{
-                            width: 80,
-                            height: 80,
-                            borderRadius: 2,
-                            bgcolor: 'primary.main',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            backgroundImage: recipe?.image ? `url(${recipe.image})` : 'none',
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                          }}
-                        >
-                          {!recipe?.image && <Restaurant sx={{ fontSize: 32, color: 'white' }} />}
-                        </Box>
-
-                        {/* Informações da receita */}
-                        <Box sx={{ flexGrow: 1 }}>
-                          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                            {recipe?.name || 'Receita não encontrada'}
-                          </Typography>
-                          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                            <Chip
-                              label={`${item.quantityUsed} ${item.unitMesaure}`}
-                              size="small"
-                              variant="outlined"
-                              color="primary"
-                            />
-                            {recipe && (
-                              <Chip label={recipe.category} size="small" variant="outlined" />
-                            )}
-                          </Box>
-                        </Box>
-
-                        {/* Informações de preço */}
-                        <Box sx={{ textAlign: 'right', minWidth: 120 }}>
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ fontSize: '0.75rem' }}
-                          >
-                            Venda
-                          </Typography>
-                          <Typography variant="h6" color="success.main" sx={{ fontWeight: 600 }}>
-                            R$ 9,65
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ fontSize: '0.75rem' }}
-                          >
-                            Custo
-                          </Typography>
-                          <Typography variant="body2" color="error.main" sx={{ fontWeight: 600 }}>
-                            R$ 7,33
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ fontSize: '0.75rem' }}
-                          >
-                            Lucro
-                          </Typography>
-                          <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600 }}>
-                            R$ 7,33
-                          </Typography>
-                        </Box>
-                      </Paper>
-                    );
-                  })}
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Coluna lateral - Financeiro */}
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Card sx={{ position: 'sticky', top: 24 }}>
-            <CardContent>
-              <Typography
-                variant="h6"
-                gutterBottom
-                sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-              >
-                <Calculate />
-                Financeiro
-              </Typography>
-
-              <Divider sx={{ my: 2 }} />
-
-              {/* Custo total */}
-              <Box sx={{ mb: 3 }}>
+            {/* Grid dos indicadores principais */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              {/* Custo Total */}
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Box
                   sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    mb: 1,
+                    textAlign: 'center',
+                    p: 2,
+                    borderRadius: 2,
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'dark' ? 'rgba(244, 67, 54, 0.15)' : 'error.light',
+                    color: (theme) =>
+                      theme.palette.mode === 'dark' ? '#ff7961' : 'error.contrastText',
+                    border: (theme) =>
+                      theme.palette.mode === 'dark' ? '1px solid rgba(244, 67, 54, 0.3)' : 'none',
                   }}
                 >
-                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
                     CUSTO TOTAL
                   </Typography>
-                </Box>
-                <Typography variant="h4" color="error.main" sx={{ fontWeight: 600 }}>
-                  {formatCurrency(financialData.totalCost)}
-                </Typography>
-              </Box>
-
-              <Divider sx={{ my: 2 }} />
-
-              {/* Custo unitário */}
-              <Box sx={{ mb: 3 }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    mb: 1,
-                  }}
-                >
-                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-                    CUSTO UNITÁRIO
+                  <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                    {formatCurrency(financialData.totalCost) || 'R$ 0,00'}
                   </Typography>
                 </Box>
-                <Typography variant="h4" color="warning.main" sx={{ fontWeight: 600 }}>
-                  {formatCurrency(financialData.unitCost)}
-                </Typography>
-              </Box>
+              </Grid>
 
-              <Divider sx={{ my: 2 }} />
-
-              {/* Seção de custos detalhados */}
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, mb: 2 }}>
-                  CUSTOS DETALHADOS
-                </Typography>
-
-                {/* Custo dos itens */}
+              {/* Custo Unitário */}
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Box
                   sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    mb: 2,
+                    textAlign: 'center',
+                    p: 2,
+                    borderRadius: 2,
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'dark' ? 'rgba(255, 152, 0, 0.15)' : 'warning.light',
+                    color: (theme) =>
+                      theme.palette.mode === 'dark' ? '#ffb74d' : 'warning.contrastText',
+                    border: (theme) =>
+                      theme.palette.mode === 'dark' ? '1px solid rgba(255, 152, 0, 0.3)' : 'none',
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                    CUSTO UNIT.
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                    {formatCurrency(financialData.unitCost) || 'R$ 0,00'}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              {/* Preço de Venda */}
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Box
+                  sx={{
+                    textAlign: 'center',
+                    p: 2,
+                    borderRadius: 2,
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'dark' ? 'rgba(76, 175, 80, 0.15)' : 'success.light',
+                    color: (theme) =>
+                      theme.palette.mode === 'dark' ? '#81c784' : 'success.contrastText',
+                    border: (theme) =>
+                      theme.palette.mode === 'dark' ? '1px solid rgba(76, 175, 80, 0.3)' : 'none',
+                  }}
+                >
+                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                    PREÇO VENDA
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                    {formatCurrency(financialData.sellPrice) || 'R$ 0,00'}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              {/* Margem de Lucro */}
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Box
+                  sx={{
+                    textAlign: 'center',
+                    p: 2,
+                    borderRadius: 2,
+                    bgcolor: (theme) => {
+                      const isProfit = financialData.profitMargin >= 0;
+                      if (theme.palette.mode === 'dark') {
+                        return isProfit ? 'rgba(63, 81, 181, 0.15)' : 'rgba(244, 67, 54, 0.15)';
+                      }
+                      return isProfit ? 'primary.light' : 'error.light';
+                    },
+                    color: (theme) => {
+                      const isProfit = financialData.profitMargin >= 0;
+                      if (theme.palette.mode === 'dark') {
+                        return isProfit ? '#7986cb' : '#ff7961';
+                      }
+                      return isProfit ? 'primary.contrastText' : 'error.contrastText';
+                    },
+                    border: (theme) =>
+                      theme.palette.mode === 'dark'
+                        ? `1px solid ${
+                            financialData.profitMargin >= 0
+                              ? 'rgba(63, 81, 181, 0.3)'
+                              : 'rgba(244, 67, 54, 0.3)'
+                          }`
+                        : 'none',
+                  }}
+                >
+                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                    MARGEM
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                    {formatPercentage(financialData.profitMargin) || '0%'}
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+
+            {/* Detalhamento dos custos */}
+            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, mb: 2 }}>
+                DETALHAMENTO DOS CUSTOS
+              </Typography>
+
+              <Grid container spacing={2}>
+                {/* Custo dos Itens */}
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1 }}>
                     <Box
                       sx={{
                         width: 32,
@@ -471,30 +522,20 @@ const MenuDetailsPage: React.FC = () => {
                     >
                       <Restaurant fontSize="small" sx={{ color: 'primary.main' }} />
                     </Box>
-                    <Box>
+                    <Box sx={{ flexGrow: 1 }}>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        CUSTO DOS ITENS
+                        Custo dos Itens
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {`${((financialData.itemsCost / (financialData.totalCost || 1)) * 100).toFixed(1)}%`}
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {formatCurrency(financialData.itemsCost)}
                       </Typography>
                     </Box>
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    {formatCurrency(financialData.itemsCost)}
-                  </Typography>
-                </Box>
+                </Grid>
 
-                {/* Custos diretos */}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    mb: 2,
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {/* Custos Diretos */}
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1 }}>
                     <Box
                       sx={{
                         width: 32,
@@ -508,30 +549,20 @@ const MenuDetailsPage: React.FC = () => {
                     >
                       <AttachMoney fontSize="small" sx={{ color: 'warning.main' }} />
                     </Box>
-                    <Box>
+                    <Box sx={{ flexGrow: 1 }}>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        CUSTOS DIRETOS
+                        Custos Diretos
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {`${((financialData.directCosts / (financialData.totalCost || 1)) * 100).toFixed(1)}%`}
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {formatCurrency(financialData.directCosts)}
                       </Typography>
                     </Box>
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    {formatCurrency(financialData.directCosts)}
-                  </Typography>
-                </Box>
+                </Grid>
 
-                {/* Custos indiretos */}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    mb: 2,
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {/* Custos Indiretos */}
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1 }}>
                     <Box
                       sx={{
                         width: 32,
@@ -545,65 +576,193 @@ const MenuDetailsPage: React.FC = () => {
                     >
                       <TrendingUp fontSize="small" sx={{ color: 'info.main' }} />
                     </Box>
-                    <Box>
+                    <Box sx={{ flexGrow: 1 }}>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        CUSTOS INDIRETOS
+                        Custos Indiretos
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {`${((financialData.indirectCosts / (financialData.totalCost || 1)) * 100).toFixed(1)}%`}
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {formatCurrency(financialData.indirectCosts)}
                       </Typography>
                     </Box>
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    {formatCurrency(financialData.indirectCosts)}
-                  </Typography>
-                </Box>
+                </Grid>
+              </Grid>
+            </Box>
+          </CardContent>
+        </Card>
+
+        {/* Seção de Itens do Cardápio */}
+        <Card sx={{ order: { xs: 2, lg: 1 }, borderRadius: 3 }}>
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                justifyContent: 'space-between',
+                alignItems: { xs: 'flex-start', sm: 'center' },
+                mb: 3,
+                gap: { xs: 2, sm: 0 },
+              }}
+            >
+              <Typography
+                variant="h5"
+                sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 600 }}
+              >
+                <Restaurant />
+                Itens do Cardápio
+                <Chip label={filteredItems.length} size="small" color="primary" />
+              </Typography>
+            </Box>
+
+            {/* Busca */}
+            <Box sx={{ mb: 3 }}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="Digite aqui o nome da receita..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                  },
+                }}
+              />
+            </Box>
+
+            {/* Lista de itens */}
+            {filteredItems.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 6 }}>
+                <Restaurant sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  {searchTerm ? 'Nenhum item encontrado' : 'Nenhum item no cardápio'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {searchTerm
+                    ? 'Tente ajustar os termos de busca'
+                    : 'Edite o cardápio para adicionar itens'}
+                </Typography>
               </Box>
+            ) : (
+              <Grid container spacing={2}>
+                {filteredItems.map((item, index) => {
+                  const recipe = getRecipeData(item.idItem);
+                  return (
+                    <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={index}>
+                      <Paper
+                        sx={{
+                          p: 2,
+                          borderRadius: 3,
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: (theme) => theme.shadows[8],
+                          },
+                          height: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                        }}
+                      >
+                        {/* Imagem da receita */}
+                        <Box
+                          sx={{
+                            width: '100%',
+                            height: 120,
+                            borderRadius: 2,
+                            bgcolor: 'primary.main',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundImage: recipe?.image ? `url(${recipe.image})` : 'none',
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            mb: 2,
+                          }}
+                        >
+                          {!recipe?.image && <Restaurant sx={{ fontSize: 40, color: 'white' }} />}
+                        </Box>
 
-              <Divider sx={{ my: 2 }} />
+                        {/* Informações da receita */}
+                        <Box sx={{ flexGrow: 1, mb: 2 }}>
+                          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, lineHeight: 1.2 }}>
+                            {recipe?.name || 'Receita não encontrada'}
+                          </Typography>
+                          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                            <Chip
+                              label={`${item.quantityUsed} ${item.unitMesaure}`}
+                              size="small"
+                              variant="outlined"
+                              color="primary"
+                            />
+                            {recipe && (
+                              <Chip label={recipe.category} size="small" variant="outlined" />
+                            )}
+                          </Box>
+                        </Box>
 
-              {/* Preço de venda e margem */}
-              <Box sx={{ mb: 3 }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    mb: 2,
-                  }}
-                >
-                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-                    PREÇO DE VENDA
-                  </Typography>
-                  <Typography variant="h4" color="success.main" sx={{ fontWeight: 600 }}>
-                    {formatCurrency(financialData.sellPrice)}
-                  </Typography>
-                </Box>
-
-                <Box
-                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                >
-                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-                    MARGEM DE LUCRO:
-                  </Typography>
-                  <Box sx={{ textAlign: 'right' }}>
-                    <Typography
-                      variant="h4"
-                      color={financialData.profitMargin >= 0 ? 'primary.main' : 'error.main'}
-                      sx={{ fontWeight: 600 }}
-                    >
-                      {formatPercentage(financialData.profitMargin)}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      MARKUP: {formatPercentage(financialData.markup)}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+                        {/* Informações financeiras do item */}
+                        <Box sx={{ pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
+                          <Grid container spacing={1}>
+                            <Grid size={4}>
+                              <Box sx={{ textAlign: 'center' }}>
+                                <Typography variant="caption" color="text.secondary">
+                                  Venda
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  color="success.main"
+                                  sx={{ fontWeight: 600 }}
+                                >
+                                  R$ 9,65
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            <Grid size={4}>
+                              <Box sx={{ textAlign: 'center' }}>
+                                <Typography variant="caption" color="text.secondary">
+                                  Custo
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  color="error.main"
+                                  sx={{ fontWeight: 600 }}
+                                >
+                                  R$ 7,33
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            <Grid size={4}>
+                              <Box sx={{ textAlign: 'center' }}>
+                                <Typography variant="caption" color="text.secondary">
+                                  Lucro
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  color="primary.main"
+                                  sx={{ fontWeight: 600 }}
+                                >
+                                  R$ 2,32
+                                </Typography>
+                              </Box>
+                            </Grid>
+                          </Grid>
+                        </Box>
+                      </Paper>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            )}
+          </CardContent>
+        </Card>
+      </Box>
 
       {/* Modais */}
       <MenuModal
@@ -635,6 +794,13 @@ const MenuDetailsPage: React.FC = () => {
               }
             : null
         }
+      />
+
+      <PDFModal
+        isOpen={isModalOpen}
+        pdfUrl={pdfUrl}
+        onClose={closeModal}
+        title={menu?.name || 'Cardápio'}
       />
     </Container>
   );

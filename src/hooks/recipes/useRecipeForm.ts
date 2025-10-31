@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { Dayjs } from 'dayjs';
-import { CreateRecipeParams } from '../../types/recipes';
+import { CreateRecipeParams, Recipe } from '../../types/recipes';
 import { RecipeIngredient } from '../../types/recipeIngredients';
 import { addNotification } from '../../store/slices/uiSlice';
 import { createRecipe } from '../../services/api/recipes';
@@ -238,9 +238,9 @@ export const useRecipeForm = () => {
   /**
    * Submeter receita
    */
-  const submitRecipe = useCallback(async (): Promise<boolean> => {
+  const submitRecipe = useCallback(async (): Promise<{ success: boolean; recipe?: Recipe }> => {
     if (!validateForm()) {
-      return false;
+      return { success: false };
     }
 
     setSubmitting(true);
@@ -268,8 +268,14 @@ export const useRecipeForm = () => {
         modePreparation: recipeSteps,
       };
 
-      // Criar receita
-      await createRecipe(recipeData);
+      // Criar receita - retorna a receita criada com ID
+      const createdRecipe = await createRecipe(recipeData);
+
+      console.log('✅ Receita criada com sucesso:', {
+        id: createdRecipe._id,
+        name: createdRecipe.name,
+        ingredientsCount: createdRecipe.ingredients?.length || 0,
+      });
 
       dispatch(
         addNotification({
@@ -279,7 +285,7 @@ export const useRecipeForm = () => {
         }),
       );
 
-      return true;
+      return { success: true, recipe: createdRecipe };
     } catch (error: any) {
       console.error('Erro ao criar receita:', error);
 
@@ -297,7 +303,7 @@ export const useRecipeForm = () => {
         }),
       );
 
-      return false;
+      return { success: false };
     } finally {
       setSubmitting(false);
     }

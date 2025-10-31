@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Recipe } from '../types/recipes';
 import { RecipeIngredient } from '../types/recipeIngredients';
 import {
@@ -8,6 +8,7 @@ import {
 
 /**
  * Hook customizado para gerenciar informações nutricionais de receitas
+ * Versão aprimorada com detecção completa de mudanças
  */
 export const useNutritionalInfo = (
   recipe: Recipe | null,
@@ -17,20 +18,74 @@ export const useNutritionalInfo = (
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 🔥 MEMOIZADO: Criar hash completo dos ingredientes para detectar qualquer mudança
+  const ingredientsHash = useMemo(() => {
+    if (!recipeIngredients.length) return '';
+
+    return recipeIngredients
+      .map((ri) => {
+        // Inclui TODOS os campos relevantes para cálculo nutricional
+        const parts = [
+          ri.ingredient._id,
+          ri.ingredient.name,
+          ri.quantity.toString(),
+          ri.unitMeasure,
+          ri.totalWeight.toString(),
+          ri.totalCost.toString(),
+          // Incluir dados nutricionais do ingrediente se existirem
+          ri.ingredient.nutritionalInfo
+            ? JSON.stringify(ri.ingredient.nutritionalInfo)
+            : 'no-nutrition',
+        ];
+        return parts.join(':');
+      })
+      .sort() // Garante ordem consistente
+      .join('|');
+  }, [recipeIngredients]);
+
+  // 🔥 MEMOIZADO: Criar hash da receita para detectar mudanças relevantes
+  const recipeHash = useMemo(() => {
+    if (!recipe) return '';
+
+    return [
+      recipe._id,
+      recipe.name,
+      recipe.yieldRecipe,
+      recipe.typeYield,
+      recipe.weightRecipe,
+      recipe.typeWeightRecipe,
+    ].join(':');
+  }, [recipe]);
+
   const calculateNutritionalInfo = useCallback(async () => {
     if (!recipe || !recipeIngredients.length) {
+      console.log('🍎 [Nutritional] Limpando dados - sem receita ou ingredientes');
       setNutritionalData(null);
+      setError(null);
       return;
     }
+
+    console.log('🍎 [Nutritional] Iniciando cálculo para:', {
+      recipe: recipe.name,
+      ingredients: recipeIngredients.length,
+      hash: ingredientsHash.substring(0, 50) + '...',
+    });
 
     setLoading(true);
     setError(null);
 
     try {
       const data = await getRecipeNutritionalLabel(recipe, recipeIngredients);
+
+      console.log('🍎 [Nutritional] Cálculo concluído:', {
+        calories: data.nutrients.calories,
+        portionSize: data.portionSize,
+        servings: data.servingsPerContainer,
+      });
+
       setNutritionalData(data);
     } catch (err) {
-      console.error('Erro ao calcular informações nutricionais:', err);
+      console.error('🍎 [Nutritional] Erro ao calcular:', err);
       setError(
         'Não foi possível calcular as informações nutricionais. Verifique se os ingredientes têm dados nutricionais disponíveis.',
       );
@@ -38,29 +93,26 @@ export const useNutritionalInfo = (
     } finally {
       setLoading(false);
     }
-  }, [
-    recipe?.id,
-    recipeIngredients.length,
-    recipeIngredients.map((i) => i.ingredient._id).join(','),
-  ]); // 🔥 Dependências específicas para evitar loops
+  }, [recipe, recipeIngredients, recipeHash, ingredientsHash]);
 
-  // 🔥 DEBOUNCE: Recalcular apenas após um delay para evitar múltiplas chamadas
+  // 🔥 DEBOUNCE INTELIGENTE: Recalcular quando dados relevantes mudarem
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (recipe && recipeIngredients.length > 0) {
-        calculateNutritionalInfo();
-      } else {
-        setNutritionalData(null);
-        setError(null);
-      }
-    }, 500); // 500ms de delay
+    if (!recipe || !recipeIngredients.length) {
+      console.log('🍎 [Nutritional] Resetando - sem dados');
+      setNutritionalData(null);
+      setError(null);
+      return;
+    }
 
-    return () => clearTimeout(timeoutId);
-  }, [
-    recipe?.id,
-    recipeIngredients.length,
-    recipeIngredients.map((i) => i.ingredient._id).join(','),
-  ]); // 🔥 Mesmas dependências específicas
+    const timeoutId = setTimeout(() => {
+      console.log('🍎 [Nutritional] Trigger de recálculo detectado');
+      calculateNutritionalInfo();
+    }, 200); // 🔥 200ms para boa responsividade
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [recipeHash, ingredientsHash, calculateNutritionalInfo]); // 🔥 Usar hashes como dependências
 
   const refresh = useCallback(() => {
     calculateNutritionalInfo();

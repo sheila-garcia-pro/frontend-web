@@ -1,5 +1,5 @@
 import React, { FC, useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -48,7 +48,11 @@ import RecipeAvatar from '../../../components/ui/RecipeAvatar';
 const RecipeDetailsPage: FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
+
+  // Verificar se a receita foi recém-criada
+  const justCreated = location.state?.justCreated || false;
 
   // Hook de responsividade
   const { isMobile, isTablet, isDesktop } = useDevice();
@@ -79,17 +83,20 @@ const RecipeDetailsPage: FC = () => {
   useEffect(() => {
     const loadRecipeIngredients = async () => {
       if (recipe?.ingredients && recipe.ingredients.length > 0) {
+        console.log('🔄 [Recipe Details] Convertendo ingredientes da API:', recipe.ingredients);
         try {
           const convertedIngredients = await convertAPIIngredientsToRecipeIngredients(
             recipe.ingredients,
             getCachedIngredientById,
           );
+          console.log('✅ [Recipe Details] Ingredientes convertidos:', convertedIngredients);
           setRecipeIngredients(convertedIngredients);
         } catch (error) {
-          console.error('❌ Erro ao converter ingredientes:', error);
+          console.error('❌ [Recipe Details] Erro ao converter ingredientes:', error);
           setRecipeIngredients([]);
         }
       } else {
+        console.log('ℹ️ [Recipe Details] Nenhum ingrediente encontrado na receita');
         setRecipeIngredients([]);
       }
     };
@@ -106,7 +113,20 @@ const RecipeDetailsPage: FC = () => {
       }
       setLoading(true);
       try {
-        const foundRecipe = await getCachedRecipeById(id);
+        console.log('🔄 [Recipe Details] Carregando receita com ID:', id);
+        console.log('🔄 [Recipe Details] Receita recém-criada?:', justCreated);
+
+        // Usar getFreshRecipeById para receitas recém-criadas para evitar problemas de cache
+        const foundRecipe = justCreated
+          ? await getFreshRecipeById(id)
+          : await getCachedRecipeById(id);
+
+        console.log('✅ [Recipe Details] Receita carregada:', {
+          id: foundRecipe._id,
+          name: foundRecipe.name,
+          ingredientsCount: foundRecipe.ingredients?.length || 0,
+          ingredients: foundRecipe.ingredients,
+        });
 
         // Garantir que ingredients seja sempre um array
         if (!foundRecipe.ingredients) {
@@ -171,7 +191,7 @@ const RecipeDetailsPage: FC = () => {
     };
 
     loadRecipe();
-  }, [id, navigate, dispatch]);
+  }, [id, navigate, dispatch, justCreated]);
 
   const handleGoBack = () => {
     navigate('/recipes');

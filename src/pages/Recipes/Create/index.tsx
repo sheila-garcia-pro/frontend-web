@@ -151,13 +151,13 @@ const RecipeCreatePage: React.FC = () => {
 
   // Submissão final
   const handleSubmit = async () => {
-    const success = await submitRecipe();
-    if (success) {
-      navigate('/recipes', {
+    const result = await submitRecipe();
+    if (result.success && result.recipe) {
+      // Navegar diretamente para a receita criada
+      navigate(`/recipes/${result.recipe._id}`, {
         state: {
           message: 'Receita criada com sucesso!',
-          reloadList: true,
-          createdRecipeName: formData.name,
+          justCreated: true,
         },
       });
     }
@@ -626,6 +626,24 @@ const RecipeCreatePage: React.FC = () => {
                         🍎 Informações Nutricionais
                       </Typography>
 
+                      {/* DEBUG: Log para verificar dados passados */}
+                      {(() => {
+                        console.log('🍎 [Recipe Create] Renderizando NutritionalInfoSection:', {
+                          ingredientsCount: recipeIngredients.length,
+                          ingredients: recipeIngredients.map((ri) => ({
+                            name: ri.ingredient.name,
+                            quantity: ri.quantity,
+                            unit: ri.unitMeasure,
+                            totalWeight: ri.totalWeight,
+                          })),
+                          recipe: {
+                            name: formData.name,
+                            yield: formData.yieldRecipe,
+                          },
+                        });
+                        return null;
+                      })()}
+
                       <NutritionalInfoSection
                         recipe={{
                           _id: 'new',
@@ -646,6 +664,61 @@ const RecipeCreatePage: React.FC = () => {
                     </Box>
                   </>
                 )}
+
+                {/* Seção de Ações do Final */}
+                <Divider sx={{ width: '100%' }} />
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: { xs: 2, sm: 3 },
+                    pt: { xs: 3, sm: 4 },
+                    pb: { xs: 1, sm: 2 },
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    width: '100%',
+                  }}
+                >
+                  <Button
+                    variant="outlined"
+                    onClick={handleCancel}
+                    disabled={submitting}
+                    startIcon={<Cancel sx={{ fontSize: { xs: 18, sm: 20 } }} />}
+                    size={isMobile ? 'large' : 'medium'}
+                    fullWidth={isMobile}
+                    sx={{
+                      minHeight: { xs: 48, sm: 42 },
+                      fontSize: { xs: '1rem', sm: '0.875rem' },
+                      fontWeight: 600,
+                      px: { xs: 3, sm: 4 },
+                      minWidth: { sm: 140 },
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={handleSubmit}
+                    disabled={submitting || loadingExternalData}
+                    startIcon={<Save sx={{ fontSize: { xs: 18, sm: 20 } }} />}
+                    size={isMobile ? 'large' : 'medium'}
+                    fullWidth={isMobile}
+                    sx={{
+                      minHeight: { xs: 48, sm: 42 },
+                      fontSize: { xs: '1rem', sm: '0.875rem' },
+                      fontWeight: 600,
+                      px: { xs: 3, sm: 4 },
+                      minWidth: { sm: 140 },
+                      boxShadow: 2,
+                      '&:hover': {
+                        boxShadow: 4,
+                        transform: 'translateY(-1px)',
+                      },
+                      transition: 'all 0.2s ease-in-out',
+                    }}
+                  >
+                    {submitting ? 'Salvando...' : isMobile ? 'Salvar Receita' : 'Salvar Receita'}
+                  </Button>
+                </Box>
               </Box>
             </CardContent>
           </Card>

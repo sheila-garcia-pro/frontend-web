@@ -142,6 +142,18 @@ export const calculateRecipeNutritionalInfo = async (
   recipe: Recipe,
   recipeIngredients: RecipeIngredient[],
 ): Promise<RecipeNutritionalInfo> => {
+  console.log('🔬 [Nutritional Calc] Iniciando cálculo:', {
+    recipeName: recipe.name,
+    yield: recipe.yieldRecipe,
+    ingredientsCount: recipeIngredients.length,
+    ingredients: recipeIngredients.map((ri) => ({
+      name: ri.ingredient.name,
+      quantity: ri.quantity,
+      unit: ri.unitMeasure,
+      totalWeight: ri.totalWeight,
+    })),
+  });
+
   const totalNutrients = {
     energyKcal: 0,
     carbohydrateG: 0,
@@ -163,8 +175,15 @@ export const calculateRecipeNutritionalInfo = async (
   // Calcular peso total da receita em gramas
   const totalRecipeWeight = recipeIngredients.reduce((sum, ri) => sum + ri.totalWeight, 0);
 
+  console.log('🔬 [Nutritional Calc] Peso total da receita:', totalRecipeWeight, 'gramas');
+
   // Para cada ingrediente, obter informações nutricionais e calcular proporcionalmente
   for (const recipeIngredient of recipeIngredients) {
+    console.log('🔬 [Nutritional Calc] Processando ingrediente:', {
+      name: recipeIngredient.ingredient.name,
+      weight: recipeIngredient.totalWeight,
+    });
+
     const nutritionalInfo = await getIngredientNutritionalInfo(recipeIngredient.ingredient.name);
 
     if (nutritionalInfo) {
@@ -172,7 +191,16 @@ export const calculateRecipeNutritionalInfo = async (
       const ingredientWeight = recipeIngredient.totalWeight; // já em gramas
       const proportion = ingredientWeight / 100; // nutrição é por 100g
 
-      totalNutrients.energyKcal += parseNutritionalValue(nutritionalInfo.energyKcal) * proportion;
+      const ingredientCalories = parseNutritionalValue(nutritionalInfo.energyKcal) * proportion;
+
+      console.log('🔬 [Nutritional Calc] Dados nutricionais:', {
+        ingredient: recipeIngredient.ingredient.name,
+        proportion: proportion,
+        caloriesPer100g: parseNutritionalValue(nutritionalInfo.energyKcal),
+        caloriesTotal: ingredientCalories,
+      });
+
+      totalNutrients.energyKcal += ingredientCalories;
       totalNutrients.carbohydrateG +=
         parseNutritionalValue(nutritionalInfo.carbohydrateG) * proportion;
       totalNutrients.proteinG += parseNutritionalValue(nutritionalInfo.proteinG) * proportion;
@@ -191,12 +219,25 @@ export const calculateRecipeNutritionalInfo = async (
       totalNutrients.ironMG += parseNutritionalValue(nutritionalInfo.ironMG) * proportion;
       totalNutrients.potassiumMG += parseNutritionalValue(nutritionalInfo.potassiumMG) * proportion;
       totalNutrients.vitaminCMCG += parseNutritionalValue(nutritionalInfo.vitaminCMCG) * proportion;
+    } else {
+      console.warn(
+        '🔬 [Nutritional Calc] Sem dados nutricionais para:',
+        recipeIngredient.ingredient.name,
+      );
     }
   }
 
   // Calcular tamanho da porção e número de porções
   const yieldNumber = parseFloat(recipe.yieldRecipe) || 1;
   const portionSize = Math.round(totalRecipeWeight / yieldNumber); // peso por porção em gramas
+
+  console.log('🔬 [Nutritional Calc] Resultado final:', {
+    totalCalories: totalNutrients.energyKcal,
+    totalProtein: totalNutrients.proteinG,
+    totalWeight: totalRecipeWeight,
+    yield: yieldNumber,
+    portionSize: portionSize,
+  });
 
   return {
     ...totalNutrients,

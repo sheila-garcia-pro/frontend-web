@@ -71,10 +71,12 @@ export const calculateMenuFinancials = (params: MenuCalculationParams): MenuFina
  * Formata valor monetário para exibição
  */
 export const formatCurrency = (value: number): string => {
-  return value.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  });
+  return value
+    .toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    })
+    .replace(/\s/, ''); // Remove o espaço entre R$ e o valor
 };
 
 /**

@@ -180,20 +180,35 @@ const HomePage: React.FC = () => {
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'center',
+                    alignItems: 'center',
                   }}
                 >
-                  <item.icon
+                  <Box
                     sx={{
-                      fontSize: { xs: 32, sm: 40, md: 48 },
-                      color: item.color,
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
                       mb: { xs: 1, sm: 2 },
                     }}
-                  />
+                  >
+                    <item.icon
+                      sx={{
+                        fontSize: { xs: 32, sm: 40, md: 48 },
+                        color: item.color,
+                      }}
+                    />
+                  </Box>
                   <Typography
                     variant={isMobile ? 'subtitle2' : 'h6'}
                     component="h3"
                     gutterBottom
-                    sx={{ fontWeight: 500 }}
+                    sx={{
+                      fontWeight: 500,
+                      textAlign: 'center',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
                   >
                     {item.title}
                   </Typography>
@@ -203,6 +218,10 @@ const HomePage: React.FC = () => {
                     sx={{
                       fontSize: { xs: '0.75rem', sm: '0.875rem' },
                       lineHeight: 1.4,
+                      textAlign: 'center',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
                     }}
                   >
                     {item.description}
