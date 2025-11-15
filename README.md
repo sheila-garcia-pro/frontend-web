@@ -1,6 +1,6 @@
 # Sheila Garcia Pro
 
-Um aplicativo moderno e completo para gerenciamento de receitas e ingredientes, desenvolvido com React, TypeScript, Material UI, Redux Toolkit e mais.
+Um aplicativo moderno e completo para gerenciamento de receitas e ingredientes, desenvolvido com React, TypeScript, Material UI, Redux Toolkit e mais..
 
 ## Visão Geral
 
