@@ -169,15 +169,8 @@ const AppRoutesContent: React.FC = () => {
           }
         />
 
-        {/* Fornecedores - com permissões específicas */}
-        <Route
-          path="suppliers"
-          element={
-            <PermissionRoute required={['get_suppliers']}>
-              <SuppliersPage />
-            </PermissionRoute>
-          }
-        />
+        {/* Fornecedores - acesso básico (será protegido com permissões quando conectar à API) */}
+        <Route path="suppliers" element={<SuppliersPage />} />
       </Route>
 
       {/* Rotas de compatibilidade */}

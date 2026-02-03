@@ -43,6 +43,7 @@ import {
   Category,
   MonetizationOn,
   Inventory,
+  Store,
 } from '@mui/icons-material';
 
 // Componentes
@@ -53,6 +54,7 @@ import {
   IngredientDetailsModal,
   IngredientAvatarDisplay,
   IngredientsStats,
+  IngredientSuppliersModal,
 } from '../../components/ui';
 
 // Hooks
@@ -76,6 +78,13 @@ const IngredientsPage: React.FC = () => {
 
   // Estado para controle de filtros colapsáveis em mobile
   const [filtersOpen, setFiltersOpen] = useState(!isMobile);
+
+  // Estado para modal de fornecedores
+  const [suppliersModalOpen, setSuppliersModalOpen] = useState(false);
+  const [selectedIngredientForSuppliers, setSelectedIngredientForSuppliers] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   // Usar o hook personalizado para gerenciar todo o estado
   const {
@@ -115,6 +124,17 @@ const IngredientsPage: React.FC = () => {
     handleCloseDetails,
   } = useIngredientsPage();
 
+  // Handlers para modal de fornecedores
+  const handleOpenSuppliersModal = (ingredientId: string, ingredientName: string) => {
+    setSelectedIngredientForSuppliers({ id: ingredientId, name: ingredientName });
+    setSuppliersModalOpen(true);
+  };
+
+  const handleCloseSuppliersModal = () => {
+    setSuppliersModalOpen(false);
+    setSelectedIngredientForSuppliers(null);
+  };
+
   // Opções de ordenação
   const sortOptions: SortOption[] = [
     { value: 'name_asc', label: 'Nome (A-Z)' },
@@ -137,6 +157,9 @@ const IngredientsPage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <IngredientSkeleton />
           </Box>
+        </TableCell>
+        <TableCell>
+          <IngredientSkeleton />
         </TableCell>
         <TableCell>
           <IngredientSkeleton />
@@ -491,6 +514,18 @@ const IngredientsPage: React.FC = () => {
                       >
                         Detalhes
                       </Button>
+                      <Button
+                        size="small"
+                        startIcon={<Store />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenSuppliersModal(ingredient._id, ingredient.name);
+                        }}
+                        sx={{ fontSize: '0.75rem' }}
+                        color="primary"
+                      >
+                        Fornecedores
+                      </Button>
                     </CardActions>
                   </Card>
                 ))}
@@ -517,6 +552,7 @@ const IngredientsPage: React.FC = () => {
                   <TableCell>{t('ingredients.fields.category')}</TableCell>
                   <TableCell>{t('ingredients.fields.price')}</TableCell>
                   <TableCell>{t('ingredients.fields.quantity')}</TableCell>
+                  <TableCell align="right">Ações</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -524,13 +560,8 @@ const IngredientsPage: React.FC = () => {
                   renderTableSkeletons()
                 ) : paginatedIngredients.length > 0 ? (
                   paginatedIngredients.map((ingredient) => (
-                    <TableRow
-                      key={ingredient._id}
-                      hover
-                      onClick={() => handleViewDetails(ingredient._id)}
-                      sx={{ cursor: 'pointer' }}
-                    >
-                      <TableCell>
+                    <TableRow key={ingredient._id} hover sx={{ cursor: 'pointer' }}>
+                      <TableCell onClick={() => handleViewDetails(ingredient._id)}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           <IngredientAvatarDisplay
                             src={ingredient.image}
@@ -541,7 +572,7 @@ const IngredientsPage: React.FC = () => {
                           <Typography>{ingredient.name}</Typography>
                         </Box>
                       </TableCell>
-                      <TableCell>
+                      <TableCell onClick={() => handleViewDetails(ingredient._id)}>
                         <Chip
                           label={ingredient.category}
                           size="small"
@@ -549,15 +580,31 @@ const IngredientsPage: React.FC = () => {
                           variant="outlined"
                         />
                       </TableCell>
-                      <TableCell>{`R$ ${ingredient.price?.price?.toFixed(2) ?? '0.00'}`}</TableCell>
-                      <TableCell>
+                      <TableCell
+                        onClick={() => handleViewDetails(ingredient._id)}
+                      >{`R$ ${ingredient.price?.price?.toFixed(2) ?? '0.00'}`}</TableCell>
+                      <TableCell onClick={() => handleViewDetails(ingredient._id)}>
                         {`${ingredient.price?.quantity ?? '0'} ${ingredient.price?.unitMeasure ?? 'Quilograma'}`}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="Gerenciar fornecedores">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenSuppliersModal(ingredient._id, ingredient.name);
+                            }}
+                            color="primary"
+                          >
+                            <Store fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} align="center">
+                    <TableCell colSpan={5} align="center">
                       <Box sx={{ p: 4 }}>
                         <Typography variant="h6" color="text.secondary">
                           {t('ingredients.messages.notFound')}
@@ -618,6 +665,16 @@ const IngredientsPage: React.FC = () => {
           onClose={handleCloseDetails}
           ingredientId={selectedIngredientId}
         />
+
+        {/* Modal de fornecedores do ingrediente */}
+        {selectedIngredientForSuppliers && (
+          <IngredientSuppliersModal
+            open={suppliersModalOpen}
+            onClose={handleCloseSuppliersModal}
+            ingredientId={selectedIngredientForSuppliers.id}
+            ingredientName={selectedIngredientForSuppliers.name}
+          />
+        )}
       </Container>
     </Box>
   );
