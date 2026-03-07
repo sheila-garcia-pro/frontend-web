@@ -23,7 +23,7 @@ import {
 } from '@mui/material';
 import { Delete as DeleteIcon, Add as AddIcon, Store as StoreIcon } from '@mui/icons-material';
 import { useSuppliers } from '@/hooks/useSuppliers';
-import { Supplier, SUPPLIER_GROUP_LABELS } from '@/types/suppliers';
+import { Supplier } from '@/types/suppliers';
 
 interface IngredientSuppliersModalProps {
   open: boolean;
@@ -120,7 +120,7 @@ export const IngredientSuppliersModal: React.FC<IngredientSuppliersModalProps> =
                 >
                   {availableSuppliers.map((supplier) => (
                     <MenuItem key={supplier._id} value={supplier._id}>
-                      {supplier.name} ({SUPPLIER_GROUP_LABELS[supplier.group]})
+                      {supplier.name} ({supplier.category})
                     </MenuItem>
                   ))}
                 </Select>
@@ -170,7 +170,7 @@ export const IngredientSuppliersModal: React.FC<IngredientSuppliersModalProps> =
                             {supplier.name}
                           </Typography>
                           <Chip
-                            label={SUPPLIER_GROUP_LABELS[supplier.group]}
+                            label={supplier.category}
                             size="small"
                             color="primary"
                             variant="outlined"

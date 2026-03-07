@@ -1,36 +1,33 @@
 // Interfaces para Fornecedores
 
-// Tipo para grupos/categorias de fornecedores
-export type SupplierGroup =
-  | 'açougue'
-  | 'hortifruti'
-  | 'mercado'
-  | 'adega'
-  | 'padaria'
-  | 'laticínios'
-  | 'pescado'
-  | 'outros';
+// Categoria de fornecedor (API dinâmica)
+export interface SupplierCategory {
+  id: string;
+  name: string;
+  description?: string;
+}
 
 // Interface principal do Fornecedor
 export interface Supplier {
   _id: string;
   name: string;
-  group: SupplierGroup;
+  category: string; // Nome da categoria (string livre, vindo da API)
   address: string;
   phone: string;
-  comments?: string;
-  ingredients?: string[]; // IDs dos ingredientes vinculados
+  active: boolean; // Status ativo/inativo
+  ingredients?: string[]; // IDs dos ingredientes vinculados (gerenciado localmente)
   createdAt?: string;
   updatedAt?: string;
+  __v?: number; // MongoDB version
 }
 
 // Interface para criação de fornecedor
 export interface CreateSupplierParams {
   name: string;
-  group: SupplierGroup;
+  category: string;
   address: string;
   phone: string;
-  comments?: string;
+  active?: boolean; // Padrão: true
 }
 
 // Interface para atualização de fornecedor
@@ -42,27 +39,28 @@ export interface UpdateSupplierParams extends Partial<CreateSupplierParams> {
 export interface SupplierSearchParams {
   page: number;
   itemPerPage: number;
-  group?: SupplierGroup | 'all';
+  category?: string;
   name?: string;
   sort?: string;
+  active?: boolean; // Filtro por status
 }
 
-// Interface para resposta da "API" de fornecedores
+// Interface para resposta da API de fornecedores
 export interface SuppliersResponse {
   data: Supplier[];
   total: number;
-  page: number;
-  itemPerPage: number;
+  currentPage: number; // API usa currentPage, não page
+  totalPages: number; // API retorna totalPages
 }
 
-// Labels amigáveis para os grupos
-export const SUPPLIER_GROUP_LABELS: Record<SupplierGroup, string> = {
-  açougue: 'Açougue',
-  hortifruti: 'Hortifruti',
-  mercado: 'Mercado',
-  adega: 'Adega',
-  padaria: 'Padaria',
-  laticínios: 'Laticínios',
-  pescado: 'Pescado',
-  outros: 'Outros',
-};
+// Interface para criação de categoria
+export interface CreateSupplierCategoryParams {
+  name: string;
+  description?: string;
+}
+
+// Interface para atualização de categoria
+export interface UpdateSupplierCategoryParams {
+  name?: string;
+  description?: string;
+}

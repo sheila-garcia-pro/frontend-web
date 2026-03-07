@@ -13,8 +13,16 @@ import {
   ListItem,
   ListItemText,
 } from '@mui/material';
-import { Store, LocationOn, Phone, Comment, CalendarToday, Kitchen } from '@mui/icons-material';
-import { Supplier, SUPPLIER_GROUP_LABELS } from '@/types/suppliers';
+import {
+  Store,
+  LocationOn,
+  Phone,
+  CalendarToday,
+  Kitchen,
+  CheckCircle,
+  Cancel,
+} from '@mui/icons-material';
+import { Supplier } from '@/types/suppliers';
 import { Ingredient } from '@/types/ingredients';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
@@ -75,14 +83,27 @@ export const SupplierDetailsModal: React.FC<SupplierDetailsModalProps> = ({
 
           <Divider />
 
-          {/* Grupo */}
+          {/* Categoria */}
           <Box>
             <Typography variant="caption" color="text.secondary" gutterBottom>
-              Grupo
+              Categoria
+            </Typography>
+            <Typography variant="body1" sx={{ mt: 0.5 }}>
+              {supplier.category}
+            </Typography>
+          </Box>
+
+          <Divider />
+
+          {/* Status */}
+          <Box>
+            <Typography variant="caption" color="text.secondary" gutterBottom>
+              Status
             </Typography>
             <Chip
-              label={SUPPLIER_GROUP_LABELS[supplier.group]}
-              color="primary"
+              icon={supplier.active ? <CheckCircle /> : <Cancel />}
+              label={supplier.active ? 'Ativo' : 'Inativo'}
+              color={supplier.active ? 'success' : 'default'}
               size="small"
               sx={{ mt: 0.5 }}
             />
@@ -113,24 +134,6 @@ export const SupplierDetailsModal: React.FC<SupplierDetailsModalProps> = ({
             </Box>
             <Typography variant="body1">{supplier.phone}</Typography>
           </Box>
-
-          {/* Comentários */}
-          {supplier.comments && (
-            <>
-              <Divider />
-              <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                  <Comment fontSize="small" color="action" />
-                  <Typography variant="caption" color="text.secondary">
-                    Comentários
-                  </Typography>
-                </Box>
-                <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                  {supplier.comments}
-                </Typography>
-              </Box>
-            </>
-          )}
 
           {/* Ingredientes Vinculados */}
           <Divider />

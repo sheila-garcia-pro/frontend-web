@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -29,6 +29,7 @@ import {
   DialogActions,
 } from '@mui/material';
 import { Search, Add, Edit, Delete, Visibility, Refresh } from '@mui/icons-material';
+import * as supplierAPI from '@/services/api/suppliers';
 
 // Hooks
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -37,18 +38,13 @@ import { useSuppliers } from '@/hooks/useSuppliers';
 import { SupplierModal, SupplierDetailsModal } from '@/components/ui';
 
 // Types
-import {
-  Supplier,
-  SupplierGroup,
-  SUPPLIER_GROUP_LABELS,
-  CreateSupplierParams,
-  UpdateSupplierParams,
-} from '@/types/suppliers';
+import { Supplier, CreateSupplierParams, UpdateSupplierParams } from '@/types/suppliers';
 
 const SuppliersPage: React.FC = () => {
   // Estados para filtros e paginação
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedGroup, setSelectedGroup] = useState<SupplierGroup | 'all'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string | 'all'>('all');
+  const [activeFilter, setActiveFilter] = useState<boolean | 'all'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [sortOption, setSortOption] = useState('name-asc');
   const itemsPerPage = 10;
@@ -62,26 +58,39 @@ const SuppliersPage: React.FC = () => {
 
   // Hook customizado
   const {
+    suppliers,
+    categories,
     loading,
+    error,
+    paginationData,
     createSupplier,
     updateSupplier,
     deleteSupplier,
     searchSuppliers,
-    availableGroups,
+    availableCategories,
+    loadCategories,
   } = useSuppliers();
 
   // Buscar fornecedores com filtros
-  const { data: suppliers, total } = useMemo(() => {
-    return searchSuppliers({
-      page: currentPage,
-      itemPerPage: itemsPerPage,
-      group: selectedGroup,
-      name: searchTerm,
-      sort: sortOption,
-    });
-  }, [searchSuppliers, currentPage, selectedGroup, searchTerm, sortOption]);
+  useEffect(() => {
+    const loadSuppliers = async () => {
+      try {
+        await searchSuppliers({
+          page: currentPage,
+          itemPerPage: itemsPerPage,
+          category: selectedCategory !== 'all' ? selectedCategory : undefined,
+          name: searchTerm,
+          sort: sortOption,
+          active: activeFilter !== 'all' ? activeFilter : undefined,
+        });
+      } catch (error) {
+        // Erro já tratado no hook
+      }
+    };
 
-  const totalPages = Math.ceil(total / itemsPerPage);
+    loadSuppliers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, selectedCategory, searchTerm, sortOption, activeFilter]);
 
   // Handlers para criação/edição
   const handleOpenModal = (supplier?: Supplier) => {
@@ -95,18 +104,32 @@ const SuppliersPage: React.FC = () => {
   };
 
   const handleSaveSupplier = async (data: CreateSupplierParams) => {
-    if (selectedSupplier) {
-      // Editar
-      const updateData: UpdateSupplierParams = {
-        _id: selectedSupplier._id,
-        ...data,
-      };
-      await updateSupplier(updateData);
-    } else {
-      // Criar
-      await createSupplier(data);
+    try {
+      if (selectedSupplier) {
+        // Editar
+        const updateData: UpdateSupplierParams = {
+          _id: selectedSupplier._id,
+          ...data,
+        };
+        await updateSupplier(updateData);
+      } else {
+        // Criar
+        await createSupplier(data);
+      }
+      handleCloseModal();
+
+      // Recarregar lista
+      searchSuppliers({
+        page: currentPage,
+        itemPerPage: itemsPerPage,
+        category: selectedCategory !== 'all' ? selectedCategory : undefined,
+        name: searchTerm,
+        sort: sortOption,
+        active: activeFilter !== 'all' ? activeFilter : undefined,
+      });
+    } catch (error) {
+      // Erro já tratado no hook
     }
-    handleCloseModal();
   };
 
   // Handlers para detalhes
@@ -133,11 +156,25 @@ const SuppliersPage: React.FC = () => {
 
   const handleConfirmDelete = async () => {
     if (supplierToDelete) {
-      await deleteSupplier(supplierToDelete._id);
-      handleCloseDeleteDialog();
-      // Ajustar página se necessário
-      if (suppliers.length === 1 && currentPage > 1) {
-        setCurrentPage(currentPage - 1);
+      try {
+        await deleteSupplier(supplierToDelete._id);
+        handleCloseDeleteDialog();
+
+        // Ajustar página se necessário
+        const newPage = suppliers.length === 1 && currentPage > 1 ? currentPage - 1 : currentPage;
+        setCurrentPage(newPage);
+
+        // Recarregar lista
+        searchSuppliers({
+          page: newPage,
+          itemPerPage: itemsPerPage,
+          category: selectedCategory !== 'all' ? selectedCategory : undefined,
+          name: searchTerm,
+          sort: sortOption,
+          active: activeFilter !== 'all' ? activeFilter : undefined,
+        });
+      } catch (error) {
+        // Erro já tratado no hook
       }
     }
   };
@@ -145,9 +182,26 @@ const SuppliersPage: React.FC = () => {
   // Handler para limpar filtros
   const handleClearFilters = () => {
     setSearchTerm('');
-    setSelectedGroup('all');
+    setSelectedCategory('all');
+    setActiveFilter('all');
     setCurrentPage(1);
     setSortOption('name-asc');
+  };
+
+  // Handler para criar nova categoria
+  const handleCreateCategory = async (categoryName: string): Promise<string> => {
+    try {
+      await supplierAPI.createSupplierCategory({ name: categoryName });
+
+      // Recarregar lista de categorias
+      await loadCategories();
+
+      // Retornar o nome da categoria criada
+      return categoryName;
+    } catch (error) {
+      // Propagar o erro para o modal tratar
+      throw error;
+    }
   };
 
   return (
@@ -158,7 +212,7 @@ const SuppliersPage: React.FC = () => {
           Fornecedores
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Gerencie seus fornecedores por grupo (açougue, hortifruti, mercado, etc.)
+          Gerencie seus fornecedores por categoria
         </Typography>
       </Box>
 
@@ -197,21 +251,37 @@ const SuppliersPage: React.FC = () => {
           {/* Linha 2: Filtros */}
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Grupo</InputLabel>
+              <InputLabel>Categoria</InputLabel>
               <Select
-                value={selectedGroup}
+                value={selectedCategory}
                 onChange={(e) => {
-                  setSelectedGroup(e.target.value as SupplierGroup | 'all');
+                  setSelectedCategory(e.target.value as string | 'all');
                   setCurrentPage(1);
                 }}
-                label="Grupo"
+                label="Categoria"
               >
-                <MenuItem value="all">Todos os Grupos</MenuItem>
-                {Object.entries(SUPPLIER_GROUP_LABELS).map(([value, label]) => (
-                  <MenuItem key={value} value={value}>
-                    {label}
+                <MenuItem value="all">Todas as Categorias</MenuItem>
+                {availableCategories.map((category) => (
+                  <MenuItem key={category} value={category}>
+                    {category}
                   </MenuItem>
                 ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={activeFilter}
+                onChange={(e) => {
+                  setActiveFilter(e.target.value === 'all' ? 'all' : e.target.value === 'true');
+                  setCurrentPage(1);
+                }}
+                label="Status"
+              >
+                <MenuItem value="all">Todos</MenuItem>
+                <MenuItem value="true">Ativos</MenuItem>
+                <MenuItem value="false">Inativos</MenuItem>
               </Select>
             </FormControl>
 
@@ -224,8 +294,8 @@ const SuppliersPage: React.FC = () => {
               >
                 <MenuItem value="name-asc">Nome (A-Z)</MenuItem>
                 <MenuItem value="name-desc">Nome (Z-A)</MenuItem>
-                <MenuItem value="group-asc">Grupo (A-Z)</MenuItem>
-                <MenuItem value="group-desc">Grupo (Z-A)</MenuItem>
+                <MenuItem value="category-asc">Categoria (A-Z)</MenuItem>
+                <MenuItem value="category-desc">Categoria (Z-A)</MenuItem>
               </Select>
             </FormControl>
 
@@ -239,7 +309,8 @@ const SuppliersPage: React.FC = () => {
       {/* Contador de Resultados */}
       <Box sx={{ mb: 2 }}>
         <Typography variant="body2" color="text.secondary">
-          {total} {total === 1 ? 'fornecedor encontrado' : 'fornecedores encontrados'}
+          {paginationData.total}{' '}
+          {paginationData.total === 1 ? 'fornecedor encontrado' : 'fornecedores encontrados'}
         </Typography>
       </Box>
 
@@ -249,7 +320,8 @@ const SuppliersPage: React.FC = () => {
           <TableHead>
             <TableRow>
               <TableCell>Nome</TableCell>
-              <TableCell>Grupo</TableCell>
+              <TableCell>Categoria</TableCell>
+              <TableCell>Status</TableCell>
               <TableCell>Telefone</TableCell>
               <TableCell>Endereço</TableCell>
               <TableCell align="right">Ações</TableCell>
@@ -258,7 +330,7 @@ const SuppliersPage: React.FC = () => {
           <TableBody>
             {suppliers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                   <Typography variant="body2" color="text.secondary">
                     Nenhum fornecedor encontrado
                   </Typography>
@@ -273,10 +345,13 @@ const SuppliersPage: React.FC = () => {
                     </Typography>
                   </TableCell>
                   <TableCell>
+                    <Typography variant="body2">{supplier.category}</Typography>
+                  </TableCell>
+                  <TableCell>
                     <Chip
-                      label={SUPPLIER_GROUP_LABELS[supplier.group]}
+                      label={supplier.active ? 'Ativo' : 'Inativo'}
                       size="small"
-                      color="primary"
+                      color={supplier.active ? 'success' : 'default'}
                       variant="outlined"
                     />
                   </TableCell>
@@ -327,11 +402,11 @@ const SuppliersPage: React.FC = () => {
       </TableContainer>
 
       {/* Paginação */}
-      {totalPages > 1 && (
+      {paginationData.totalPages > 1 && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
           <Pagination
-            count={totalPages}
-            page={currentPage}
+            count={paginationData.totalPages}
+            page={paginationData.currentPage}
             onChange={(_, page) => setCurrentPage(page)}
             color="primary"
           />
@@ -345,6 +420,8 @@ const SuppliersPage: React.FC = () => {
         onSave={handleSaveSupplier}
         supplier={selectedSupplier}
         loading={loading}
+        categories={categories}
+        onCreateCategory={handleCreateCategory}
       />
 
       {/* Modal de Detalhes */}
