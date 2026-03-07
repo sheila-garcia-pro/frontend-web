@@ -16,6 +16,7 @@ export interface Supplier {
   phone: string;
   active: boolean; // Status ativo/inativo
   ingredients?: string[]; // IDs dos ingredientes vinculados (gerenciado localmente)
+  coupons?: string[]; // IDs dos cupons vinculados
   createdAt?: string;
   updatedAt?: string;
   __v?: number; // MongoDB version

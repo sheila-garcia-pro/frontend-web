@@ -28,14 +28,15 @@ import {
   DialogContentText,
   DialogActions,
 } from '@mui/material';
-import { Search, Add, Edit, Delete, Visibility, Refresh } from '@mui/icons-material';
+import { Search, Add, Edit, Delete, Visibility, Refresh, LocalOffer } from '@mui/icons-material';
 import * as supplierAPI from '@/services/api/suppliers';
 
 // Hooks
 import { useSuppliers } from '@/hooks/useSuppliers';
+import { useCoupons } from '@/hooks/useCoupons';
 
 // Components
-import { SupplierModal, SupplierDetailsModal } from '@/components/ui';
+import { SupplierModal, SupplierDetailsModal, SupplierCouponsModal } from '@/components/ui';
 
 // Types
 import { Supplier, CreateSupplierParams, UpdateSupplierParams } from '@/types/suppliers';
@@ -53,6 +54,7 @@ const SuppliersPage: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [couponsModalOpen, setCouponsModalOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [supplierToDelete, setSupplierToDelete] = useState<Supplier | null>(null);
 
@@ -140,6 +142,17 @@ const SuppliersPage: React.FC = () => {
 
   const handleCloseDetails = () => {
     setDetailsModalOpen(false);
+    setSelectedSupplier(null);
+  };
+
+  // Handlers para cupons
+  const handleOpenCouponsModal = (supplier: Supplier) => {
+    setSelectedSupplier(supplier);
+    setCouponsModalOpen(true);
+  };
+
+  const handleCloseCouponsModal = () => {
+    setCouponsModalOpen(false);
     setSelectedSupplier(null);
   };
 
@@ -378,6 +391,15 @@ const SuppliersPage: React.FC = () => {
                           <Visibility fontSize="small" />
                         </IconButton>
                       </Tooltip>
+                      <Tooltip title="Ver cupons">
+                        <IconButton
+                          size="small"
+                          color="secondary"
+                          onClick={() => handleOpenCouponsModal(supplier)}
+                        >
+                          <LocalOffer fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                       <Tooltip title="Editar">
                         <IconButton size="small" onClick={() => handleOpenModal(supplier)}>
                           <Edit fontSize="small" />
@@ -429,6 +451,14 @@ const SuppliersPage: React.FC = () => {
         open={detailsModalOpen}
         onClose={handleCloseDetails}
         supplier={selectedSupplier}
+      />
+
+      {/* Modal de Cupons */}
+      <SupplierCouponsModal
+        open={couponsModalOpen}
+        onClose={handleCloseCouponsModal}
+        supplierId={selectedSupplier?._id || ''}
+        supplierName={selectedSupplier?.name || ''}
       />
 
       {/* Dialog de Confirmação de Exclusão */}

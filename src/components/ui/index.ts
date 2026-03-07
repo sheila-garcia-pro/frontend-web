@@ -32,3 +32,8 @@ export { default as Footer } from './Footer';
 export { SupplierModal } from './SupplierModal';
 export { SupplierDetailsModal } from './SupplierDetailsModal';
 export { IngredientSuppliersModal } from './IngredientSuppliersModal';
+
+// Componentes de Cupons
+export { CouponModal } from './CouponModal';
+export { CouponDetailsModal } from './CouponDetailsModal';
+export { SupplierCouponsModal } from './SupplierCouponsModal';

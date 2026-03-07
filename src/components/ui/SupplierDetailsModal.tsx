@@ -21,11 +21,13 @@ import {
   Kitchen,
   CheckCircle,
   Cancel,
+  LocalOffer,
 } from '@mui/icons-material';
 import { Supplier } from '@/types/suppliers';
 import { Ingredient } from '@/types/ingredients';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
+import { useCoupons } from '@/hooks/useCoupons';
 
 interface SupplierDetailsModalProps {
   open: boolean;
@@ -41,6 +43,9 @@ export const SupplierDetailsModal: React.FC<SupplierDetailsModalProps> = ({
   // Buscar ingredientes vinculados do Redux store
   const allIngredients = useSelector((state: RootState) => state.ingredients.items);
 
+  // Hook de cupons
+  const { getCouponsBySupplier } = useCoupons();
+
   // Filtrar ingredientes vinculados a este fornecedor
   const linkedIngredients = useMemo(() => {
     if (!supplier || !supplier.ingredients) return [];
@@ -48,6 +53,12 @@ export const SupplierDetailsModal: React.FC<SupplierDetailsModalProps> = ({
       supplier.ingredients?.includes(ingredient._id),
     );
   }, [supplier, allIngredients]);
+
+  // Buscar cupons vinculados a este fornecedor
+  const linkedCoupons = useMemo(() => {
+    if (!supplier) return [];
+    return getCouponsBySupplier(supplier._id);
+  }, [supplier, getCouponsBySupplier]);
 
   if (!supplier) return null;
 
@@ -163,6 +174,43 @@ export const SupplierDetailsModal: React.FC<SupplierDetailsModalProps> = ({
                       secondary={
                         <Typography variant="caption" color="text.secondary">
                           {ingredient.category}
+                        </Typography>
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            )}
+          </Box>
+
+          {/* Cupons Disponíveis */}
+          <Divider />
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <LocalOffer fontSize="small" color="action" />
+              <Typography variant="caption" color="text.secondary">
+                Cupons Disponíveis ({linkedCoupons.length})
+              </Typography>
+            </Box>
+            {linkedCoupons.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                Nenhum cupom cadastrado para este fornecedor.
+              </Typography>
+            ) : (
+              <List dense disablePadding>
+                {linkedCoupons.map((coupon) => (
+                  <ListItem
+                    key={coupon._id}
+                    sx={{
+                      px: 0,
+                      py: 0.5,
+                    }}
+                  >
+                    <ListItemText
+                      primary={<Typography variant="body2">• {coupon.name}</Typography>}
+                      secondary={
+                        <Typography variant="caption" color="text.secondary">
+                          {coupon.description}
                         </Typography>
                       }
                     />

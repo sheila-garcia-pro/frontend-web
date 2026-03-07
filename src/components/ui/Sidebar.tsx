@@ -24,6 +24,7 @@ import {
   Home as HomeIcon,
   MenuBook as MenuBookIcon,
   Store as StoreIcon,
+  LocalOffer as LocalOfferIcon,
 } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@store/index';
@@ -124,6 +125,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { key: 'recipes', icon: RestaurantIcon, path: '/recipes', label: t('menu.recipes') },
     { key: 'menu', icon: MenuBookIcon, path: '/menu', label: t('menu.menu') },
     { key: 'suppliers', icon: StoreIcon, path: '/suppliers', label: t('menu.suppliers') },
+    { key: 'coupons', icon: LocalOfferIcon, path: '/coupons', label: t('menu.coupons') },
   ];
 
   const authenticatedItems = [
