@@ -8,12 +8,14 @@ import uiReducer from './slices/uiSlice';
 import dashboardReducer from './slices/dashboardSlice';
 import ingredientsReducer from './slices/ingredientsSlice';
 import categoriesReducer from './slices/categoriesSlice';
+import couponsReducer from './slices/couponsSlice';
 
 // Importa sagas
 import authSagas from './sagas/authSagas';
 import uiSagas from './sagas/uiSagas';
 import ingredientsSagas from './sagas/ingredientsSagas';
 import categoriesSagas from './sagas/categoriesSagas';
+import couponsSagas from './sagas/couponsSagas';
 
 // Cria middleware do Saga
 const sagaMiddleware = createSagaMiddleware();
@@ -25,6 +27,7 @@ const rootReducer = combineReducers({
   dashboard: dashboardReducer,
   ingredients: ingredientsReducer,
   categories: categoriesReducer,
+  coupons: couponsReducer,
   // Adicione outros reducers aqui
 });
 
@@ -50,6 +53,7 @@ function* rootSaga() {
     ...uiSagas,
     ...ingredientsSagas,
     ...categoriesSagas,
+    ...couponsSagas,
     // Adicione outras sagas aqui
   ]);
 }

@@ -16,6 +16,7 @@
     "ingredients": "Ingredients",
     "menu": "Menus",
     "suppliers": "Suppliers",
+    "coupons": "Coupons",
     "profile": "Profile",
     "close": "Close menu"
   },
@@ -24,6 +25,7 @@
     "recipes": "Recipes",
     "ingredients": "Ingredients",
     "suppliers": "Suppliers",
+    "coupons": "Coupons",
     "profile": "Profile",
     "logout": "Logout"
   },

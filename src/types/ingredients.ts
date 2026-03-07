@@ -6,6 +6,7 @@ export interface Ingredient {
   image: string;
   isEdit?: boolean;
   correctionFactor?: number; // Fator de correção para perdas e desperdício
+  suppliers?: string[]; // IDs dos fornecedores vinculados
   price?: {
     price: number;
     quantity: number;
@@ -20,6 +21,7 @@ export interface CreateIngredientParams {
   category: string;
   image: string;
   correctionFactor?: number; // Fator de correção para perdas e desperdício
+  suppliers?: string[]; // IDs dos fornecedores vinculados
   price?: {
     price: string | number;
     quantity: string | number;

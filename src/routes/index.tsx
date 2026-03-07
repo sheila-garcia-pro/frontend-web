@@ -25,6 +25,7 @@ import RecipesPage from '@pages/Recipes';
 import RecipeCreatePage from '@pages/Recipes/Create/index';
 import RecipeDetailsPage from '@pages/Recipes/RecipeDetails';
 import SuppliersPage from '@pages/Suppliers';
+import CouponsPage from '@pages/Coupons';
 import ProfilePage from '@pages/Profile';
 import MenuPage from '@pages/Menu';
 import MenuDetailsPage from '@pages/Menu/MenuDetails';
@@ -169,12 +170,15 @@ const AppRoutesContent: React.FC = () => {
           }
         />
 
-        {/* Fornecedores - com permissões específicas */}
+        {/* Fornecedores - acesso básico (será protegido com permissões quando conectar à API) */}
+        <Route path="suppliers" element={<SuppliersPage />} />
+
+        {/* Cupons - protegido por permissão */}
         <Route
-          path="suppliers"
+          path="coupons"
           element={
-            <PermissionRoute required={['get_suppliers']}>
-              <SuppliersPage />
+            <PermissionRoute required={['get_coupons']} any={true}>
+              <CouponsPage />
             </PermissionRoute>
           }
         />
