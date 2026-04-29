@@ -5,6 +5,7 @@ import {
   FUNCTIONAL_COLORS,
   TEXT_COLORS,
   withOpacity,
+  AUTH_THEME_COLORS,
 } from './colors';
 
 // Tema personalizado baseado na nova identidade visual
@@ -12,6 +13,7 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => {
   const isLight = mode === 'light';
   const themeColors = isLight ? LIGHT_THEME_COLORS : DARK_THEME_COLORS;
   const textColors = isLight ? TEXT_COLORS.light : TEXT_COLORS.dark;
+  const authColors = isLight ? AUTH_THEME_COLORS.light : AUTH_THEME_COLORS.dark;
 
   return {
     palette: {
@@ -34,6 +36,12 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => {
             background: {
               default: themeColors.background.default,
               paper: themeColors.background.paper,
+              accent: themeColors.background.accent,
+              auth: authColors.background,
+              authPanel: authColors.panel,
+              authOverlay: authColors.heroOverlay,
+              authOverlayStrong: authColors.heroOverlayStrong,
+              authTint: authColors.heroTint,
             },
             text: {
               primary: textColors.primary,
@@ -83,6 +91,12 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => {
             background: {
               default: themeColors.background.default,
               paper: themeColors.background.paper,
+              accent: themeColors.background.accent,
+              auth: authColors.background,
+              authPanel: authColors.panel,
+              authOverlay: authColors.heroOverlay,
+              authOverlayStrong: authColors.heroOverlayStrong,
+              authTint: authColors.heroTint,
             },
             text: {
               primary: textColors.primary,
@@ -431,6 +445,11 @@ declare module '@mui/material/styles' {
 
   interface TypeBackground {
     accent?: string;
+    auth?: string;
+    authPanel?: string;
+    authOverlay?: string;
+    authOverlayStrong?: string;
+    authTint?: string;
   }
 
   interface TypeText {
