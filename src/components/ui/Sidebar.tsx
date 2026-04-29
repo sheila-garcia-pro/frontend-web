@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Box,
@@ -14,7 +14,7 @@ import {
   Typography,
   Tooltip,
 } from '@mui/material';
-import { styled, useTheme, Theme } from '@mui/material/styles';
+import { styled, useTheme, Theme, alpha } from '@mui/material/styles';
 import {
   Person as PersonIcon,
   ChevronLeft as ChevronLeftIcon,
@@ -25,6 +25,8 @@ import {
   MenuBook as MenuBookIcon,
   Store as StoreIcon,
   LocalOffer as LocalOfferIcon,
+  Instagram as InstagramIcon,
+  WhatsApp as WhatsAppIcon,
 } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@store/index';
@@ -49,7 +51,7 @@ const DrawerHeader = styled('div')(({ theme }: { theme: Theme }) => ({
 }));
 
 const StyledListItemButton = styled(ListItemButton)(({ theme }: { theme: Theme }) => ({
-  borderRadius: 0,
+  borderRadius: '10px',
   margin: theme.spacing(0.25, 1),
   paddingTop: theme.spacing(1),
   paddingBottom: theme.spacing(1),
@@ -57,24 +59,32 @@ const StyledListItemButton = styled(ListItemButton)(({ theme }: { theme: Theme }
   paddingRight: theme.spacing(1.5),
   minHeight: '48px',
   justifyContent: 'flex-start',
+  color: alpha(theme.palette.common.white, 0.82),
+  transition: 'background-color 0.2s ease-out, color 0.2s ease-out',
   '&:hover': {
-    backgroundColor:
-      theme.palette.mode === 'dark'
-        ? theme.palette.primary.dark + '20'
-        : theme.palette.primary.light + '20',
+    backgroundColor: alpha(theme.palette.common.white, 0.06),
   },
   '&.Mui-selected': {
-    backgroundColor: theme.palette.primary.main + '15',
+    backgroundColor: alpha(theme.palette.primary.light, 0.16),
+    color: theme.palette.primary.light,
     '&:hover': {
-      backgroundColor: theme.palette.primary.main + '25',
+      backgroundColor: alpha(theme.palette.primary.light, 0.16),
+    },
+    '& .MuiListItemText-primary': {
+      fontWeight: 600,
+    },
+    '& .MuiSvgIcon-root': {
+      color: theme.palette.primary.light,
+      opacity: 1,
     },
   },
 }));
 
 const StyledListItemIcon = styled(ListItemIcon)(({ theme }: { theme: Theme }) => ({
   minWidth: '40px',
-  color: theme.palette.text.secondary,
+  color: 'inherit',
   justifyContent: 'center',
+  opacity: 0.8,
   '& .MuiSvgIcon-root': {
     fontSize: '20px',
   },
@@ -84,7 +94,8 @@ const StyledListItemText = styled(ListItemText)(({ theme }: { theme: Theme }) =>
   '& .MuiListItemText-primary': {
     fontSize: '14px',
     fontWeight: 500,
-    color: theme.palette.text.primary,
+    color: 'inherit',
+    opacity: 0.86,
   },
 }));
 
@@ -97,12 +108,38 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const { t } = useTranslation();
 
   // Hook de responsividade para otimizações adicionais
-  const { isMobile: deviceIsMobile, isTablet, isDesktop } = useDevice();
+  const { isTablet, isDesktop } = useDevice();
+
+  const sidebarBackground = alpha(theme.palette.primary.dark, 0.98);
+  const sidebarBorder = alpha(theme.palette.common.white, 0.1);
+  const sidebarText = alpha(theme.palette.common.white, 0.86);
+  const sidebarTextMuted = alpha(theme.palette.common.white, 0.7);
+
+  const socialLinks = [
+    {
+      label: 'Instagram',
+      href: 'https://www.instagram.com/chefsheilagarcia',
+      icon: <InstagramIcon sx={{ fontSize: 16 }} />,
+    },
+    {
+      label: 'WhatsApp',
+      href: 'https://wa.me/5511956070390',
+      icon: <WhatsAppIcon sx={{ fontSize: 16 }} />,
+    },
+  ];
+
+  const isActiveRoute = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname.startsWith(path);
+  };
 
   const handleNavigation = (path: string) => {
     navigate(path);
@@ -133,31 +170,27 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const renderMenuItem = (item: any) => {
+    const isActive = isActiveRoute(item.path);
     const menuItem = (
       <StyledListItemButton
+        selected={isActive}
+        aria-current={isActive ? 'page' : undefined}
         onClick={() => handleNavigation(item.path)}
         sx={{
           justifyContent: collapsed ? 'center' : 'flex-start',
           px: collapsed ? 1 : 1.5,
           py: { xs: 1.5, sm: 1.25, md: 1 },
           minHeight: { xs: 56, sm: 52, md: 48 },
-          borderRadius: 2,
           mx: 0.5,
           my: 0.25,
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          '&:hover': {
-            transform: 'translateX(4px)',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-          },
-          '&:active': {
-            transform: 'translateX(2px) scale(0.98)',
-          },
         }}
       >
         <StyledListItemIcon
           sx={{
             minWidth: collapsed ? '24px' : '40px',
             transition: 'all 0.3s ease-in-out',
+            color: isActive ? theme.palette.primary.light : sidebarTextMuted,
+            opacity: isActive ? 1 : 0.85,
             '& .MuiSvgIcon-root': {
               fontSize: { xs: 22, sm: 21, md: 20 },
             },
@@ -171,7 +204,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             sx={{
               '& .MuiListItemText-primary': {
                 fontSize: { xs: '1rem', sm: '0.95rem', md: '0.875rem' },
-                fontWeight: 500,
+                fontWeight: isActive ? 600 : 500,
+                color: isActive ? theme.palette.primary.light : sidebarText,
+                opacity: isActive ? 1 : 0.86,
                 transition: 'opacity 0.3s ease-in-out',
               },
             }}
@@ -191,8 +226,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           PopperProps={{
             sx: {
               '& .MuiTooltip-tooltip': {
-                bgcolor: theme.palette.mode === 'light' ? '#3A4534' : '#E8EDAA',
-                color: theme.palette.mode === 'light' ? '#F5F3E7' : '#23291C',
+                bgcolor: alpha(theme.palette.common.black, 0.9),
+                color: alpha(theme.palette.common.white, 0.95),
                 fontSize: '0.875rem',
                 borderRadius: 2,
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
@@ -217,8 +252,13 @@ const Sidebar: React.FC<SidebarProps> = ({
           width: drawerWidth,
           boxSizing: 'border-box',
           borderRadius: 0,
-          backgroundColor: theme.palette.background.paper,
-          borderRight: `1px solid ${theme.palette.divider}`,
+          backgroundColor: sidebarBackground,
+          color: sidebarText,
+          borderRight: `1px solid ${sidebarBorder}`,
+          boxShadow: 'none',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
           transition: theme.transitions.create(['width', 'transform'], {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.enteringScreen,
@@ -229,10 +269,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           // Backdrop blur para mobile/tablet
           ...((isMobile || isTablet) && {
             backdropFilter: 'blur(8px)',
-            bgcolor:
-              theme.palette.mode === 'light'
-                ? 'rgba(255, 255, 255, 0.95)'
-                : 'rgba(35, 41, 28, 0.95)',
+            bgcolor: alpha(theme.palette.primary.dark, 0.96),
           }),
         },
       }}
@@ -244,13 +281,16 @@ const Sidebar: React.FC<SidebarProps> = ({
       <DrawerHeader>
         {!collapsed && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Logo size="small" />
+            <Logo size="small" variant="white" />
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: sidebarText }}>
+              Sheila Garcia
+            </Typography>
           </Box>
         )}
 
         {collapsed && (
           <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-            <Logo size="tiny" />
+            <Logo size="tiny" variant="white" />
           </Box>
         )}
 
@@ -261,14 +301,14 @@ const Sidebar: React.FC<SidebarProps> = ({
               onClick={handleCollapsedToggle}
               size={isMobile ? 'medium' : 'small'}
               sx={{
-                color: theme.palette.text.secondary,
+                color: sidebarTextMuted,
                 minWidth: { xs: 44, sm: 40 },
                 minHeight: { xs: 44, sm: 40 },
                 borderRadius: 2,
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                transition: 'all 0.2s ease-out',
                 '&:hover': {
-                  backgroundColor: theme.palette.action.hover,
-                  transform: 'scale(1.1)',
+                  backgroundColor: alpha(theme.palette.common.white, 0.06),
+                  transform: 'scale(1.05)',
                   color: theme.palette.primary.main,
                 },
                 '&:active': {
@@ -282,9 +322,25 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </DrawerHeader>
 
-      <Divider sx={{ mx: collapsed ? 0.5 : 1 }} />
+      <Divider
+        sx={{
+          mx: collapsed ? 0.5 : 1,
+          borderColor: alpha(theme.palette.common.white, 0.1),
+        }}
+      />
 
-      <List sx={{ px: 0, py: 1 }}>
+      <List
+        sx={{
+          px: 0,
+          py: 0.5,
+          flex: 1,
+          overflowY: 'auto',
+          scrollbarWidth: 'none',
+          '&::-webkit-scrollbar': {
+            display: 'none',
+          },
+        }}
+      >
         {menuItems.map((item) => (
           <ListItem key={item.key} disablePadding>
             {renderMenuItem(item)}
@@ -293,7 +349,13 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         {isAuthenticated && (
           <>
-            <Divider sx={{ mx: collapsed ? 0.5 : 2, my: 1 }} />
+            <Divider
+              sx={{
+                mx: collapsed ? 0.5 : 2,
+                my: 1,
+                borderColor: alpha(theme.palette.common.white, 0.1),
+              }}
+            />
             {authenticatedItems.map((item) => (
               <ListItem key={item.key} disablePadding>
                 {renderMenuItem(item)}
@@ -302,6 +364,68 @@ const Sidebar: React.FC<SidebarProps> = ({
           </>
         )}
       </List>
+
+      <Box
+        sx={{
+          px: collapsed ? 1 : 2,
+          pb: collapsed ? 1.5 : 2,
+        }}
+      >
+        <Divider
+          sx={{
+            mb: 1,
+            borderColor: alpha(theme.palette.common.white, 0.1),
+          }}
+        />
+        {!collapsed && (
+          <Typography
+            variant="caption"
+            sx={{
+              color: sidebarTextMuted,
+              mb: 1,
+              display: 'block',
+            }}
+          >
+            Siga a Sheila Garcia
+          </Typography>
+        )}
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            justifyContent: collapsed ? 'center' : 'flex-start',
+          }}
+        >
+          {socialLinks.map((link) => (
+            <Tooltip key={link.label} title={link.label} placement="top" arrow>
+              <IconButton
+                component="a"
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                size="small"
+                sx={{
+                  borderRadius: 2,
+                  p: 0.75,
+                  minWidth: 32,
+                  minHeight: 32,
+                  color: sidebarTextMuted,
+                  border: `1px solid ${alpha(theme.palette.common.white, 0.12)}`,
+                  backgroundColor: alpha(theme.palette.common.white, 0.02),
+                  transition: 'all 0.2s ease-out',
+                  '&:hover': {
+                    color: theme.palette.primary.light,
+                    borderColor: alpha(theme.palette.primary.light, 0.4),
+                    backgroundColor: alpha(theme.palette.primary.light, 0.12),
+                  },
+                }}
+              >
+                {link.icon}
+              </IconButton>
+            </Tooltip>
+          ))}
+        </Box>
+      </Box>
     </Drawer>
   );
 };
