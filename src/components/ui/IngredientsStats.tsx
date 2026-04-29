@@ -32,17 +32,19 @@ export const IngredientsStats: React.FC<IngredientsStatsProps> = ({
     <Box
       sx={{
         display: 'flex',
-        alignItems: 'center',
+        flexDirection: { xs: 'column', sm: 'row' },
+        alignItems: { sm: 'center' },
         justifyContent: 'space-between',
+        gap: 1.5,
         mb: 2,
-        p: 2,
+        p: { xs: 1.5, sm: 2 },
         bgcolor: 'background.paper',
-        borderRadius: 1,
-        border: 1,
+        borderRadius: 2,
+        border: '1px solid',
         borderColor: 'divider',
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
         <Typography variant="body2" color="text.secondary">
           {hasFilters ? (
             <>
@@ -64,6 +66,14 @@ export const IngredientsStats: React.FC<IngredientsStatsProps> = ({
                 size="small"
                 variant="outlined"
                 color="primary"
+              />
+            )}
+            {searchTerm && (
+              <Chip
+                label={`Busca: ${searchTerm}`}
+                size="small"
+                variant="outlined"
+                color="default"
               />
             )}
           </Box>

@@ -14,7 +14,11 @@ import {
   CircularProgress,
   Typography,
   Box,
+  IconButton,
+  Stack,
 } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
+import { Close as CloseIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   updateIngredientRequest,
@@ -45,6 +49,7 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
+  const theme = useTheme();
   const { items: categories } = useSelector((state: RootState) => state.categories);
   const { loading: ingredientLoading } = useSelector((state: RootState) => state.ingredients);
   const [formData, setFormData] = useState<Partial<CreateIngredientParams>>({
@@ -63,6 +68,13 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [unitMeasures, setUnitMeasures] = useState<UnitMeasure[]>([]);
   const [loadingUnitMeasures, setLoadingUnitMeasures] = useState(false);
+  const sectionSx = {
+    p: { xs: 2, sm: 2.5 },
+    borderRadius: 2,
+    border: '1px solid',
+    borderColor: 'divider',
+    bgcolor: 'background.paper',
+  } as const;
   // Resetar formulário quando o modal fecha ou o ingrediente muda
   useEffect(() => {
     setFormData({
@@ -227,76 +239,94 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{t('ingredients.actions.edit')}</DialogTitle>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{ sx: { borderRadius: 2 } }}
+    >
+      <DialogTitle sx={{ pb: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              {t('ingredients.actions.edit')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Atualize as informacoes do ingrediente selecionado.
+            </Typography>
+          </Box>
+          <IconButton onClick={onClose} aria-label="fechar">
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
       <DialogContent>
-        <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField
-            fullWidth
-            label={t('ingredients.form.name')}
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            error={!!errors.name}
-            helperText={errors.name}
-            required
-          />
+        <Stack spacing={2.5} sx={{ py: 2 }}>
+          <Box sx={sectionSx}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+              Informacoes basicas
+            </Typography>
+            <Stack spacing={2}>
+              <TextField
+                fullWidth
+                label={t('ingredients.form.name')}
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                error={!!errors.name}
+                helperText={errors.name}
+                required
+              />
 
-          <FormControl fullWidth required error={!!errors.category}>
-            <InputLabel id="category-label">{t('ingredients.form.category')}</InputLabel>
-            <Select
-              labelId="category-label"
-              label={t('ingredients.form.category')}
-              name="category"
-              value={formData.category}
-              onChange={handleCategoryChange}
-              disabled={categories.length === 0}
-            >
-              {categories.map((cat) => (
-                <MenuItem key={cat._id} value={cat.name}>
-                  {cat.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              <FormControl fullWidth required error={!!errors.category}>
+                <InputLabel id="category-label">{t('ingredients.form.category')}</InputLabel>
+                <Select
+                  labelId="category-label"
+                  label={t('ingredients.form.category')}
+                  name="category"
+                  value={formData.category}
+                  onChange={handleCategoryChange}
+                  disabled={categories.length === 0}
+                >
+                  {categories.map((cat) => (
+                    <MenuItem key={cat._id} value={cat.name}>
+                      {cat.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-          <TextField
-            fullWidth
-            label="Fator de Correção"
-            name="correctionFactor"
-            type="number"
-            value={formData.correctionFactor || 1.0}
-            onChange={handleChange}
-            InputProps={{
-              inputProps: { min: 0.1, max: 3.0, step: 0.01 },
-            }}
-            helperText="Fator para ajuste de perdas e desperdício (padrão: 1.0)"
-            sx={{
-              '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
-                {
-                  WebkitAppearance: 'none',
-                  margin: 0,
-                },
-              '& input[type="number"]': {
-                MozAppearance: 'textfield',
-              },
-            }}
-          />
+              <TextField
+                fullWidth
+                label="Fator de Correcao"
+                name="correctionFactor"
+                type="number"
+                value={formData.correctionFactor || 1.0}
+                onChange={handleChange}
+                InputProps={{
+                  inputProps: { min: 0.1, max: 3.0, step: 0.01 },
+                }}
+                helperText="Fator para ajuste de perdas e desperdicio (padrao: 1.0)"
+                sx={{
+                  '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                    {
+                      WebkitAppearance: 'none',
+                      margin: 0,
+                    },
+                  '& input[type="number"]': {
+                    MozAppearance: 'textfield',
+                  },
+                }}
+              />
+            </Stack>
+          </Box>
 
-          <Box
-            sx={{
-              border: '1px solid',
-              borderColor: 'divider',
-              p: 2,
-              borderRadius: 1,
-              bgcolor: 'background.paper',
-            }}
-          >
-            {' '}
-            <Typography variant="subtitle1" gutterBottom>
+          <Box sx={sectionSx}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
               {t('ingredients.form.priceInfo')}
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <Stack spacing={2}>
               <TextField
                 fullWidth
                 label={t('ingredients.form.price')}
@@ -342,7 +372,7 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
                     MozAppearance: 'textfield',
                   },
                 }}
-              />{' '}
+              />
               <TextField
                 fullWidth
                 label={t('ingredients.form.unitMeasure')}
@@ -367,50 +397,53 @@ const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
                   ))
                 )}
               </TextField>
-            </Box>
-            {/* Campo calculado para mostrar preço por porção */}
-            {formData.price?.price && formData.price?.quantity && (
-              <Box
-                sx={{
-                  mt: 2,
-                  p: 2,
-                  bgcolor: 'secondary.50',
-                  borderRadius: 1,
-                  border: '1px solid',
-                  borderColor: 'secondary.200',
-                }}
-              >
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Preço por porção (100g):
-                </Typography>
-                <Typography variant="h6" color="secondary.main" sx={{ fontWeight: 600 }}>
-                  R${' '}
-                  {calculatePricePerPortion(
-                    parseFloat(formData.price.price.toString()),
-                    parseFloat(formData.price.quantity.toString()),
-                    formData.price.unitMeasure,
-                  ).toFixed(2)}
-                </Typography>
-              </Box>
-            )}
+              {formData.price?.price && formData.price?.quantity && (
+                <Box
+                  sx={{
+                    mt: 1,
+                    p: 2,
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: alpha(theme.palette.primary.main, 0.2),
+                    bgcolor: alpha(theme.palette.primary.main, 0.08),
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Preco por porcao (100g):
+                  </Typography>
+                  <Typography variant="h6" color="primary.main" sx={{ fontWeight: 600 }}>
+                    R${' '}
+                    {calculatePricePerPortion(
+                      parseFloat(formData.price.price.toString()),
+                      parseFloat(formData.price.quantity.toString()),
+                      formData.price.unitMeasure,
+                    ).toFixed(2)}
+                  </Typography>
+                </Box>
+              )}
+            </Stack>
           </Box>
 
-          {/* Campo de upload de imagem */}
-          <ImageUploadComponent
-            value={formData.image || null}
-            onChange={handleImageChange}
-            disabled={ingredientLoading}
-            label="Imagem do Ingrediente"
-            error={errors.image}
-            helperText="Faça upload de uma imagem para identificar o ingrediente (opcional)"
-            type="ingredients"
-            placeholder="Clique para selecionar uma imagem do ingrediente"
-            ingredientName={formData.name?.trim() || ingredient.name || 'Ingrediente'}
-          />
-        </Box>
+          <Box sx={sectionSx}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+              Imagem
+            </Typography>
+            <ImageUploadComponent
+              value={formData.image || null}
+              onChange={handleImageChange}
+              disabled={ingredientLoading}
+              label="Imagem do Ingrediente"
+              error={errors.image}
+              helperText="Faça upload de uma imagem para identificar o ingrediente (opcional)"
+              type="ingredients"
+              placeholder="Clique para selecionar uma imagem do ingrediente"
+              ingredientName={formData.name?.trim() || ingredient.name || 'Ingrediente'}
+            />
+          </Box>
+        </Stack>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} color="inherit">
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={onClose} color="inherit" variant="outlined">
           {t('common.cancel')}
         </Button>
         <Button onClick={handleSubmit} variant="contained" disabled={ingredientLoading}>

@@ -12,7 +12,6 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   IconButton,
-  Divider,
   Chip,
   FormControl,
   InputLabel,
@@ -20,8 +19,11 @@ import {
   MenuItem,
   Alert,
   CircularProgress,
+  Stack,
 } from '@mui/material';
 import { Delete as DeleteIcon, Add as AddIcon, Store as StoreIcon } from '@mui/icons-material';
+import { alpha, useTheme } from '@mui/material/styles';
+import { Close as CloseIcon } from '@mui/icons-material';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { Supplier } from '@/types/suppliers';
 
@@ -38,6 +40,7 @@ export const IngredientSuppliersModal: React.FC<IngredientSuppliersModalProps> =
   ingredientId,
   ingredientName,
 }) => {
+  const theme = useTheme();
   const {
     suppliers,
     loading,
@@ -95,21 +98,46 @@ export const IngredientSuppliersModal: React.FC<IngredientSuppliersModalProps> =
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <StoreIcon />
-          Fornecedores de {ingredientName}
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{ sx: { borderRadius: 2 } }}
+    >
+      <DialogTitle sx={{ pb: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <StoreIcon />
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                Fornecedores
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {ingredientName}
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton onClick={handleClose} aria-label="fechar">
+            <CloseIcon />
+          </IconButton>
         </Box>
       </DialogTitle>
       <DialogContent>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-          {/* Adicionar novo fornecedor */}
-          <Box>
-            <Typography variant="subtitle2" gutterBottom>
-              Adicionar Fornecedor
+        <Stack spacing={2.5} sx={{ mt: 1 }}>
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+            }}
+          >
+            <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+              Adicionar fornecedor
             </Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
               <FormControl fullWidth size="small">
                 <InputLabel>Selecione um fornecedor</InputLabel>
                 <Select
@@ -130,43 +158,49 @@ export const IngredientSuppliersModal: React.FC<IngredientSuppliersModalProps> =
                 startIcon={loading ? <CircularProgress size={16} /> : <AddIcon />}
                 onClick={handleAddSupplier}
                 disabled={!selectedSupplierId || loading}
-                sx={{ minWidth: 100 }}
+                sx={{ minWidth: 120, borderRadius: 2 }}
               >
                 Adicionar
               </Button>
-            </Box>
+            </Stack>
             {availableSuppliers.length === 0 && (
               <Alert severity="info" sx={{ mt: 1 }}>
-                Todos os fornecedores disponíveis já estão vinculados.
+                Todos os fornecedores disponiveis ja estao vinculados.
               </Alert>
             )}
           </Box>
 
-          <Divider />
-
-          {/* Lista de fornecedores vinculados */}
-          <Box>
-            <Typography variant="subtitle2" gutterBottom>
-              Fornecedores Vinculados ({linkedSuppliers.length})
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+            }}
+          >
+            <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+              Fornecedores vinculados ({linkedSuppliers.length})
             </Typography>
             {linkedSuppliers.length === 0 ? (
               <Alert severity="warning">Nenhum fornecedor vinculado a este ingrediente.</Alert>
             ) : (
-              <List dense>
+              <List dense sx={{ mt: 1 }}>
                 {linkedSuppliers.map((supplier) => (
                   <ListItem
                     key={supplier._id}
                     sx={{
                       border: '1px solid',
                       borderColor: 'divider',
-                      borderRadius: 1,
+                      borderRadius: 1.5,
                       mb: 1,
+                      bgcolor: alpha(theme.palette.primary.main, 0.03),
                     }}
                   >
                     <ListItemText
                       primary={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography variant="body2" fontWeight={500}>
+                          <Typography variant="body2" fontWeight={600}>
                             {supplier.name}
                           </Typography>
                           <Chip
@@ -205,10 +239,12 @@ export const IngredientSuppliersModal: React.FC<IngredientSuppliersModalProps> =
               </List>
             )}
           </Box>
-        </Box>
+        </Stack>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose}>Fechar</Button>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={handleClose} variant="outlined" color="inherit">
+          Fechar
+        </Button>
       </DialogActions>
     </Dialog>
   );
