@@ -25,6 +25,7 @@ import {
   MenuBook as MenuBookIcon,
   Store as StoreIcon,
   LocalOffer as LocalOfferIcon,
+  CreditCard as CreditCardIcon,
   Instagram as InstagramIcon,
   WhatsApp as WhatsAppIcon,
 } from '@mui/icons-material';
@@ -161,6 +162,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { key: 'ingredients', icon: KitchenIcon, path: '/ingredients', label: t('menu.ingredients') },
     { key: 'recipes', icon: RestaurantIcon, path: '/recipes', label: t('menu.recipes') },
     { key: 'menu', icon: MenuBookIcon, path: '/menu', label: t('menu.menu') },
+    { key: 'plans', icon: CreditCardIcon, path: '/planos', label: t('menu.plans') },
     { key: 'suppliers', icon: StoreIcon, path: '/suppliers', label: t('menu.suppliers') },
     { key: 'coupons', icon: LocalOfferIcon, path: '/coupons', label: t('menu.coupons') },
   ];
