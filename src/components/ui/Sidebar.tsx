@@ -29,6 +29,7 @@ import {
   SupportAgent as SupportAgentIcon,
   Instagram as InstagramIcon,
   WhatsApp as WhatsAppIcon,
+  Public as PublicIcon,
 } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@store/index';
@@ -162,6 +163,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     { key: 'home', icon: HomeIcon, path: '/', label: t('menu.home') },
     { key: 'ingredients', icon: KitchenIcon, path: '/ingredients', label: t('menu.ingredients') },
     { key: 'recipes', icon: RestaurantIcon, path: '/recipes', label: t('menu.recipes') },
+    {
+      key: 'public-recipes',
+      icon: PublicIcon,
+      path: '/receitas-publicas',
+      label: t('menu.publicRecipes'),
+    },
     { key: 'menu', icon: MenuBookIcon, path: '/menu', label: t('menu.menu') },
     { key: 'plans', icon: CreditCardIcon, path: '/planos', label: t('menu.plans') },
     { key: 'suppliers', icon: StoreIcon, path: '/suppliers', label: t('menu.suppliers') },
