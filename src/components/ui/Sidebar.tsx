@@ -26,6 +26,7 @@ import {
   Store as StoreIcon,
   LocalOffer as LocalOfferIcon,
   CreditCard as CreditCardIcon,
+  SupportAgent as SupportAgentIcon,
   Instagram as InstagramIcon,
   WhatsApp as WhatsAppIcon,
 } from '@mui/icons-material';
@@ -165,6 +166,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { key: 'plans', icon: CreditCardIcon, path: '/planos', label: t('menu.plans') },
     { key: 'suppliers', icon: StoreIcon, path: '/suppliers', label: t('menu.suppliers') },
     { key: 'coupons', icon: LocalOfferIcon, path: '/coupons', label: t('menu.coupons') },
+    { key: 'support', icon: SupportAgentIcon, path: '/suporte', label: t('menu.support') },
   ];
 
   const authenticatedItems = [

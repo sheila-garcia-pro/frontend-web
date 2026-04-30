@@ -30,6 +30,7 @@ import ProfilePage from '@pages/Profile';
 import MenuPage from '@pages/Menu';
 import MenuDetailsPage from '@pages/Menu/MenuDetails';
 import PlansPage from '@pages/Plans';
+import SupportPage from '@pages/Support';
 
 // Componente para rotas de autenticação - acessíveis quando não autenticado
 const AuthRoute: React.FC<{ element: React.ReactElement }> = ({ element }) => {
@@ -122,6 +123,9 @@ const AppRoutesContent: React.FC = () => {
 
         {/* Planos - acesso básico */}
         <Route path="planos" element={<PlansPage />} />
+
+        {/* Suporte - acesso básico */}
+        <Route path="suporte" element={<SupportPage />} />
 
         <Route
           path="ingredients"
