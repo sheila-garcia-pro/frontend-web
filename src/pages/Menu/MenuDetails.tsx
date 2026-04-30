@@ -194,17 +194,38 @@ const MenuDetailsPage: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3 } }}>
       {/* Cabeçalho */}
       <Box
-        sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}
+        sx={{
+          mb: { xs: 3, sm: 4 },
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: { xs: 'stretch', md: 'center' },
+          flexDirection: { xs: 'column', md: 'row' },
+          gap: { xs: 2, md: 3 },
+        }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton onClick={handleBack} color="primary">
+          <IconButton
+            onClick={handleBack}
+            sx={{
+              bgcolor: 'background.paper',
+              border: '1px solid',
+              borderColor: 'divider',
+              boxShadow: 0,
+              '&:hover': { bgcolor: 'action.hover' },
+            }}
+          >
             <ArrowBack />
           </IconButton>
           <Box>
-            <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 500 }}>
+            <Typography
+              variant="h4"
+              component="h1"
+              gutterBottom
+              sx={{ fontWeight: 600, mb: 0.5 }}
+            >
               {menu.name}
             </Typography>
             <Typography variant="body1" color="text.secondary">
@@ -213,12 +234,12 @@ const MenuDetailsPage: React.FC = () => {
           </Box>
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
           <Button
-            variant="outlined"
+            variant="contained"
             startIcon={<Edit />}
             onClick={handleEdit}
-            sx={{ borderRadius: 3 }}
+            sx={{ borderRadius: 2, px: 2.5, textTransform: 'none', fontWeight: 600 }}
           >
             Editar
           </Button>
@@ -227,7 +248,7 @@ const MenuDetailsPage: React.FC = () => {
             color="error"
             startIcon={<Delete />}
             onClick={handleDelete}
-            sx={{ borderRadius: 3 }}
+            sx={{ borderRadius: 2, px: 2.5, textTransform: 'none', fontWeight: 600 }}
           >
             Excluir
           </Button>
@@ -237,21 +258,31 @@ const MenuDetailsPage: React.FC = () => {
       <Grid container spacing={3}>
         {/* Coluna principal - Lista de itens */}
         <Grid size={{ xs: 12, lg: 8 }}>
-          <Card>
-            <CardContent>
+          <Card
+            sx={{
+              borderRadius: { xs: 2, sm: 3 },
+              boxShadow: { xs: 1, sm: 2 },
+              border: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Box
                 sx={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  mb: 3,
+                  mb: { xs: 2, sm: 3 },
+                  flexWrap: 'wrap',
+                  gap: 1,
                 }}
               >
-                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Restaurant />
-                  Itens
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    Itens
+                  </Typography>
                   <Chip label={filteredItems.length} size="small" color="primary" />
-                </Typography>
+                </Box>
               </Box>
 
               {/* Busca */}
@@ -259,19 +290,20 @@ const MenuDetailsPage: React.FC = () => {
                 <TextField
                   fullWidth
                   size="small"
-                  placeholder="Digite aqui o nome da receita..."
+                  placeholder="Digite aqui o nome da receita"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <Search />
+                        <Search fontSize="small" />
                       </InputAdornment>
                     ),
                   }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      borderRadius: 3,
+                      borderRadius: 2,
+                      bgcolor: 'background.default',
                     },
                   }}
                 />
@@ -279,8 +311,17 @@ const MenuDetailsPage: React.FC = () => {
 
               {/* Lista de itens */}
               {filteredItems.length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <Restaurant sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                <Box
+                  sx={{
+                    textAlign: 'center',
+                    py: 4,
+                    bgcolor: 'background.default',
+                    borderRadius: 2,
+                    border: '1px dashed',
+                    borderColor: 'divider',
+                  }}
+                >
+                  <Restaurant sx={{ fontSize: 40, color: 'text.secondary', mb: 2 }} />
                   <Typography variant="h6" color="text.secondary" gutterBottom>
                     {searchTerm ? 'Nenhum item encontrado' : 'Nenhum item no cardápio'}
                   </Typography>
@@ -298,22 +339,26 @@ const MenuDetailsPage: React.FC = () => {
                       <Paper
                         key={index}
                         sx={{
-                          p: 3,
+                          p: { xs: 2, sm: 2.5 },
                           display: 'flex',
-                          alignItems: 'center',
-                          gap: 3,
-                          '&:hover': {
-                            boxShadow: (theme) => theme.shadows[4],
-                          },
+                          alignItems: { xs: 'flex-start', sm: 'center' },
+                          gap: { xs: 2, sm: 3 },
+                          borderRadius: 2,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          boxShadow: 0,
+                          '&:hover': { bgcolor: 'action.hover' },
                         }}
                       >
                         {/* Imagem da receita */}
                         <Box
                           sx={{
-                            width: 80,
-                            height: 80,
+                            width: { xs: 64, sm: 80 },
+                            height: { xs: 64, sm: 80 },
                             borderRadius: 2,
-                            bgcolor: 'primary.main',
+                            bgcolor: 'background.default',
+                            border: '1px solid',
+                            borderColor: 'divider',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -322,7 +367,9 @@ const MenuDetailsPage: React.FC = () => {
                             backgroundPosition: 'center',
                           }}
                         >
-                          {!recipe?.image && <Restaurant sx={{ fontSize: 32, color: 'white' }} />}
+                          {!recipe?.image && (
+                            <Restaurant sx={{ fontSize: 28, color: 'text.secondary' }} />
+                          )}
                         </Box>
 
                         {/* Informações da receita */}
@@ -330,7 +377,7 @@ const MenuDetailsPage: React.FC = () => {
                           <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
                             {recipe?.name || 'Receita não encontrada'}
                           </Typography>
-                          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
                             <Chip
                               label={`${item.quantityUsed} ${item.unitMesaure}`}
                               size="small"
@@ -344,7 +391,13 @@ const MenuDetailsPage: React.FC = () => {
                         </Box>
 
                         {/* Informações de preço */}
-                        <Box sx={{ textAlign: 'right', minWidth: 120 }}>
+                        <Box
+                          sx={{
+                            textAlign: 'right',
+                            minWidth: 120,
+                            alignSelf: { xs: 'flex-start', sm: 'center' },
+                          }}
+                        >
                           <Typography
                             variant="body2"
                             color="text.secondary"
@@ -387,8 +440,17 @@ const MenuDetailsPage: React.FC = () => {
 
         {/* Coluna lateral - Financeiro */}
         <Grid size={{ xs: 12, lg: 4 }}>
-          <Card sx={{ position: 'sticky', top: 24 }}>
-            <CardContent>
+          <Card
+            sx={{
+              position: { xs: 'static', lg: 'sticky' },
+              top: { lg: 24 },
+              borderRadius: { xs: 2, sm: 3 },
+              boxShadow: { xs: 1, sm: 2 },
+              border: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography
                 variant="h6"
                 gutterBottom
