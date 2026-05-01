@@ -101,8 +101,7 @@ src/
 ├── components/ # Componentes reutilizáveis da aplicação
 │ ├── common/ # Componentes comuns (GlobalLoader, NotificationsManager, etc.)
 │ ├── layouts/ # Layouts da aplicação (MainLayout, AuthLayout)
-│ └── ui/ # Componentes de interface (Navbar, Sidebar, Cards, Carousel, etc.)
-│ ├── Carousel/ # Componente de carrossel
+│ └── ui/ # Componentes de interface (Navbar, Sidebar, Cards, etc.)
 │ ├── IngredientCard/ # Card para exibição de ingredientes
 │ ├── RecipeCard/ # Card para exibição de receitas
 │ └── SkeletonLoading/ # Componentes de skeleton para loading
@@ -113,7 +112,7 @@ src/
 ├── pages/ # Páginas da aplicação
 │ ├── Auth/ # Páginas de autenticação
 │ ├── Dashboard/# Página do dashboard
-│ ├── Home/ # Página inicial com carrosséis
+│ ├── Home/ # Página inicial com destaques
 │ ├── Ingredients/ # Página de listagem de ingredientes
 │ └── Recipes/ # Página de listagem de receitas
 ├── routes/ # Configuração de rotas
@@ -133,7 +132,7 @@ src/
 ### Página Home
 
 - **Carregamento Simulado**: Simulação de requisições à API com loading states e notificações
-- **Carrosséis**: Exibição de ingredientes e receitas em destaque com navegação
+- **Destaques**: Exibição de ingredientes e receitas em destaque
 - **Cards Interativos**: Cards com efeito de hover e botão para navegação para detalhes
 - **Layout Responsivo**: Adaptação para diferentes tamanhos de tela
 - **Skeleton Loading**: Exibição de placeholders durante o carregamento
@@ -206,13 +205,6 @@ O projeto utiliza dados mockados para simular o consumo de uma API:
 - Probabilidade de erro de 5% para testar fluxos de erro
 
 ## Componentes Principais
-
-### Carousel
-
-Componente reutilizável para exibição de itens em carrossel:
-- Suporte para responsividade com diferentes quantidades de itens por linha
-- Navegação com botões e indicadores de página
-- Transição suave entre páginas
 
 ### IngredientCard / RecipeCard
 
