@@ -53,7 +53,7 @@ const PlansPage: React.FC = () => {
     {
       id: 'pro',
       name: 'Pro',
-      price: 'R$ 39',
+      price: 'R$ ?',
       period: 'por mes',
       description: 'Para quem precisa de controle e analise avancada.',
       features: [

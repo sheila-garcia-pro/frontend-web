@@ -6,6 +6,7 @@ import {
   Checkbox,
   Chip,
   Container,
+  IconButton,
   InputAdornment,
   Paper,
   Stack,
@@ -15,6 +16,8 @@ import {
 import { alpha } from '@mui/material/styles';
 import {
   Add,
+  ChevronLeft,
+  ChevronRight,
   CloudDownload,
   Restaurant,
   Search,
@@ -148,6 +151,22 @@ const PublicRecipesPage: React.FC = () => {
 
   const handleSelectCategory = (category: string) => {
     setSelectedCategory(category);
+  };
+
+  const carouselRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
+
+  const handleCarouselScroll = (category: string, direction: 'left' | 'right') => {
+    const container = carouselRefs.current[category];
+    if (!container) return;
+
+    const cardWidth = isMobile ? 200 : 240;
+    const gap = 16;
+    const offset = cardWidth + gap;
+
+    container.scrollBy({
+      left: direction === 'left' ? -offset : offset,
+      behavior: 'smooth',
+    });
   };
 
   return (
@@ -309,10 +328,14 @@ const PublicRecipesPage: React.FC = () => {
           <Box
             sx={{
               display: 'flex',
-              gap: 1,
-              flexWrap: { xs: 'nowrap', md: 'wrap' },
-              overflowX: { xs: 'auto', md: 'visible' },
-              pb: { xs: 1, md: 0 },
+              gap: { xs: 1, sm: 1.5 },
+              flexWrap: 'nowrap',
+              overflowX: 'auto',
+              pb: 1,
+              scrollbarWidth: 'none',
+              '&::-webkit-scrollbar': {
+                display: 'none',
+              },
             }}
           >
             <Chip
@@ -375,22 +398,54 @@ const PublicRecipesPage: React.FC = () => {
                         Receitas selecionadas: {items.filter((item) => selectedIds.has(item.id)).length}
                       </Typography>
                     </Stack>
-                    <Button
-                      variant="text"
-                      onClick={() => handleSelectCategory(category)}
-                      sx={{ textTransform: 'none', fontWeight: 600 }}
-                    >
-                      Ver todas
-                    </Button>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleCarouselScroll(category, 'left')}
+                        aria-label="voltar carrossel"
+                        sx={{
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        <ChevronLeft fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleCarouselScroll(category, 'right')}
+                        aria-label="avancar carrossel"
+                        sx={{
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        <ChevronRight fontSize="small" />
+                      </IconButton>
+                      <Button
+                        variant="text"
+                        onClick={() => handleSelectCategory(category)}
+                        sx={{ textTransform: 'none', fontWeight: 600 }}
+                      >
+                        Ver todas
+                      </Button>
+                    </Box>
                   </Box>
 
                   <Box
+                    ref={(node) => {
+                      carouselRefs.current[category] = node as HTMLDivElement | null;
+                    }}
                     sx={{
                       display: 'flex',
                       gap: 2,
                       overflowX: 'auto',
                       pb: 1,
                       pr: 1,
+                      flexWrap: 'nowrap',
+                      scrollbarWidth: 'none',
+                      '&::-webkit-scrollbar': {
+                        display: 'none',
+                      },
                     }}
                   >
                     {visibleItems.map((recipe) => {
@@ -405,8 +460,8 @@ const PublicRecipesPage: React.FC = () => {
                           key={recipe.id}
                           variant="outlined"
                           sx={{
-                            width: 240,
-                            minWidth: 240,
+                            width: { xs: 200, md: 240 },
+                            minWidth: { xs: 200, md: 240 },
                             borderRadius: 3,
                             overflow: 'hidden',
                             borderColor: isSelected ? 'primary.main' : 'divider',

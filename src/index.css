@@ -10,11 +10,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
   /* Garantir que o body ocupe toda a altura */
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 html {
   /* Garantir que o html também ocupe toda a altura */
   height: 100%;
+  overflow-x: hidden;
 }
 
 #root {
