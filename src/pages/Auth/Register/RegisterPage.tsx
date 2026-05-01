@@ -11,6 +11,8 @@ import {
   InputAdornment,
   IconButton,
   LinearProgress,
+  Stack,
+  Divider,
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
@@ -376,212 +378,206 @@ const RegisterPage: React.FC = () => {
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate sx={{ width: '100%' }}>
-      <Typography variant="h5" component="h1" gutterBottom align="center">
-        Criar Conta
-      </Typography>
+      <Stack spacing={{ xs: 2, sm: 2.5, md: 3 }}>
+        <Box>
+          <Typography variant="h3" sx={{ mb: 0.5 }}>
+            Bem vindo a Sheila Garcia!
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Crie sua conta para continuar.
+          </Typography>
+        </Box>
 
-      {/* Mensagem de erro do Redux */}
-      {error && (
-        <Typography color="error" align="center" sx={{ mt: 2, mb: 2 }}>
-          Por favor, verifique seus dados e tente novamente.
+        {error && (
+          <Typography color="error" align="left">
+            Por favor, verifique seus dados e tente novamente.
+          </Typography>
+        )}
+
+        <TextField
+          margin="dense"
+          required
+          fullWidth
+          id="name"
+          label="Nome Completo"
+          name="name"
+          autoComplete="name"
+          autoFocus
+          size="small"
+          value={formData.name}
+          onChange={handleChange}
+          onBlur={(e) => validateField('name', e.target.value)}
+          disabled={loading}
+          error={!!formErrors.name}
+          helperText={formErrors.name}
+          InputProps={{
+            endAdornment: formData.name ? (
+              <InputAdornment position="end">
+                {!formErrors.name ? <CheckCircleIcon color="success" /> : <ErrorIcon color="error" />}
+              </InputAdornment>
+            ) : null,
+          }}
+        />
+
+        <TextField
+          margin="dense"
+          required
+          fullWidth
+          id="email"
+          label="Email"
+          name="email"
+          autoComplete="email"
+          size="small"
+          value={formData.email}
+          onChange={handleChange}
+          onBlur={(e) => validateField('email', e.target.value)}
+          disabled={loading}
+          error={!!formErrors.email}
+          helperText={formErrors.email}
+          InputProps={{
+            endAdornment: formData.email ? (
+              <InputAdornment position="end">
+                {!formErrors.email ? <CheckCircleIcon color="success" /> : <ErrorIcon color="error" />}
+              </InputAdornment>
+            ) : null,
+          }}
+        />
+
+        <TextField
+          margin="dense"
+          required
+          fullWidth
+          id="phone"
+          label="Telefone com DDD"
+          name="phone"
+          autoComplete="tel"
+          size="small"
+          value={formData.phone}
+          onChange={handleChange}
+          onBlur={(e) => validateField('phone', e.target.value)}
+          disabled={loading}
+          error={!!formErrors.phone}
+          helperText={formErrors.phone}
+          InputProps={{
+            endAdornment: formData.phone ? (
+              <InputAdornment position="end">
+                {!formErrors.phone ? <CheckCircleIcon color="success" /> : <ErrorIcon color="error" />}
+              </InputAdornment>
+            ) : null,
+          }}
+        />
+
+        <TextField
+          margin="dense"
+          required
+          fullWidth
+          id="dateOfBirth"
+          label="Data de nascimento"
+          name="dateOfBirth"
+          placeholder="DD/MM/YYYY"
+          size="small"
+          value={formData.dateOfBirth}
+          onChange={handleChange}
+          onBlur={(e) => validateField('dateOfBirth', e.target.value)}
+          disabled={loading}
+          error={!!formErrors.dateOfBirth}
+          helperText={formErrors.dateOfBirth}
+          InputProps={{
+            endAdornment: formData.dateOfBirth ? (
+              <InputAdornment position="end">
+                {!formErrors.dateOfBirth ? <CheckCircleIcon color="success" /> : <ErrorIcon color="error" />}
+              </InputAdornment>
+            ) : null,
+          }}
+        />
+
+        <TextField
+          margin="dense"
+          required
+          fullWidth
+          name="password"
+          label="Senha"
+          type={showPassword ? 'text' : 'password'}
+          id="password"
+          autoComplete="new-password"
+          size="small"
+          value={formData.password}
+          onChange={handleChange}
+          onBlur={(e) => validateField('password', e.target.value)}
+          disabled={loading}
+          error={!!formErrors.password}
+          helperText={formErrors.password}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                {formData.password && passwordStrength === 'strong' && (
+                  <CheckCircleIcon color="success" sx={{ mr: 1 }} />
+                )}
+                {formData.password && passwordStrength !== 'strong' && (
+                  <ErrorIcon color="error" sx={{ mr: 1 }} />
+                )}
+                <IconButton
+                  aria-label="toggle password visibility"
+                  onClick={handleTogglePasswordVisibility}
+                  edge="end"
+                >
+                  {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        {formData.password && <PasswordStrengthIndicator strength={passwordStrength} />}
+
+        <TextField
+          margin="dense"
+          required
+          fullWidth
+          name="confirmPassword"
+          label="Confirmar Senha"
+          type={showPassword ? 'text' : 'password'}
+          id="confirmPassword"
+          autoComplete="new-password"
+          size="small"
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          onBlur={(e) => validateField('confirmPassword', e.target.value)}
+          disabled={loading}
+          error={!!formErrors.confirmPassword}
+          helperText={formErrors.confirmPassword}
+          InputProps={{
+            endAdornment: formData.confirmPassword ? (
+              <InputAdornment position="end">
+                {!formErrors.confirmPassword ? (
+                  <CheckCircleIcon color="success" />
+                ) : (
+                  <ErrorIcon color="error" />
+                )}
+              </InputAdornment>
+            ) : null,
+          }}
+        />
+
+        <Button
+          type="submit"
+          fullWidth
+          variant="contained"
+          disabled={loading || !isFormValid}
+          sx={{ py: 1.1 }}
+        >
+          {loading ? <CircularProgress size={24} color="inherit" /> : 'Cadastrar'}
+        </Button>
+
+        <Divider flexItem sx={{ opacity: 0.6 }} />
+
+        <Typography variant="body2" color="text.secondary">
+          Ja tem uma conta?{' '}
+          <Link component={RouterLink} to="/login" underline="hover">
+            Faca login
+          </Link>
         </Typography>
-      )}
-
-      {/* Campo de nome */}
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        id="name"
-        label="Nome Completo"
-        name="name"
-        autoComplete="name"
-        autoFocus
-        value={formData.name}
-        onChange={handleChange}
-        onBlur={(e) => validateField('name', e.target.value)}
-        disabled={loading}
-        error={!!formErrors.name}
-        helperText={formErrors.name}
-        InputProps={{
-          endAdornment: formData.name ? (
-            <InputAdornment position="end">
-              {!formErrors.name ? <CheckCircleIcon color="success" /> : <ErrorIcon color="error" />}
-            </InputAdornment>
-          ) : null,
-        }}
-      />
-
-      {/* Campo de email */}
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        id="email"
-        label="Email"
-        name="email"
-        autoComplete="email"
-        value={formData.email}
-        onChange={handleChange}
-        onBlur={(e) => validateField('email', e.target.value)}
-        disabled={loading}
-        error={!!formErrors.email}
-        helperText={formErrors.email}
-        InputProps={{
-          endAdornment: formData.email ? (
-            <InputAdornment position="end">
-              {!formErrors.email ? (
-                <CheckCircleIcon color="success" />
-              ) : (
-                <ErrorIcon color="error" />
-              )}
-            </InputAdornment>
-          ) : null,
-        }}
-      />
-
-      {/* Campo de telefone */}
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        id="phone"
-        label="Telefone com DDD"
-        name="phone"
-        autoComplete="tel"
-        value={formData.phone}
-        onChange={handleChange}
-        onBlur={(e) => validateField('phone', e.target.value)}
-        disabled={loading}
-        error={!!formErrors.phone}
-        helperText={formErrors.phone}
-        InputProps={{
-          endAdornment: formData.phone ? (
-            <InputAdornment position="end">
-              {!formErrors.phone ? (
-                <CheckCircleIcon color="success" />
-              ) : (
-                <ErrorIcon color="error" />
-              )}
-            </InputAdornment>
-          ) : null,
-        }}
-      />
-
-      {/* Campo de data de nascimento */}
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        id="dateOfBirth"
-        label="Data de Nascimento (DD/MM/YYYY)"
-        name="dateOfBirth"
-        placeholder="DD/MM/YYYY"
-        value={formData.dateOfBirth}
-        onChange={handleChange}
-        onBlur={(e) => validateField('dateOfBirth', e.target.value)}
-        disabled={loading}
-        error={!!formErrors.dateOfBirth}
-        helperText={formErrors.dateOfBirth}
-        InputProps={{
-          endAdornment: formData.dateOfBirth ? (
-            <InputAdornment position="end">
-              {!formErrors.dateOfBirth ? (
-                <CheckCircleIcon color="success" />
-              ) : (
-                <ErrorIcon color="error" />
-              )}
-            </InputAdornment>
-          ) : null,
-        }}
-      />
-
-      {/* Campo de senha */}
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        name="password"
-        label="Senha"
-        type={showPassword ? 'text' : 'password'}
-        id="password"
-        autoComplete="new-password"
-        value={formData.password}
-        onChange={handleChange}
-        onBlur={(e) => validateField('password', e.target.value)}
-        disabled={loading}
-        error={!!formErrors.password}
-        helperText={formErrors.password}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              {formData.password && passwordStrength === 'strong' && (
-                <CheckCircleIcon color="success" sx={{ mr: 1 }} />
-              )}
-              {formData.password && passwordStrength !== 'strong' && (
-                <ErrorIcon color="error" sx={{ mr: 1 }} />
-              )}
-              <IconButton
-                aria-label="toggle password visibility"
-                onClick={handleTogglePasswordVisibility}
-                edge="end"
-              >
-                {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-              </IconButton>
-            </InputAdornment>
-          ),
-        }}
-      />
-
-      {/* Indicador de força da senha */}
-      {formData.password && <PasswordStrengthIndicator strength={passwordStrength} />}
-
-      {/* Campo de confirmação de senha */}
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        name="confirmPassword"
-        label="Confirmar Senha"
-        type={showPassword ? 'text' : 'password'}
-        id="confirmPassword"
-        autoComplete="new-password"
-        value={formData.confirmPassword}
-        onChange={handleChange}
-        onBlur={(e) => validateField('confirmPassword', e.target.value)}
-        disabled={loading}
-        error={!!formErrors.confirmPassword}
-        helperText={formErrors.confirmPassword}
-        InputProps={{
-          endAdornment: formData.confirmPassword ? (
-            <InputAdornment position="end">
-              {!formErrors.confirmPassword ? (
-                <CheckCircleIcon color="success" />
-              ) : (
-                <ErrorIcon color="error" />
-              )}
-            </InputAdornment>
-          ) : null,
-        }}
-      />
-
-      {/* Botão de submit com validação */}
-      <Button
-        type="submit"
-        fullWidth
-        variant="contained"
-        disabled={loading || !isFormValid}
-        sx={{ mt: 3, mb: 2 }}
-      >
-        {loading ? <CircularProgress size={24} color="inherit" /> : 'Cadastrar'}
-      </Button>
-
-      {/* Link para login */}
-      <Box sx={{ textAlign: 'center', mt: 2 }}>
-        <Link component={RouterLink} to="/login" variant="body2">
-          Já tem uma conta? Faça login
-        </Link>
-      </Box>
+      </Stack>
     </Box>
   );
 };

@@ -9,7 +9,8 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
-  Paper,
+  Card,
+  CardContent,
   Chip,
 } from '@mui/material';
 import {
@@ -18,6 +19,7 @@ import {
   Delete as DeleteIcon,
   Save as SaveIcon,
   Cancel as CancelIcon,
+  InfoOutlined,
 } from '@mui/icons-material';
 
 interface RecipeStepsCardProps {
@@ -104,53 +106,73 @@ const RecipeStepsCardComponent: React.FC<RecipeStepsCardProps> = ({
   };
 
   return (
-    <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          📝 Modo de Preparo
-        </Typography>
-        <Chip
-          label={`${steps.length} passos`}
-          size="small"
-          sx={{ ml: 2 }}
-          color={steps.length > 0 ? 'success' : 'default'}
-        />
-      </Box>
+    <Card
+      sx={{
+        mb: { xs: 2, sm: 3 },
+        borderRadius: { xs: 2, sm: 3 },
+        boxShadow: { xs: 1, sm: 2 },
+        border: '1px solid',
+        borderColor: 'divider',
+      }}
+    >
+      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Modo de Preparo
+          </Typography>
+          <InfoOutlined fontSize="small" sx={{ color: 'text.secondary' }} />
+          <Chip
+            label={`${steps.length} passos`}
+            size="small"
+            sx={{ ml: 1 }}
+            color={steps.length > 0 ? 'success' : 'default'}
+          />
+        </Box>
 
       {/* Campo para adicionar novo passo */}
-      <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
+      <Box sx={{ display: 'flex', gap: 1, mb: 3, alignItems: 'flex-start' }}>
         <TextField
           fullWidth
-          label="Adicionar novo passo"
           value={newStep}
           onChange={(e) => setNewStep(e.target.value)}
           onKeyPress={(e) => handleKeyPress(e, 'add')}
           multiline
           rows={2}
-          placeholder="Ex: Pré-aqueça o forno a 180°C..."
+          placeholder="Digite o passo a passo do preparo"
+          size="small"
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+              bgcolor: 'background.default',
+            },
+          }}
         />
         <Button
           variant="contained"
           onClick={handleAddStep}
           disabled={!newStep.trim()}
           startIcon={<AddIcon />}
-          sx={{ minWidth: 120 }}
+          sx={{ minWidth: 120, height: 40 }}
         >
-          Adicionar
+          + Passo
         </Button>
       </Box>
 
       {/* Lista de passos */}
       {steps.length > 0 ? (
-        <List
-          sx={{
-            bgcolor: (theme) =>
-              theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'background.default',
-            borderRadius: 1,
-          }}
-        >
+        <List sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
           {steps.map((step, index) => (
-            <ListItem key={index} sx={{ py: 1.5 }}>
+            <ListItem
+              key={index}
+              sx={{
+                py: 1.5,
+                px: 2,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 2,
+                bgcolor: 'background.paper',
+              }}
+            >
               <ListItemText
                 primary={
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
@@ -214,12 +236,10 @@ const RecipeStepsCardComponent: React.FC<RecipeStepsCardProps> = ({
             textAlign: 'center',
             py: 4,
             color: 'text.secondary',
-            bgcolor: (theme) =>
-              theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'background.default',
-            borderRadius: 1,
+            bgcolor: 'background.default',
+            borderRadius: 2,
             border: '1px dashed',
-            borderColor: (theme) =>
-              theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'divider',
+            borderColor: 'divider',
           }}
         >
           <Typography variant="body1">Nenhum passo adicionado ainda</Typography>
@@ -228,7 +248,8 @@ const RecipeStepsCardComponent: React.FC<RecipeStepsCardProps> = ({
           </Typography>
         </Box>
       )}
-    </Paper>
+    </CardContent>
+  </Card>
   );
 };
 

@@ -26,6 +26,11 @@ import { Recipe, CreateRecipeParams } from '../../../types/recipes';
 import { updateRecipe } from '../../../services/api/recipes';
 import { syncIngredientsWithAPI } from '../../../utils/ingredientSync';
 import {
+  convertRecipeIngredientsForAPI,
+  validateRecipeIngredients,
+  formatIngredientsForLog,
+} from '../../../utils/recipeIngredientConversion';
+import {
   filterValidIngredients,
   calculateIngredientStats,
 } from '../../../utils/ingredientValidation';
@@ -114,7 +119,17 @@ const RecipeSaveManager: React.FC<RecipeSaveManagerProps> = ({
       // Etapa 2: Salvar receita
       updateStepStatus('recipe', 'processing');
 
-      const recipeData: Partial<CreateRecipeParams> = {
+      // Validar e converter ingredientes
+      const ingredientValidation = validateRecipeIngredients(recipeIngredients);
+      if (!ingredientValidation.isValid) {
+        console.error('Erros na validação dos ingredientes:', ingredientValidation.errors);
+        throw new Error(`Ingredientes inválidos: ${ingredientValidation.errors.join(', ')}`);
+      }
+
+      // Converter ingredientes com conversão automática de unidades
+      const convertedIngredients = convertRecipeIngredientsForAPI(recipeIngredients);
+
+      const recipeData = {
         name: recipe.name,
         category: recipe.category,
         image: recipe.image,
@@ -124,12 +139,12 @@ const RecipeSaveManager: React.FC<RecipeSaveManagerProps> = ({
         weightRecipe: recipe.weightRecipe,
         typeWeightRecipe: recipe.typeWeightRecipe,
         descripition: recipe.descripition,
-        ingredients: recipeIngredients.map((ri) => ({
-          idIngredient: ri.ingredient._id,
-          quantityIngredientRecipe: ri.quantity.toString(),
-          unitAmountUseIngredient: ri.unitMeasure,
-          priceQuantityIngredient: ri.ingredient.price?.price || 0,
-          unitMeasure: ri.ingredient.price?.unitMeasure || ri.unitMeasure,
+        ingredients: convertedIngredients.map((ci) => ({
+          ...ci,
+          priceQuantityIngredient:
+            recipeIngredients.find((ri) => ri.ingredient._id === ci.idIngredient)?.ingredient.price
+              ?.price || 0,
+          unitMeasure: ci.unitAmountUseIngredient,
         })),
         modePreparation: recipeSteps.length > 0 ? recipeSteps : undefined,
       };

@@ -24,6 +24,11 @@ import { Recipe, CreateRecipeParams } from '../../../types/recipes';
 import { updateRecipe } from '../../../services/api/recipes';
 import { getCachedIngredientById } from '../../../services/api/ingredients';
 import { syncIngredientsWithAPI } from '../../../utils/ingredientSync';
+import {
+  convertRecipeIngredientsForAPI,
+  validateRecipeIngredients,
+  formatIngredientsForLog,
+} from '../../../utils/recipeIngredientConversion';
 import ImageUploadComponent from '../ImageUpload';
 import {
   RecipeIngredient,
@@ -229,37 +234,14 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
 
   // Função para atualizar ingredientes da receita
   const handleIngredientsUpdate = useCallback((ingredients: RecipeIngredient[]) => {
-    console.log(
-      '[RecipeEditModal] handleIngredientsUpdate chamada com:',
-      ingredients.length,
-      'ingredientes',
-    );
-    console.log(
-      '[RecipeEditModal] Ingredientes recebidos:',
-      ingredients.map((ing) => ({ name: ing.ingredient.name, quantity: ing.quantity })),
-    );
-
     // Previne atualizações circulares
     if (isUpdatingIngredientsRef.current) {
-      console.warn('[RecipeEditModal] Bloqueou atualização circular de ingredientes');
       return;
     }
 
     updateCountRef.current++;
-    console.log(
-      '[RecipeEditModal] Atualizando ingredientes (#',
-      updateCountRef.current,
-      '):',
-      ingredients.length,
-    );
-
     isUpdatingIngredientsRef.current = true;
     setRecipeIngredients(ingredients);
-    console.log(
-      '[RecipeEditModal] Estado recipeIngredients atualizado para:',
-      ingredients.length,
-      'ingredientes',
-    );
 
     // Reseta a flag após o próximo render
     setTimeout(() => {
@@ -283,7 +265,6 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
   // Memoizar ingredientes para evitar re-renders desnecessários
   // Só muda se o tamanho ou IDs mudarem
   const memoizedIngredients = useMemo(() => {
-    console.log('[RecipeEditModal] Memoizando ingredientes:', recipeIngredients.length);
     return recipeIngredients;
   }, [
     recipeIngredients.length,
@@ -313,20 +294,8 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
       return;
     }
 
-    console.log('[RecipeEditModal] handleSave - Iniciando validação');
-    console.log(
-      '[RecipeEditModal] Estado atual recipeIngredients:',
-      recipeIngredients.length,
-      'ingredientes',
-    );
-    console.log(
-      '[RecipeEditModal] Dados dos ingredientes:',
-      recipeIngredients.map((ing) => ({ name: ing.ingredient.name, quantity: ing.quantity })),
-    );
-
     // Validação obrigatória para ingredientes
     if (recipeIngredients.length === 0) {
-      console.error('[RecipeEditModal] ERRO: Nenhum ingrediente encontrado no estado!');
       dispatch(
         addNotification({
           message: 'Adicione pelo menos um ingrediente à receita!',
@@ -336,12 +305,6 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
       );
       return;
     }
-
-    console.log(
-      '[RecipeEditModal] Validação de ingredientes PASSOU - encontrados:',
-      recipeIngredients.length,
-      'ingredientes',
-    );
 
     if (!recipe._id) {
       dispatch(
@@ -366,15 +329,30 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
         }
       }
 
-      // Etapa 2: Preparar dados da receita com ingredientes e passos
+      // Etapa 2: Validar e converter ingredientes
+      const ingredientValidation = validateRecipeIngredients(recipeIngredients);
+      if (!ingredientValidation.isValid) {
+        console.error('Erros na validação dos ingredientes:', ingredientValidation.errors);
+        throw new Error(`Ingredientes inválidos: ${ingredientValidation.errors.join(', ')}`);
+      }
+
+      // Converter ingredientes com conversão automática de unidades
+      const convertedIngredients = convertRecipeIngredientsForAPI(recipeIngredients);
+
+      // Log para debug
+      console.log(
+        '📊 (Edição) ' + formatIngredientsForLog(recipeIngredients, convertedIngredients),
+      );
+
+      // Etapa 3: Preparar dados da receita com ingredientes convertidos
       const recipeData = {
         ...formData,
-        ingredients: recipeIngredients.map((ri) => ({
-          idIngredient: ri.ingredient._id,
-          quantityIngredientRecipe: ri.quantity.toString(),
-          unitAmountUseIngredient: ri.unitMeasure,
-          priceQuantityIngredient: ri.ingredient.price?.price || 0,
-          unitMeasure: ri.ingredient.price?.unitMeasure || ri.unitMeasure,
+        ingredients: convertedIngredients.map((ci) => ({
+          ...ci,
+          priceQuantityIngredient:
+            recipeIngredients.find((ri) => ri.ingredient._id === ci.idIngredient)?.ingredient.price
+              ?.price || 0,
+          unitMeasure: ci.unitAmountUseIngredient,
         })),
         modePreparation: recipeSteps.length > 0 ? recipeSteps : undefined,
       };
@@ -605,20 +583,7 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
                     gap: 1,
                   }}
                 >
-                  🥘 Ingredientes da Receita *{/* 🔍 DEBUG: Indicador do estado no modal pai */}
-                  <Box
-                    sx={{
-                      ml: 2,
-                      px: 1,
-                      py: 0.5,
-                      borderRadius: 1,
-                      bgcolor: recipeIngredients.length > 0 ? 'success.light' : 'warning.light',
-                      fontSize: '0.75rem',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    DEBUG PAI: {recipeIngredients.length}
-                  </Box>
+                  🥘 Ingredientes da Receita *
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   Gerencie os ingredientes utilizados nesta receita (pelo menos um ingrediente é

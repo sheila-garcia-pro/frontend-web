@@ -13,9 +13,13 @@
     "dashboard": "Painel",
     "home": "Início",
     "recipes": "Receitas",
+    "publicRecipes": "Receitas Publicas",
     "ingredients": "Ingredientes",
     "menu": "Cardápios",
+    "plans": "Planos",
+    "support": "Suporte",
     "suppliers": "Fornecedores",
+    "coupons": "Cupons",
     "profile": "Perfil",
     "close": "Fechar menu"
   },
@@ -24,6 +28,7 @@
     "recipes": "Receitas",
     "ingredients": "Ingredientes",
     "suppliers": "Fornecedores",
+    "coupons": "Cupons",
     "profile": "Perfil",
     "logout": "Sair"
   },

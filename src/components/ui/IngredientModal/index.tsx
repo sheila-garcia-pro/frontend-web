@@ -16,7 +16,10 @@ import {
   Stack,
   Box,
   InputAdornment,
+  IconButton,
 } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
+import { Close as CloseIcon } from '@mui/icons-material';
 import { getUnitMeasures } from '../../../services/api/unitMeasure';
 import { UnitMeasure } from '../../../types/unitMeasure';
 import { useDispatch, useSelector } from 'react-redux';
@@ -25,6 +28,7 @@ import { fetchCategoriesRequest } from '../../../store/slices/categoriesSlice';
 import { RootState } from '../../../store';
 import { CreateIngredientParams } from '../../../types/ingredients';
 import { useTranslation } from 'react-i18next';
+import { useDevice } from '../../../hooks/useDevice';
 import ImageUploadComponent from '../ImageUploadImproved';
 import { calculatePricePerPortion } from '../../../utils/unitConversion';
 
@@ -36,6 +40,10 @@ interface IngredientModalProps {
 const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
+  const theme = useTheme();
+
+  // Hook de responsividade
+  const { isMobile, isTablet, isDesktop } = useDevice();
   const { items: categories, loading: categoriesLoading } = useSelector(
     (state: RootState) => state.categories,
   );
@@ -236,19 +244,94 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
     }
   };
 
+  const sectionSx = {
+    p: { xs: 2, sm: 2.5 },
+    borderRadius: 2,
+    border: '1px solid',
+    borderColor: 'divider',
+    bgcolor: 'background.paper',
+  } as const;
+
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="sm"
+      maxWidth={isMobile ? false : 'sm'}
       fullWidth
+      fullScreen={isMobile}
       PaperProps={{
-        elevation: 5,
-        sx: { borderRadius: 2 },
+        elevation: isMobile ? 0 : 5,
+        sx: {
+          borderRadius: isMobile ? 0 : 2,
+          width: isMobile ? '100vw' : isTablet ? '90vw' : undefined,
+          height: isMobile ? '100vh' : isTablet ? '90vh' : undefined,
+          maxHeight: isMobile ? '100vh' : isTablet ? '90vh' : undefined,
+          margin: isMobile ? 0 : 'auto',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        },
       }}
     >
-      <DialogTitle>{t('ingredients.newIngredient')}</DialogTitle>
-      <DialogContent dividers>
+      <DialogTitle
+        sx={{
+          px: { xs: 2, sm: 3 },
+          py: { xs: 2, sm: 3 },
+          borderBottom: isMobile ? '1px solid' : 'none',
+          borderColor: 'divider',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box>
+            <Typography
+              variant={isMobile ? 'h6' : 'h5'}
+              component="h2"
+              sx={{
+                fontWeight: 600,
+                fontSize: { xs: '1.25rem', sm: '1.5rem' },
+              }}
+            >
+              {t('ingredients.newIngredient')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Preencha os dados para cadastrar um novo ingrediente.
+            </Typography>
+          </Box>
+          <IconButton
+            onClick={onClose}
+            sx={{
+              color: 'text.secondary',
+              '&:hover': {
+                bgcolor: 'action.hover',
+              },
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+      <DialogContent
+        dividers={!isMobile}
+        sx={{
+          px: { xs: 2, sm: 3 },
+          py: { xs: 1, sm: 2 },
+          overflow: 'auto',
+          maxHeight: isMobile ? 'calc(100vh - 140px)' : isTablet ? 'calc(90vh - 140px)' : undefined,
+          // Scroll personalizado
+          '&::-webkit-scrollbar': {
+            width: isMobile ? '4px' : '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            backgroundColor: 'rgba(0,0,0,0.1)',
+            borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: 'rgba(0,0,0,0.2)',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: 'rgba(0,0,0,0.3)',
+            },
+          },
+        }}
+      >
         {/* Overlay de processamento */}
         {isProcessing && (
           <Box
@@ -258,7 +341,7 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              backgroundColor: alpha(theme.palette.background.paper, 0.9),
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -278,201 +361,240 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
         )}
 
         <Box sx={{ py: 2 }}>
-          <Stack spacing={2}>
-            <TextField
-              label="Nome do Ingrediente"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              fullWidth
-              required
-              variant="outlined"
-              error={!!errors.name}
-              helperText={errors.name}
-              autoFocus
-              disabled={ingredientLoading}
-            />
-            <FormControl fullWidth required error={!!errors.category}>
-              <InputLabel id="category-label">Categoria</InputLabel>
-              <Select
-                labelId="category-label"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                label="Categoria"
-                disabled={categoriesLoading || ingredientLoading}
-              >
-                {categoriesLoading ? (
-                  <MenuItem value="">
-                    <CircularProgress size={20} />
-                  </MenuItem>
-                ) : categories && categories.length > 0 ? (
-                  categories.map((category) => (
-                    <MenuItem key={category._id} value={category.name}>
-                      {category.name}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem value="">Nenhuma categoria disponível</MenuItem>
-                )}
-              </Select>
-              {errors.category && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1 }}>
-                  {errors.category}
-                </Typography>
-              )}
-            </FormControl>
-
-            <TextField
-              label="Fator de Correção"
-              name="correctionFactor"
-              type="number"
-              value={formData.correctionFactor || 1.0}
-              onChange={handleChange}
-              fullWidth
-              InputProps={{
-                inputProps: { min: 0.1, max: 3.0, step: 0.01 },
-              }}
-              helperText="Fator para ajuste de perdas e desperdício (padrão: 1.0)"
-              disabled={ingredientLoading}
-              sx={{
-                '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
-                  {
-                    WebkitAppearance: 'none',
-                    margin: 0,
-                  },
-                '& input[type="number"]': {
-                  MozAppearance: 'textfield',
-                },
-              }}
-            />
-
-            <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
-              Preço de Compra
-            </Typography>
-            <TextField
-              fullWidth
-              label="Preço"
-              name="price.price"
-              type="number"
-              value={formData.price?.price || ''}
-              onChange={handleChange}
-              error={!!errors['price.price']}
-              helperText={errors['price.price']}
-              InputProps={{
-                inputProps: { min: 0, step: 0.01 },
-                startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-              }}
-              sx={{
-                '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
-                  {
-                    WebkitAppearance: 'none',
-                    margin: 0,
-                  },
-                '& input[type="number"]': {
-                  MozAppearance: 'textfield',
-                },
-              }}
-            />
-            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-              <TextField
-                fullWidth
-                label="Quantidade"
-                name="price.quantity"
-                type="number"
-                value={formData.price?.quantity || ''}
-                onChange={handleChange}
-                error={!!errors['price.quantity']}
-                helperText={errors['price.quantity']}
-                InputProps={{
-                  inputProps: { min: 0, step: 0.01 },
-                }}
-                sx={{
-                  '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
-                    {
-                      WebkitAppearance: 'none',
-                      margin: 0,
-                    },
-                  '& input[type="number"]': {
-                    MozAppearance: 'textfield',
-                  },
-                }}
-              />
-
-              <FormControl fullWidth error={!!errors['price.unitMeasure']}>
-                <InputLabel>Medida</InputLabel>
-                <Select
-                  label="Medida"
-                  name="price.unitMeasure"
-                  value={formData.price?.unitMeasure || ''}
+          <Stack spacing={2.5}>
+            <Box sx={sectionSx}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                Informacoes basicas
+              </Typography>
+              <Stack spacing={2}>
+                <TextField
+                  label="Nome do Ingrediente"
+                  name="name"
+                  value={formData.name}
                   onChange={handleChange}
-                  disabled={loadingUnitMeasures}
-                >
-                  {loadingUnitMeasures ? (
-                    <MenuItem value="">
-                      <CircularProgress size={20} />
-                    </MenuItem>
-                  ) : unitMeasures.length > 0 ? (
-                    unitMeasures.map((unit) => (
-                      <MenuItem key={unit._id} value={unit.name}>
-                        {unit.name} ({unit.acronym})
+                  fullWidth
+                  required
+                  variant="outlined"
+                  error={!!errors.name}
+                  helperText={errors.name}
+                  autoFocus
+                  disabled={ingredientLoading}
+                />
+                <FormControl fullWidth required error={!!errors.category}>
+                  <InputLabel id="category-label">Categoria</InputLabel>
+                  <Select
+                    labelId="category-label"
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    label="Categoria"
+                    disabled={categoriesLoading || ingredientLoading}
+                  >
+                    {categoriesLoading ? (
+                      <MenuItem value="">
+                        <CircularProgress size={20} />
                       </MenuItem>
-                    ))
-                  ) : (
-                    <MenuItem value="">Nenhuma unidade disponível</MenuItem>
+                    ) : categories && categories.length > 0 ? (
+                      categories.map((category) => (
+                        <MenuItem key={category._id} value={category.name}>
+                          {category.name}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem value="">Nenhuma categoria disponivel</MenuItem>
+                    )}
+                  </Select>
+                  {errors.category && (
+                    <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1 }}>
+                      {errors.category}
+                    </Typography>
                   )}
-                </Select>
-                {errors['price.unitMeasure'] && (
-                  <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1 }}>
-                    {errors['price.unitMeasure']}
-                  </Typography>
-                )}
-              </FormControl>
+                </FormControl>
+
+                <TextField
+                  label="Fator de Correcao"
+                  name="correctionFactor"
+                  type="number"
+                  value={formData.correctionFactor || 1.0}
+                  onChange={handleChange}
+                  fullWidth
+                  InputProps={{
+                    inputProps: { min: 0.1, max: 3.0, step: 0.01 },
+                  }}
+                  helperText="Fator para ajuste de perdas e desperdicio (padrao: 1.0)"
+                  disabled={ingredientLoading}
+                  sx={{
+                    '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                      {
+                        WebkitAppearance: 'none',
+                        margin: 0,
+                      },
+                    '& input[type="number"]': {
+                      MozAppearance: 'textfield',
+                    },
+                  }}
+                />
+              </Stack>
             </Box>
 
-            {/* Campo calculado para mostrar preço por porção */}
-            {formData.price?.price && formData.price?.quantity && (
-              <Box
-                sx={{
-                  mt: 2,
-                  p: 2,
-                  bgcolor: 'secondary.50',
-                  borderRadius: 1,
-                  border: '1px solid',
-                  borderColor: 'secondary.200',
-                }}
-              >
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Preço por porção (100g):
-                </Typography>
-                <Typography variant="h6" color="secondary.main" sx={{ fontWeight: 600 }}>
-                  R${' '}
-                  {calculatePricePerPortion(
-                    parseFloat(formData.price.price.toString()),
-                    parseFloat(formData.price.quantity.toString()),
-                    formData.price.unitMeasure,
-                  ).toFixed(2)}
+            <Box sx={sectionSx}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  Preco de compra
                 </Typography>
               </Box>
-            )}
+              <Stack spacing={2}>
+                <TextField
+                  fullWidth
+                  label="Preco"
+                  name="price.price"
+                  type="number"
+                  value={formData.price?.price || ''}
+                  onChange={handleChange}
+                  error={!!errors['price.price']}
+                  helperText={errors['price.price']}
+                  InputProps={{
+                    inputProps: { min: 0, step: 0.01 },
+                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                  }}
+                  sx={{
+                    '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                      {
+                        WebkitAppearance: 'none',
+                        margin: 0,
+                      },
+                    '& input[type="number"]': {
+                      MozAppearance: 'textfield',
+                    },
+                  }}
+                />
+                <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+                  <TextField
+                    fullWidth
+                    label="Quantidade"
+                    name="price.quantity"
+                    type="number"
+                    value={formData.price?.quantity || ''}
+                    onChange={handleChange}
+                    error={!!errors['price.quantity']}
+                    helperText={errors['price.quantity']}
+                    InputProps={{
+                      inputProps: { min: 0, step: 0.01 },
+                    }}
+                    sx={{
+                      '& input[type="number"]::-webkit-outer-spin-button, & input[type="number"]::-webkit-inner-spin-button':
+                        {
+                          WebkitAppearance: 'none',
+                          margin: 0,
+                        },
+                      '& input[type="number"]': {
+                        MozAppearance: 'textfield',
+                      },
+                    }}
+                  />
 
-            <ImageUploadComponent
-              value={formData.image || null}
-              onChange={handleImageChange}
-              disabled={ingredientLoading}
-              label="Imagem do Ingrediente"
-              required={false}
-              error={errors.image}
-              helperText="Faça upload de uma imagem para identificar o ingrediente (opcional)"
-              type="ingredients"
-              placeholder="Clique para selecionar uma imagem do ingrediente"
-              ingredientName={formData.name.trim() || 'Ingrediente'}
-            />
+                  <FormControl fullWidth error={!!errors['price.unitMeasure']}>
+                    <InputLabel>Medida</InputLabel>
+                    <Select
+                      label="Medida"
+                      name="price.unitMeasure"
+                      value={formData.price?.unitMeasure || ''}
+                      onChange={handleChange}
+                      disabled={loadingUnitMeasures}
+                    >
+                      {loadingUnitMeasures ? (
+                        <MenuItem value="">
+                          <CircularProgress size={20} />
+                        </MenuItem>
+                      ) : unitMeasures.length > 0 ? (
+                        unitMeasures.map((unit) => (
+                          <MenuItem key={unit._id} value={unit.name}>
+                            {unit.name} ({unit.acronym})
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem value="">Nenhuma unidade disponivel</MenuItem>
+                      )}
+                    </Select>
+                    {errors['price.unitMeasure'] && (
+                      <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1 }}>
+                        {errors['price.unitMeasure']}
+                      </Typography>
+                    )}
+                  </FormControl>
+                </Box>
+
+                {formData.price?.price && formData.price?.quantity && (
+                  <Box
+                    sx={{
+                      mt: 1,
+                      p: 2,
+                      borderRadius: 2,
+                      border: '1px solid',
+                      borderColor: alpha(theme.palette.primary.main, 0.2),
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Preco por porcao (100g):
+                    </Typography>
+                    <Typography variant="h6" color="primary.main" sx={{ fontWeight: 600 }}>
+                      R${' '}
+                      {calculatePricePerPortion(
+                        parseFloat(formData.price.price.toString()),
+                        parseFloat(formData.price.quantity.toString()),
+                        formData.price.unitMeasure,
+                      ).toFixed(2)}
+                    </Typography>
+                  </Box>
+                )}
+              </Stack>
+            </Box>
+
+            <Box sx={sectionSx}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                Imagem
+              </Typography>
+              <ImageUploadComponent
+                value={formData.image || null}
+                onChange={handleImageChange}
+                disabled={ingredientLoading}
+                label="Imagem do Ingrediente"
+                required={false}
+                error={errors.image}
+                helperText="Faça upload de uma imagem para identificar o ingrediente (opcional)"
+                type="ingredients"
+                placeholder="Clique para selecionar uma imagem do ingrediente"
+                ingredientName={formData.name.trim() || 'Ingrediente'}
+              />
+            </Box>
           </Stack>
         </Box>
       </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} color="inherit" disabled={ingredientLoading || isProcessing}>
+      <DialogActions
+        sx={{
+          px: { xs: 2, sm: 3 },
+          py: { xs: 1.5, sm: 2 },
+          borderTop: isMobile ? 'none' : '1px solid',
+          borderColor: 'divider',
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: { xs: 1, sm: 1 },
+          '& .MuiButton-root': {
+            minHeight: { xs: 48, sm: 42 },
+            fontSize: { xs: '1rem', sm: '0.875rem' },
+          },
+        }}
+      >
+        <Button
+          onClick={onClose}
+          color="inherit"
+          disabled={ingredientLoading || isProcessing}
+          size={isMobile ? 'large' : 'medium'}
+          fullWidth={isMobile}
+          sx={{
+            order: { xs: 2, sm: 1 },
+          }}
+        >
           {t('ingredients.actions.cancel')}
         </Button>
         <Button
@@ -484,6 +606,11 @@ const IngredientModal: React.FC<IngredientModalProps> = ({ open, onClose }) => {
               <CircularProgress size={20} sx={{ color: 'inherit' }} />
             ) : null
           }
+          size={isMobile ? 'large' : 'medium'}
+          fullWidth={isMobile}
+          sx={{
+            order: { xs: 1, sm: 2 },
+          }}
         >
           {isProcessing
             ? processingMessage || 'Processando...'

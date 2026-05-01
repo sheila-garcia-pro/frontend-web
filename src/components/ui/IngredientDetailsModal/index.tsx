@@ -411,7 +411,6 @@ const IngredientDetailsModal: React.FC<IngredientDetailsModalProps> = ({
         fetchIngredientsRequest({
           page: 1,
           itemPerPage: 10,
-          search: '',
         }),
       );
       dispatch(

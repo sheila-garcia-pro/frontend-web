@@ -1,76 +1,112 @@
-import React from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
-import { Box, Container, Paper, CssBaseline } from '@mui/material';
-import { useSelector } from 'react-redux';
-import { RootState } from '@store/index';
-import { useTheme } from '@mui/material/styles';
+import React, { useMemo } from 'react';
+import { Outlet } from 'react-router-dom';
+import { Box, CssBaseline, Typography } from '@mui/material';
+import { ThemeProvider } from '@mui/material/styles';
+
+// Hooks
+import { useDevice } from '@hooks/useDevice';
 
 // Componentes
 import GlobalLoader from '@components/common/GlobalLoader';
 import Logo from '@components/common/Logo';
+import loginHero from '@assets/LOGOTIPOS/LOGOTIPOS _Prancheta 1 cópia 3.jpg';
+import getTheme from '@themes/index';
 
 // Layout para páginas de autenticação (login, registro, recuperação de senha)
 const AuthLayout: React.FC = () => {
-  const theme = useTheme();
-  const location = useLocation();
-  const isDarkMode = theme.palette.mode === 'dark';
+  const { isMobile, isTablet } = useDevice();
+  const authTheme = useMemo(() => getTheme('light'), []);
+  const theme = authTheme;
+  const authBackground = theme.palette.background.auth || theme.palette.background.default;
+  const authPanel = theme.palette.background.authPanel || theme.palette.background.paper;
+  const heroOverlay = theme.palette.background.authOverlay || theme.palette.background.paper;
+  const heroOverlayStrong =
+    theme.palette.background.authOverlayStrong || theme.palette.background.paper;
+  const heroTint = theme.palette.background.authTint || theme.palette.primary.main;
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: theme.palette.background.default,
-        backgroundImage: isDarkMode
-          ? 'linear-gradient(to bottom, #333D2C, #23291C)' // Gradiente mais nítido no modo escuro
-          : 'linear-gradient(rgba(193, 200, 177, 0.1), rgba(141, 166, 122, 0.1))', // Gradiente sutil no modo claro
-        py: 6,
-      }}
-    >
-      <Container maxWidth="sm">
-        <Paper
-          elevation={isDarkMode ? 6 : 3} // Maior elevação no modo escuro para destacar
+    <ThemeProvider theme={authTheme}>
+      <CssBaseline />
+      <Box
+        sx={{
+          minHeight: '100dvh',
+          height: '100dvh',
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.1fr) minmax(0, 520px)' },
+          gridTemplateRows: {
+            xs: 'minmax(160px, 34vh) 1fr',
+            sm: 'minmax(200px, 38vh) 1fr',
+            md: '1fr',
+          },
+          backgroundColor: authBackground,
+          overflow: 'hidden',
+        }}
+      >
+        <Box
           sx={{
-            p: 4,
+            position: 'relative',
             display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            backgroundColor: theme.palette.background.paper,
-            borderRadius: '16px', // Bordas mais arredondadas
-            boxShadow: isDarkMode
-              ? '0px 8px 30px rgba(0, 0, 0, 0.5), 0px 0px 1px rgba(232, 237, 170, 0.3)' // Sombra mais intensa e borda sutil
-              : '0px 4px 20px rgba(58, 69, 52, 0.15)',
-            border: isDarkMode ? '1px solid rgba(232, 237, 170, 0.15)' : 'none', // Borda sutil no modo escuro
+            alignItems: 'flex-end',
+            p: { xs: 2, sm: 3, md: 5 },
+            color: theme.palette.text.primary,
+            backgroundColor: authBackground,
+            backgroundImage: `url(${loginHero})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              inset: 0,
+              background: `linear-gradient(120deg, ${heroOverlayStrong} 0%, ${heroOverlay} 70%, ${heroTint} 100%)`,
+            },
           }}
         >
-          {/* Logo */}
-          <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
+          <Box
+            sx={{
+              position: 'relative',
+              zIndex: 1,
+              maxWidth: { xs: '100%', md: 420 },
+            }}
+          >
+            <Typography variant={isMobile ? 'h4' : 'h3'} sx={{ mb: 1 }}>
+              Crie fichas tecnicas de forma simples e organizada
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Mais organizacao, praticidade e eficiencia para o seu negocio.
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: { xs: 1.5, sm: 2, md: 2.5 },
+            px: { xs: 2.5, sm: 3.5, md: 5 },
+            py: { xs: 2.5, sm: 3.5, md: 5 },
+            backgroundColor: authPanel,
+            minHeight: 0,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Logo
-              variant="white"
-              size="large"
+              variant="symbol"
+              size={isMobile ? 'small' : 'medium'}
               showText={false}
-              textColor={isDarkMode ? '#E8EDAA' : 'primary.main'}
               to="/"
-              sx={{
-                justifyContent: 'center',
-                flexDirection: 'column',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
             />
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              Sheila Garcia
+            </Typography>
           </Box>
 
-          {/* Conteúdo da página de autenticação (via Outlet) */}
           <Outlet />
-        </Paper>
-      </Container>
+        </Box>
+      </Box>
 
-      {/* Loader global */}
       <GlobalLoader />
-    </Box>
+    </ThemeProvider>
   );
 };
 

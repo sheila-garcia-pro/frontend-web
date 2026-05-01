@@ -31,6 +31,7 @@ export const useIngredientsPage = () => {
   const [ingredientsList, setIngredientsList] = useState<Ingredient[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+  const [shouldResetPage, setShouldResetPage] = useState(false);
 
   // Refs para controle de sincronização
   const previousTotal = useRef(0);
@@ -45,7 +46,7 @@ export const useIngredientsPage = () => {
   const debouncedSearchTerm = useDebounce(searchInput, 300);
 
   // Constantes
-  const itemsPerPage = 1000;
+  const itemsPerPage = 10;
 
   // Função para carregar ingredientes com parâmetros otimizados (similar ao useRecipesPage)
   const loadIngredients = useCallback(
@@ -53,12 +54,16 @@ export const useIngredientsPage = () => {
       params: {
         search?: string;
         category?: string;
+        sort?: string;
         forceRefresh?: boolean;
         showNotification?: boolean;
+        page?: number;
       } = {},
     ) => {
       setLoading(true);
       try {
+        const pageToUse = params.page !== undefined ? params.page : currentPage;
+        const sortToUse = params.sort !== undefined ? params.sort : sortOption;
         let response;
 
         if (params.forceRefresh) {
@@ -66,17 +71,19 @@ export const useIngredientsPage = () => {
           clearCache('/v1/users/me/ingredient');
 
           response = await getIngredients({
-            page: currentPage,
+            page: pageToUse,
             itemPerPage: itemsPerPage,
             name: params.search,
             category: params.category,
+            sort: sortToUse,
           });
         } else {
           response = await getCachedIngredients({
-            page: currentPage,
+            page: pageToUse,
             itemPerPage: itemsPerPage,
             name: params.search,
             category: params.category,
+            sort: sortToUse,
           });
         }
 
@@ -106,7 +113,7 @@ export const useIngredientsPage = () => {
         setLoading(false);
       }
     },
-    [currentPage, itemsPerPage, dispatch],
+    [currentPage, itemsPerPage, dispatch, sortOption],
   );
 
   // Carregar dados iniciais
@@ -123,50 +130,31 @@ export const useIngredientsPage = () => {
     isInitialLoad.current = false;
   }, [dispatch, loadIngredients]);
 
-  // Carregar ingredientes quando filtros mudarem (exceto carregamento inicial)
+  // Único useEffect para carregar ingredientes (unificado)
   useEffect(() => {
     if (!isInitialLoad.current) {
       loadIngredients({
         search: debouncedSearchTerm,
         category: selectedCategory || undefined,
+        sort: sortOption,
         showNotification: false,
+        page: currentPage,
       });
     }
-  }, [debouncedSearchTerm, selectedCategory, loadIngredients]);
+  }, [currentPage, debouncedSearchTerm, selectedCategory, sortOption]);
 
-  // Carregar ingredientes quando página mudar
+  // Reset página apenas quando filtros mudarem (não quando página muda)
   useEffect(() => {
-    if (!isInitialLoad.current) {
-      loadIngredients({
-        search: debouncedSearchTerm,
-        category: selectedCategory || undefined,
-        showNotification: false,
-      });
-    }
-  }, [currentPage, loadIngredients, debouncedSearchTerm, selectedCategory]);
-
-  // Detectar mudanças na lista de ingredientes e resetar página se necessário
-  useEffect(() => {
-    const currentTotal = ingredientsList.length;
-
-    // Se houve mudança no total de ingredientes (criação/exclusão)
-    // e não estamos na primeira página, reseta para página 1
-    if (previousTotal.current !== currentTotal && currentPage !== 1) {
+    if (!isInitialLoad.current && shouldResetPage) {
       setCurrentPage(1);
+      setShouldResetPage(false);
     }
-
-    previousTotal.current = currentTotal;
-  }, [ingredientsList.length, currentPage]);
-
-  // Reset página quando filtros mudarem
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedCategory, debouncedSearchTerm, currentTab, sortOption]);
+  }, [shouldResetPage]);
 
   // Handlers
   const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(event.target.value);
-    setCurrentPage(1);
+    setShouldResetPage(true);
   }, []);
 
   const handleCategoryToggle = useCallback(
@@ -178,19 +166,19 @@ export const useIngredientsPage = () => {
         // Seleciona a nova categoria
         setSelectedCategory(categoryName);
       }
-      setCurrentPage(1);
+      setShouldResetPage(true);
     },
     [selectedCategory],
   );
 
   const handleTabChange = useCallback((_event: React.SyntheticEvent, newValue: 'used' | 'all') => {
     setCurrentTab(newValue);
-    setCurrentPage(1);
+    setShouldResetPage(true);
   }, []);
 
   const handleSortChange = useCallback((event: any) => {
     setSortOption(event.target.value);
-    setCurrentPage(1);
+    setShouldResetPage(true);
   }, []);
 
   const handlePageChange = useCallback((_event: React.ChangeEvent<unknown>, value: number) => {
@@ -202,9 +190,11 @@ export const useIngredientsPage = () => {
     loadIngredients({
       search: debouncedSearchTerm,
       category: selectedCategory || undefined,
+      sort: sortOption,
       forceRefresh: true,
+      page: currentPage,
     });
-  }, [loadIngredients, debouncedSearchTerm, selectedCategory]);
+  }, [loadIngredients, debouncedSearchTerm, selectedCategory, sortOption, currentPage]);
 
   // Modal handlers
   const handleOpenModal = useCallback(() => setModalOpen(true), []);
@@ -215,10 +205,12 @@ export const useIngredientsPage = () => {
       loadIngredients({
         search: debouncedSearchTerm,
         category: selectedCategory || undefined,
+        sort: sortOption,
         forceRefresh: false, // Não força refresh para não mostrar loading desnecessário
+        page: currentPage,
       });
     }, 300);
-  }, [loadIngredients, debouncedSearchTerm, selectedCategory]);
+  }, [loadIngredients, debouncedSearchTerm, selectedCategory, sortOption, currentPage]);
   const handleOpenCategoryModal = useCallback(() => setCategoryModalOpen(true), []);
   const handleCloseCategoryModal = useCallback(() => setCategoryModalOpen(false), []);
 

@@ -40,9 +40,11 @@ interface RecipeBasicInfoProps {
   // Dados externos
   userCategories: RecipeCategory[];
   yields: Array<{ _id: string; name: string; description?: string }>;
+  unitMeasures: Array<{ _id: string; name: string; acronym?: string; description?: string }>;
   userUnitsAmountUse: Array<{ _id?: string; id?: string; name: string; description?: string }>;
   isLoadingCategories: boolean;
   loadingYields: boolean;
+  loadingUnitMeasures: boolean;
   loadingUserUnits: boolean;
 
   // Erros
@@ -70,9 +72,11 @@ const RecipeBasicInfo: React.FC<RecipeBasicInfoProps> = ({
   typeWeightRecipe,
   userCategories,
   yields,
+  unitMeasures,
   userUnitsAmountUse,
   isLoadingCategories,
   loadingYields,
+  loadingUnitMeasures,
   loadingUserUnits,
   errors,
   onFieldChange,
@@ -166,41 +170,35 @@ const RecipeBasicInfo: React.FC<RecipeBasicInfoProps> = ({
 
         {/* Linha 3: Tipo de Rendimento e Tempo de Preparação */}
         <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
-          <FormControl
-            fullWidth
-            error={!!errors.typeYield}
-            sx={{ flex: 1 }}
-            data-testid="yield-type-select"
-          >
-            <InputLabel>Tipo de Rendimento *</InputLabel>
-            <Select
-              value={typeYield || ''}
-              onChange={(e) => {
-                const value = e.target.value;
-                onFieldChange('typeYield', value);
-              }}
-              label="Tipo de Rendimento *"
-              disabled={loadingYields}
-              displayEmpty
-            >
-              <MenuItem value="">
-                <em>Selecione um tipo de rendimento</em>
-              </MenuItem>
-              {yields?.map((yieldItem, index) => {
-                const itemValue = yieldItem._id || yieldItem.name || `yield-${index}`;
-                return (
-                  <MenuItem key={itemValue} value={itemValue}>
-                    {yieldItem.name}
-                  </MenuItem>
-                );
-              }) || []}
-            </Select>
-            {errors.typeYield && (
-              <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
-                {errors.typeYield}
-              </Typography>
-            )}
-          </FormControl>
+          <Box sx={{ flex: 1 }}>
+            <FormControl fullWidth error={!!errors.typeYield} data-testid="yield-type-select">
+              <InputLabel>Tipo de Rendimento *</InputLabel>
+              <Select
+                value={typeYield || ''}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  onFieldChange('typeYield', value);
+                }}
+                label="Tipo de Rendimento *"
+                disabled={loadingYields}
+              >
+                <MenuItem value=""></MenuItem>
+                {yields?.map((yieldItem, index) => {
+                  const itemValue = yieldItem._id || yieldItem.name || `yield-${index}`;
+                  return (
+                    <MenuItem key={itemValue} value={itemValue}>
+                      {yieldItem.name}
+                    </MenuItem>
+                  );
+                }) || []}
+              </Select>
+              {errors.typeYield && (
+                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
+                  {errors.typeYield}
+                </Typography>
+              )}
+            </FormControl>
+          </Box>
 
           <Box sx={{ flex: 1 }}>
             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
@@ -254,34 +252,35 @@ const RecipeBasicInfo: React.FC<RecipeBasicInfoProps> = ({
             ⚖️ Informações de Peso (Opcional)
           </Typography>
 
-          <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
-            <Box sx={{ flex: 1 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-                <QuickUnitAmountUseAdd onUnitAdded={() => {}} />
-              </Box>
+          {/* Botão Nova Unidade centralizado no topo */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            <QuickUnitAmountUseAdd onUnitAdded={() => {}} />
+          </Box>
 
-              <TextField
-                label="Peso da Receita"
-                name="weightRecipe"
-                value={weightRecipe}
-                onChange={handleTextChange('weightRecipe')}
-                fullWidth
-                error={!!errors.weightRecipe}
-                helperText={errors.weightRecipe || 'Digite apenas números (ex: 1.5, 250)'}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <ScaleIcon />
-                    </InputAdornment>
-                  ),
-                  inputProps: {
-                    inputMode: 'decimal',
-                    pattern: '[0-9]*[.,]?[0-9]*',
-                  },
-                }}
-                data-testid="weight-recipe-input"
-              />
-            </Box>
+          {/* Campos lado a lado */}
+          <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
+            <TextField
+              label="Peso da Receita"
+              name="weightRecipe"
+              value={weightRecipe}
+              onChange={handleTextChange('weightRecipe')}
+              fullWidth
+              error={!!errors.weightRecipe}
+              helperText={errors.weightRecipe || 'Digite apenas números (ex: 1.5, 250)'}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <ScaleIcon />
+                  </InputAdornment>
+                ),
+                inputProps: {
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]*',
+                },
+              }}
+              sx={{ flex: 1 }}
+              data-testid="weight-recipe-input"
+            />
 
             <FormControl
               fullWidth
@@ -297,15 +296,15 @@ const RecipeBasicInfo: React.FC<RecipeBasicInfoProps> = ({
                   onFieldChange('typeWeightRecipe', value);
                 }}
                 label="Unidade de Peso"
-                disabled={loadingUserUnits}
-                displayEmpty
+                disabled={loadingUnitMeasures}
               >
                 <MenuItem value=""></MenuItem>
-                {userUnitsAmountUse?.map((unit, index) => {
-                  const itemValue = unit._id || unit.id || unit.name || `unit-${index}`;
+                {unitMeasures?.map((unit, index) => {
+                  const itemKey = unit._id || `unit-measure-${index}`;
+                  const itemValue = unit.name; // Usa o nome da unidade de medida
                   return (
-                    <MenuItem key={itemValue} value={itemValue}>
-                      {unit.name}
+                    <MenuItem key={itemKey} value={itemValue}>
+                      {unit.name} {unit.acronym && `(${unit.acronym})`}
                     </MenuItem>
                   );
                 }) || []}

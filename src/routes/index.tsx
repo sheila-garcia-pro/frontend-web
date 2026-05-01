@@ -24,10 +24,14 @@ import IngredientsPage from '@pages/Ingredients';
 import RecipesPage from '@pages/Recipes';
 import RecipeCreatePage from '@pages/Recipes/Create/index';
 import RecipeDetailsPage from '@pages/Recipes/RecipeDetails';
+import PublicRecipesPage from '@pages/Recipes/PublicRecipes';
 import SuppliersPage from '@pages/Suppliers';
+import CouponsPage from '@pages/Coupons';
 import ProfilePage from '@pages/Profile';
 import MenuPage from '@pages/Menu';
 import MenuDetailsPage from '@pages/Menu/MenuDetails';
+import PlansPage from '@pages/Plans';
+import SupportPage from '@pages/Support';
 
 // Componente para rotas de autenticação - acessíveis quando não autenticado
 const AuthRoute: React.FC<{ element: React.ReactElement }> = ({ element }) => {
@@ -118,6 +122,12 @@ const AppRoutesContent: React.FC = () => {
         {/* Perfil - acesso básico */}
         <Route path="profile" element={<ProfilePage />} />
 
+        {/* Planos - acesso básico */}
+        <Route path="planos" element={<PlansPage />} />
+
+        {/* Suporte - acesso básico */}
+        <Route path="suporte" element={<SupportPage />} />
+
         <Route
           path="ingredients"
           element={
@@ -136,9 +146,17 @@ const AppRoutesContent: React.FC = () => {
           }
         />
         <Route
+          path="receitas-publicas"
+          element={
+            <PermissionRoute required={['get_recipe', 'get_user_recipe']} any={true}>
+              <PublicRecipesPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
           path="recipes/create"
           element={
-            <PermissionRoute required={['create_recipe']}>
+            <PermissionRoute required={['create_recipe', 'create_user_recipe']} any={true}>
               <RecipeCreatePage />
             </PermissionRoute>
           }
@@ -169,16 +187,22 @@ const AppRoutesContent: React.FC = () => {
           }
         />
 
-        {/* Fornecedores - com permissões específicas */}
+        {/* Fornecedores - acesso básico (será protegido com permissões quando conectar à API) */}
+        <Route path="suppliers" element={<SuppliersPage />} />
+
+        {/* Cupons - protegido por permissão */}
         <Route
-          path="suppliers"
+          path="coupons"
           element={
-            <PermissionRoute required={['get_suppliers']}>
-              <SuppliersPage />
+            <PermissionRoute required={['get_coupons']} any={true}>
+              <CouponsPage />
             </PermissionRoute>
           }
         />
       </Route>
+
+      {/* Rotas de compatibilidade */}
+      <Route path="/not-authorized" element={<Navigate to="/403" replace />} />
 
       {/* Rota 404 - Protegida por padrão */}
       <Route

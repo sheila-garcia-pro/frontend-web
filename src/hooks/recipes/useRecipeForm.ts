@@ -6,6 +6,11 @@ import { RecipeIngredient } from '../../types/recipeIngredients';
 import { addNotification } from '../../store/slices/uiSlice';
 import { createRecipe } from '../../services/api/recipes';
 import { syncIngredientsWithAPI } from '../../utils/ingredientSync';
+import {
+  convertRecipeIngredientsForAPI,
+  validateRecipeIngredients,
+  formatIngredientsForLog,
+} from '../../utils/recipeIngredientConversion';
 
 /**
  * Hook para gerenciar o estado do formulário de criação de receita
@@ -243,14 +248,23 @@ export const useRecipeForm = () => {
       // Sincronizar ingredientes com API
       await syncIngredientsWithAPI(recipeIngredients);
 
+      // Validar ingredientes antes da conversão
+      const ingredientValidation = validateRecipeIngredients(recipeIngredients);
+      if (!ingredientValidation.isValid) {
+        console.error('Erros na validação dos ingredientes:', ingredientValidation.errors);
+        throw new Error(`Ingredientes inválidos: ${ingredientValidation.errors.join(', ')}`);
+      }
+
+      // Converter ingredientes com conversão automática de unidades
+      const convertedIngredients = convertRecipeIngredientsForAPI(recipeIngredients);
+
+      // Log para debug
+      console.log('📊 ' + formatIngredientsForLog(recipeIngredients, convertedIngredients));
+
       // Preparar dados da receita
       const recipeData: CreateRecipeParams = {
         ...formData,
-        ingredients: recipeIngredients.map((item) => ({
-          idIngredient: item.ingredient._id,
-          quantityIngredientRecipe: item.quantity.toString(),
-          unitAmountUseIngredient: item.unitMeasure,
-        })),
+        ingredients: convertedIngredients,
         modePreparation: recipeSteps,
       };
 

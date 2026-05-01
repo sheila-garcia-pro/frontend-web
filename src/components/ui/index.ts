@@ -27,3 +27,13 @@ export { default as IngredientSkeleton } from './SkeletonLoading/IngredientSkele
 export { default as Navbar } from './Navbar';
 export { default as Sidebar } from './Sidebar';
 export { default as Footer } from './Footer';
+
+// Componentes de Fornecedores
+export { SupplierModal } from './SupplierModal';
+export { SupplierDetailsModal } from './SupplierDetailsModal';
+export { IngredientSuppliersModal } from './IngredientSuppliersModal';
+
+// Componentes de Cupons
+export { CouponModal } from './CouponModal';
+export { CouponDetailsModal } from './CouponDetailsModal';
+export { SupplierCouponsModal } from './SupplierCouponsModal';

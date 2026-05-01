@@ -29,6 +29,12 @@ export type Permission =
   | 'update_supplier'
   | 'delete_supplier'
 
+  // Cupons
+  | 'get_coupons'
+  | 'create_coupon'
+  | 'update_coupon'
+  | 'delete_coupon'
+
   // Ingredientes do usuário (scoped)
   | 'create_user_ingredient'
   | 'get_user_ingredient'

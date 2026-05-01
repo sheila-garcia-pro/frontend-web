@@ -17,7 +17,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/v1': {
-        target: 'https://sg-api.squareweb.app',
+        target: 'https://sg-dev-api.squareweb.app',
         changeOrigin: true,
         secure: true,
         configure: (proxy, _options) => {

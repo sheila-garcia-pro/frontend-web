@@ -13,9 +13,13 @@
     "dashboard": "Dashboard",
     "home": "Home",
     "recipes": "Recipes",
+    "publicRecipes": "Public Recipes",
     "ingredients": "Ingredients",
     "menu": "Menus",
+    "plans": "Plans",
+    "support": "Support",
     "suppliers": "Suppliers",
+    "coupons": "Coupons",
     "profile": "Profile",
     "close": "Close menu"
   },
@@ -24,6 +28,7 @@
     "recipes": "Recipes",
     "ingredients": "Ingredients",
     "suppliers": "Suppliers",
+    "coupons": "Coupons",
     "profile": "Profile",
     "logout": "Logout"
   },
