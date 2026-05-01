@@ -7,25 +7,12 @@ import {
   Card,
   CardContent,
   Grid,
-  Chip,
   IconButton,
   Tooltip,
-  Divider,
   Skeleton,
-  Button,
   CircularProgress,
 } from '@mui/material';
-import {
-  ArrowBack,
-  Restaurant,
-  AccessTime,
-  Scale,
-  People,
-  Bookmark,
-  Share,
-  Edit,
-  Delete,
-} from '@mui/icons-material';
+import { ArrowBack, Share, Edit, Delete, InfoOutlined } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { addNotification } from '../../../store/slices/uiSlice';
 import { Recipe } from '../../../types/recipes';
@@ -51,7 +38,7 @@ const RecipeDetailsPage: FC = () => {
   const dispatch = useDispatch();
 
   // Hook de responsividade
-  const { isMobile, isTablet, isDesktop } = useDevice();
+  const { isMobile, isTablet } = useDevice();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -519,421 +506,240 @@ const RecipeDetailsPage: FC = () => {
             </Tooltip>
           )}
         </Box>
-        {/* Conteúdo principal - Card único */}
+        {/* Card principal - Receita */}
         <Card
           sx={{
             borderRadius: { xs: 2, sm: 3 },
-            boxShadow: { xs: 2, sm: 3 },
-            overflow: 'hidden',
+            boxShadow: { xs: 1, sm: 2 },
+            border: '1px solid',
+            borderColor: 'divider',
             mb: { xs: 2, sm: 3 },
             width: '100%',
             maxWidth: '100%',
           }}
         >
-          <CardContent
-            sx={{
-              p: { xs: 1, sm: 2, md: 3 },
-              '&:last-child': { pb: { xs: 1, sm: 2, md: 3 } },
-            }}
-          >
-            {/* Avatar circular no topo */}
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
             <Box
               sx={{
                 display: 'flex',
-                justifyContent: 'center',
-                pt: { xs: 3, sm: 4 },
-                pb: { xs: 1.5, sm: 2 },
-                bgcolor: 'grey.50',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 2,
+                mb: { xs: 2, sm: 3 },
+                flexWrap: 'wrap',
               }}
             >
-              <Box
-                sx={{
-                  width: { xs: 80, sm: 100, md: 120 },
-                  height: { xs: 80, sm: 100, md: 120 },
-                  borderRadius: '50%',
-                  border: '4px solid',
-                  borderColor: 'primary.main',
-                  boxShadow: { xs: 1, sm: 2 },
-                  overflow: 'hidden',
-                }}
-              >
-                <RecipeAvatar
-                  image={recipe.image}
-                  name={recipe.name}
-                  size={isMobile ? 80 : isTablet ? 100 : 120}
-                  borderRadius={50}
-                />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography
+                  variant={isMobile ? 'subtitle1' : 'h6'}
+                  sx={{ fontWeight: 600, color: 'text.primary' }}
+                >
+                  Receita
+                </Typography>
+                <Tooltip title="Informacoes da receita">
+                  <InfoOutlined fontSize="small" sx={{ color: 'text.secondary' }} />
+                </Tooltip>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Tooltip title="Compartilhar">
+                  <IconButton
+                    onClick={handleShare}
+                    sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
+                  >
+                    <Share fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Editar">
+                  <IconButton
+                    onClick={handleEditClick}
+                    sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
+                  >
+                    <Edit fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Excluir">
+                  <IconButton
+                    onClick={handleDeleteClick}
+                    color="error"
+                    sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
+                  >
+                    <Delete fontSize="small" />
+                  </IconButton>
+                </Tooltip>
               </Box>
             </Box>
 
-            {/* Conteúdo principal */}
-            <Box sx={{ p: { xs: 2, sm: 3 }, pt: { xs: 1, sm: 1 } }}>
-              {/* Título e ações */}
-              <Box sx={{ position: 'relative', mb: { xs: 1.5, sm: 2 } }}>
-                {/* Botões de ação no canto superior direito */}
+            <Grid container spacing={{ xs: 2, sm: 3 }}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Box
                   sx={{
-                    position: 'absolute',
-                    top: { xs: -12, sm: -16 },
-                    right: { xs: -12, sm: -16 },
                     display: 'flex',
-                    flexDirection: isMobile ? 'row' : 'column',
-                    gap: { xs: 0.5, sm: 1 },
-                    zIndex: 1,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                    minHeight: { xs: 180, sm: 220 },
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    bgcolor: 'background.default',
+                    p: { xs: 2, sm: 3 },
                   }}
                 >
-                  <Tooltip title="Editar">
-                    <IconButton
-                      onClick={handleEditClick}
-                      color="primary"
-                      size={isMobile ? 'small' : 'medium'}
-                      sx={{
-                        bgcolor: 'background.paper',
-                        boxShadow: 1,
-                        minWidth: { xs: 36, sm: 40 },
-                        minHeight: { xs: 36, sm: 40 },
-                        '&:hover': {
-                          boxShadow: 2,
-                          transform: 'scale(1.05)',
-                        },
-                        transition: 'all 0.2s ease-in-out',
-                      }}
-                    >
-                      <Edit sx={{ fontSize: { xs: 18, sm: 20 } }} />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Excluir">
-                    <IconButton
-                      onClick={handleDeleteClick}
-                      color="error"
-                      size={isMobile ? 'small' : 'medium'}
-                      sx={{
-                        bgcolor: 'background.paper',
-                        boxShadow: 1,
-                        minWidth: { xs: 36, sm: 40 },
-                        minHeight: { xs: 36, sm: 40 },
-                        '&:hover': {
-                          boxShadow: 2,
-                          transform: 'scale(1.05)',
-                        },
-                        transition: 'all 0.2s ease-in-out',
-                      }}
-                    >
-                      <Delete sx={{ fontSize: { xs: 18, sm: 20 } }} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-
-                {/* Título centralizado */}
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography
-                    variant={isMobile ? 'h5' : isTablet ? 'h4' : 'h4'}
-                    component="h2"
-                    gutterBottom
+                  <Box
                     sx={{
-                      fontWeight: 600,
-                      color: 'primary.main',
-                      mb: { xs: 2, sm: 3 },
-                      fontSize: {
-                        xs: '1.5rem',
-                        sm: '1.75rem',
-                        md: '2rem',
-                      },
-                      lineHeight: 1.2,
-                      wordBreak: 'break-word',
+                      width: { xs: 120, sm: 140, md: 160 },
+                      height: { xs: 120, sm: 140, md: 160 },
+                      borderRadius: '50%',
+                      border: '2px solid',
+                      borderColor: 'divider',
+                      bgcolor: 'background.paper',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      overflow: 'hidden',
                     }}
                   >
-                    {recipe.name}
-                  </Typography>
+                    <RecipeAvatar
+                      image={recipe.image}
+                      name={recipe.name}
+                      size={isMobile ? 120 : isTablet ? 140 : 160}
+                      borderRadius={50}
+                    />
+                  </Box>
                 </Box>
-              </Box>
+              </Grid>
 
-              {/* Categoria e chips informativos centralizados */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: { xs: 0.5, sm: 1 },
-                  mb: { xs: 2, sm: 3 },
-                  justifyContent: 'center',
-                  px: { xs: 1, sm: 0 },
-                  width: '100%',
-                  maxWidth: '100%',
-                  overflow: 'hidden',
-                }}
-              >
-                <Chip
-                  icon={<Restaurant sx={{ fontSize: { xs: 16, sm: 18 } }} />}
-                  label={recipe.category}
-                  color="primary"
-                  variant="filled"
-                  size={isMobile ? 'small' : 'medium'}
-                  sx={{
-                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                    height: { xs: 28, sm: 32 },
-                    maxWidth: { xs: '30%', sm: 'none' },
-                  }}
-                />
-                <Chip
-                  icon={<AccessTime sx={{ fontSize: { xs: 16, sm: 18 } }} />}
-                  label={recipe.preparationTime}
-                  color="secondary"
-                  variant="outlined"
-                  size={isMobile ? 'small' : 'medium'}
-                  sx={{
-                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                    height: { xs: 28, sm: 32 },
-                    maxWidth: { xs: '30%', sm: 'none' },
-                  }}
-                />
-                <Chip
-                  icon={<Scale sx={{ fontSize: { xs: 16, sm: 18 } }} />}
-                  label={`${recipe.weightRecipe} ${recipe.typeWeightRecipe}`}
-                  color="info"
-                  variant="outlined"
-                  size={isMobile ? 'small' : 'medium'}
-                  sx={{
-                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                    height: { xs: 28, sm: 32 },
-                    maxWidth: { xs: '30%', sm: 'none' },
-                  }}
-                />
-                <Chip
-                  icon={<People sx={{ fontSize: { xs: 16, sm: 18 } }} />}
-                  label={`${recipe.yieldRecipe} ${recipe.typeYield}`}
-                  color="success"
-                  variant="outlined"
-                  size={isMobile ? 'small' : 'medium'}
-                  sx={{
-                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                    height: { xs: 28, sm: 32 },
-                    maxWidth: { xs: '30%', sm: 'none' },
-                  }}
-                />
-              </Box>
-
-              <Divider sx={{ my: { xs: 2, sm: 3 } }} />
-
-              {/* Layout responsivo para o resto do conteúdo */}
-              <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ width: '100%', overflow: 'hidden' }}>
-                {/* Coluna da esquerda - Descrição */}
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Box sx={{ mb: { xs: 2, sm: 3 } }}>
-                    <Typography
-                      variant={isMobile ? 'subtitle1' : 'h6'}
-                      gutterBottom
-                      sx={{
-                        fontWeight: 600,
-                        mb: { xs: 1.5, sm: 2 },
-                        fontSize: { xs: '1.1rem', sm: '1.25rem' },
-                      }}
-                    >
-                      Descrição
+              <Grid size={{ xs: 12, md: 8 }}>
+                <Grid container spacing={{ xs: 2, sm: 2.5 }}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Nome da receita
                     </Typography>
                     <Box
                       sx={{
-                        maxHeight: { xs: 120, sm: 150, md: 200 },
-                        overflow: 'auto',
-                        pr: 1,
+                        mt: 0.5,
+                        px: 2,
+                        py: 1.5,
                         border: '1px solid',
                         borderColor: 'divider',
-                        borderRadius: { xs: 1, sm: 1 },
-                        p: { xs: 1.5, sm: 2 },
+                        borderRadius: 2,
                         bgcolor: 'background.paper',
-                        '&::-webkit-scrollbar': {
-                          width: { xs: '4px', sm: '6px' },
-                        },
-                        '&::-webkit-scrollbar-track': {
-                          background: 'rgba(0,0,0,0.1)',
-                          borderRadius: '3px',
-                        },
-                        '&::-webkit-scrollbar-thumb': {
-                          background: 'rgba(0,0,0,0.3)',
-                          borderRadius: '3px',
-                          '&:hover': {
-                            background: 'rgba(0,0,0,0.5)',
-                          },
-                        },
                       }}
                     >
-                      <Typography
-                        variant={isMobile ? 'body2' : 'body1'}
-                        color="text.secondary"
-                        sx={{
-                          lineHeight: { xs: 1.5, sm: 1.6 },
-                          textAlign: 'justify',
-                          wordWrap: 'break-word',
-                          wordBreak: 'break-word',
-                          overflowWrap: 'break-word',
-                          hyphens: 'auto',
-                          fontSize: { xs: '0.875rem', sm: '1rem' },
-                        }}
-                      >
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                        {recipe.name}
+                      </Typography>
+                    </Box>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Categoria
+                    </Typography>
+                    <Box
+                      sx={{
+                        mt: 0.5,
+                        px: 2,
+                        py: 1.5,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 2,
+                        bgcolor: 'background.paper',
+                      }}
+                    >
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                        {recipe.category}
+                      </Typography>
+                    </Box>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Rendimento
+                    </Typography>
+                    <Box
+                      sx={{
+                        mt: 0.5,
+                        px: 2,
+                        py: 1.5,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 2,
+                        bgcolor: 'background.paper',
+                      }}
+                    >
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                        {recipe.yieldRecipe} {recipe.typeYield}
+                      </Typography>
+                    </Box>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Peso da receita
+                    </Typography>
+                    <Box
+                      sx={{
+                        mt: 0.5,
+                        px: 2,
+                        py: 1.5,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 2,
+                        bgcolor: 'background.paper',
+                      }}
+                    >
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                        {recipe.weightRecipe} {recipe.typeWeightRecipe}
+                      </Typography>
+                    </Box>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Tempo de preparo
+                    </Typography>
+                    <Box
+                      sx={{
+                        mt: 0.5,
+                        px: 2,
+                        py: 1.5,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 2,
+                        bgcolor: 'background.paper',
+                      }}
+                    >
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                        {recipe.preparationTime}
+                      </Typography>
+                    </Box>
+                  </Grid>
+
+                  <Grid size={{ xs: 12 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Descricao
+                    </Typography>
+                    <Box
+                      sx={{
+                        mt: 0.5,
+                        px: 2,
+                        py: 1.5,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 2,
+                        bgcolor: 'background.paper',
+                        minHeight: { xs: 72, sm: 96 },
+                      }}
+                    >
+                      <Typography variant="body2" color="text.secondary">
                         {recipe.descripition}
                       </Typography>
                     </Box>
-                  </Box>
-                </Grid>
-
-                {/* Coluna da direita - Informações nutricionais */}
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Box sx={{ mb: { xs: 2, sm: 3 } }}>
-                    <Typography
-                      variant={isMobile ? 'subtitle1' : 'h6'}
-                      gutterBottom
-                      sx={{
-                        fontWeight: 600,
-                        mb: { xs: 1.5, sm: 2 },
-                        fontSize: { xs: '1.1rem', sm: '1.25rem' },
-                      }}
-                    >
-                      Informações Nutricionais
-                    </Typography>
-                    <Grid
-                      container
-                      spacing={{ xs: 1.5, sm: 2 }}
-                      sx={{ width: '100%', overflow: 'hidden' }}
-                    >
-                      <Grid size={{ xs: 6 }}>
-                        <Box
-                          sx={{
-                            p: { xs: 1.5, sm: 2 },
-                            bgcolor: 'success.light',
-                            borderRadius: { xs: 1.5, sm: 2 },
-                            textAlign: 'center',
-                            border: '1px solid',
-                            borderColor: 'success.main',
-                            minHeight: { xs: 70, sm: 80 },
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <People
-                            sx={{
-                              fontSize: { xs: 24, sm: 28, md: 32 },
-                              color: 'success.dark',
-                              mb: 0.5,
-                            }}
-                          />
-                          <Typography
-                            variant={isMobile ? 'subtitle1' : 'h6'}
-                            color="success.dark"
-                            sx={{
-                              fontWeight: 700,
-                              fontSize: { xs: '1rem', sm: '1.125rem' },
-                            }}
-                          >
-                            {recipe.yieldRecipe}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            color="success.dark"
-                            sx={{
-                              fontWeight: 500,
-                              fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                            }}
-                          >
-                            {recipe.typeYield}
-                          </Typography>
-                        </Box>
-                      </Grid>
-
-                      <Grid size={{ xs: 6 }}>
-                        <Box
-                          sx={{
-                            p: { xs: 1.5, sm: 2 },
-                            bgcolor: 'secondary.light',
-                            borderRadius: { xs: 1.5, sm: 2 },
-                            textAlign: 'center',
-                            border: '1px solid',
-                            borderColor: 'secondary.main',
-                            minHeight: { xs: 70, sm: 80 },
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <Scale
-                            sx={{
-                              fontSize: { xs: 24, sm: 28, md: 32 },
-                              color: 'secondary.dark',
-                              mb: 0.5,
-                            }}
-                          />
-                          <Typography
-                            variant={isMobile ? 'subtitle1' : 'h6'}
-                            color="secondary.dark"
-                            sx={{
-                              fontWeight: 700,
-                              fontSize: { xs: '1rem', sm: '1.125rem' },
-                            }}
-                          >
-                            {recipe.weightRecipe}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            color="secondary.dark"
-                            sx={{
-                              fontWeight: 500,
-                              fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                            }}
-                          >
-                            {recipe.typeWeightRecipe}
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </Box>
+                  </Grid>
                 </Grid>
               </Grid>
-
-              {/* Botões de ação principais */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  gap: { xs: 1.5, sm: 2 },
-                  mt: { xs: 2, sm: 3 },
-                  flexDirection: { xs: 'column', sm: 'row' },
-                  width: '100%',
-                  maxWidth: '100%',
-                  px: { xs: 1, sm: 0 },
-                }}
-              >
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<Edit sx={{ fontSize: { xs: 18, sm: 20 } }} />}
-                  onClick={handleEditClick}
-                  size={isMobile ? 'large' : 'medium'}
-                  fullWidth={isMobile}
-                  sx={{
-                    minHeight: { xs: 48, sm: 42 },
-                    fontSize: { xs: '1rem', sm: '0.875rem' },
-                    fontWeight: 600,
-                  }}
-                >
-                  {isMobile ? 'Editar' : 'Editar Receita'}
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  startIcon={<Delete sx={{ fontSize: { xs: 18, sm: 20 } }} />}
-                  onClick={handleDeleteClick}
-                  size={isMobile ? 'large' : 'medium'}
-                  fullWidth={isMobile}
-                  sx={{
-                    minHeight: { xs: 48, sm: 42 },
-                    fontSize: { xs: '1rem', sm: '0.875rem' },
-                    fontWeight: 600,
-                  }}
-                >
-                  Excluir
-                </Button>
-              </Box>
-            </Box>
+            </Grid>
           </CardContent>
         </Card>
 
@@ -995,14 +801,21 @@ const RecipeDetailsPage: FC = () => {
               overflow: 'hidden',
             }}
           >
-            <Card sx={{ borderRadius: { xs: 2, sm: 3 } }}>
+            <Card
+              sx={{
+                borderRadius: { xs: 2, sm: 3 },
+                boxShadow: { xs: 1, sm: 2 },
+                border: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
               <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Typography
                   variant={isMobile ? 'subtitle1' : 'h6'}
                   gutterBottom
                   sx={{
                     fontWeight: 600,
-                    color: 'primary.main',
+                    color: 'text.primary',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 1,
@@ -1010,7 +823,7 @@ const RecipeDetailsPage: FC = () => {
                     fontSize: { xs: '1.1rem', sm: '1.25rem' },
                   }}
                 >
-                  🍎 Rótulo Nutricional
+                  Rotulo Nutricional
                 </Typography>
                 <Typography
                   variant="body2"

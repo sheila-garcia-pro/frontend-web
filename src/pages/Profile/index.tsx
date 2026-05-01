@@ -5,18 +5,21 @@ import {
   TextField,
   Button,
   Container,
-  Paper,
+  Card,
+  CardContent,
+  Divider,
   Avatar,
   IconButton,
   Tooltip,
   CircularProgress,
+  Chip,
 } from '@mui/material';
-import { Camera, Delete } from '@mui/icons-material';
+import { Camera, Delete, InfoOutlined } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { RootState } from '@store/index';
 import useNotification from '@hooks/useNotification';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme, alpha } from '@mui/material/styles';
 import { updateUserRequest } from '@store/slices/authSlice';
 import imageUploadService from '@services/imageUploadService';
 
@@ -25,8 +28,7 @@ const ProfilePage: React.FC = () => {
   const user = useSelector((state: RootState) => state.auth.user);
   const notification = useNotification();
   const dispatch = useDispatch();
-  const { mode } = useTheme();
-  const [isEditing, setIsEditing] = useState(false);
+  const theme = useTheme();
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [removingImage, setRemovingImage] = useState(false);
@@ -279,8 +281,6 @@ const ProfilePage: React.FC = () => {
       } else {
         notification.showSuccess('Perfil atualizado com sucesso!');
       }
-
-      setIsEditing(false);
       setIsChangingPassword(false);
       setPasswordData({ password: '', newPassword: '', confirmPassword: '' });
     } catch (error) {
@@ -367,32 +367,53 @@ const ProfilePage: React.FC = () => {
     return (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
   }
 
+  const stats = [
+    { label: 'Ingredientes', value: 0 },
+    { label: 'Receitas', value: 0 },
+    { label: 'Cardapios', value: 0 },
+  ];
+
+  const planLabel = 'Plano: Gratis';
+
+  const handleChoosePlan = () => {
+    notification.showInfo('Funcionalidade de planos em desenvolvimento.');
+  };
+
   return (
-    <Container maxWidth="md">
-      <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
-        {' '}
-        <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4 }}>
-          {t('profile.title')}
-        </Typography>
-        <Box
+    <Container maxWidth="lg" sx={{ py: { xs: 2, md: 3 } }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: { xs: 2.5, md: 3 },
+          gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 320px) minmax(0, 1fr)' },
+        }}
+      >
+        <Card
           sx={{
-            display: 'grid',
-            gap: 4,
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 2fr' },
+            borderRadius: 2,
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+            backgroundColor: theme.palette.background.paper,
+            boxShadow: theme.shadows[1],
           }}
         >
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <CardContent
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 2,
+            }}
+          >
             <Box sx={{ position: 'relative' }}>
               <Avatar
                 src={formData.image}
                 sx={{
                   width: 120,
                   height: 120,
-                  mb: 2,
-                  bgcolor: mode === 'light' ? '#3A4534' : '#E8EDAA',
-                  color: mode === 'light' ? '#F5F3E7' : '#23291C',
+                  bgcolor: alpha(theme.palette.primary.main, 0.15),
+                  color: theme.palette.primary.dark,
                   fontSize: '2rem',
-                  fontWeight: 'bold',
+                  fontWeight: 700,
                 }}
               >
                 {!formData.image && user?.name ? getInitials(user.name) : '?'}
@@ -403,98 +424,158 @@ const ProfilePage: React.FC = () => {
                 ref={fileInputRef}
                 accept="image/*"
                 onChange={handleFileChange}
-              />{' '}
-              {isEditing && (
-                <Box sx={{ position: 'absolute', right: -8, bottom: 16, display: 'flex', gap: 1 }}>
-                  {formData.image && (
-                    <Tooltip title={t('profile.actions.removePhoto')}>
-                      <IconButton
-                        sx={{
-                          bgcolor: 'error.main',
-                          color: 'white',
-                          boxShadow: 1,
-                          '&:hover': { bgcolor: 'error.dark' },
-                        }}
-                        onClick={handleRemoveImage}
-                        disabled={uploading || removingImage}
-                      >
-                        {removingImage ? <CircularProgress size={20} /> : <Delete />}
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                  <Tooltip title={t('profile.actions.changePhoto')}>
+              />
+              <Box sx={{ position: 'absolute', right: -8, bottom: 12, display: 'flex', gap: 1 }}>
+                {formData.image && (
+                  <Tooltip title={t('profile.actions.removePhoto')}>
                     <IconButton
                       sx={{
-                        bgcolor: 'background.paper',
+                        bgcolor: theme.palette.error.main,
+                        color: theme.palette.common.white,
                         boxShadow: 1,
-                        '&:hover': { bgcolor: 'primary.main', color: 'white' },
+                        '&:hover': { bgcolor: theme.palette.error.dark },
                       }}
-                      onClick={handleImageClick}
+                      onClick={handleRemoveImage}
                       disabled={uploading || removingImage}
                     >
-                      {uploading ? <CircularProgress size={20} /> : <Camera />}
+                      {removingImage ? <CircularProgress size={20} /> : <Delete />}
                     </IconButton>
                   </Tooltip>
-                </Box>
-              )}
-            </Box>{' '}
-          </Box>
+                )}
+                <Tooltip title={t('profile.actions.changePhoto')}>
+                  <IconButton
+                    sx={{
+                      bgcolor: theme.palette.background.paper,
+                      boxShadow: 1,
+                      '&:hover': {
+                        bgcolor: theme.palette.primary.main,
+                        color: theme.palette.common.white,
+                      },
+                    }}
+                    onClick={handleImageClick}
+                    disabled={uploading || removingImage}
+                  >
+                    {uploading ? <CircularProgress size={20} /> : <Camera />}
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </Box>
 
-          <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {' '}
-            <TextField
-              fullWidth
-              label={t('profile.fields.fullName')}
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-              error={!!formErrors.name}
-              helperText={formErrors.name}
-            />{' '}
-            <TextField
-              fullWidth
-              label={t('profile.fields.email')}
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-              error={!!formErrors.email}
-              helperText={formErrors.email}
-            />
-            <TextField
-              fullWidth
-              label={t('profile.fields.phone')}
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-              error={!!formErrors.phone}
-              helperText={formErrors.phone}
-              placeholder={t('profile.fields.phonePlaceholder')}
-              inputProps={{
-                maxLength: 15, // Máximo para formato (99) 99999-9999
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                {user?.name || t('profile.fields.fullName')}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {user?.email || t('profile.fields.email')}
+              </Typography>
+            </Box>
+
+            <Chip
+              label={planLabel}
+              size="small"
+              sx={{
+                bgcolor: alpha(theme.palette.primary.main, 0.12),
+                color: theme.palette.primary.main,
+                fontWeight: 600,
               }}
             />
-            <TextField
-              fullWidth
-              label="Data de Nascimento"
-              name="dateOfBirth"
-              value={formData.dateOfBirth}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-              error={!!formErrors.dateOfBirth}
-              helperText={formErrors.dateOfBirth}
-              placeholder="DD/MM/YYYY"
-              inputProps={{
-                maxLength: 10, // Máximo para formato DD/MM/YYYY
-              }}
-            />
-            {isEditing && isChangingPassword ? (
-              <>
-                {' '}
+
+            <Divider flexItem sx={{ my: 1 }} />
+
+            <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              {stats.map((stat) => (
+                <Box
+                  key={stat.label}
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    {stat.label}
+                  </Typography>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                    {stat.value}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Card
+          sx={{
+            borderRadius: 2,
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+            backgroundColor: theme.palette.background.paper,
+            boxShadow: theme.shadows[1],
+          }}
+        >
+          <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="h6">Detalhes Pessoais</Typography>
+              <Tooltip title="Informacoes do seu perfil">
+                <InfoOutlined fontSize="small" color="action" />
+              </Tooltip>
+            </Box>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label={t('profile.fields.fullName')}
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                error={!!formErrors.name}
+                helperText={formErrors.name}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label={t('profile.fields.email')}
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                error={!!formErrors.email}
+                helperText={formErrors.email}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label={t('profile.fields.phone')}
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                error={!!formErrors.phone}
+                helperText={formErrors.phone}
+                placeholder={t('profile.fields.phonePlaceholder')}
+                inputProps={{
+                  maxLength: 15,
+                }}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label="Data de Nascimento"
+                name="dateOfBirth"
+                value={formData.dateOfBirth}
+                onChange={handleInputChange}
+                error={!!formErrors.dateOfBirth}
+                helperText={formErrors.dateOfBirth}
+                placeholder="DD/MM/YYYY"
+                inputProps={{
+                  maxLength: 10,
+                }}
+              />
+            </Box>
+
+            {isChangingPassword ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <TextField
                   fullWidth
+                  size="small"
                   label={t('profile.fields.currentPassword')}
                   name="password"
                   type="password"
@@ -505,6 +586,7 @@ const ProfilePage: React.FC = () => {
                 />
                 <TextField
                   fullWidth
+                  size="small"
                   label={t('profile.fields.newPassword')}
                   name="newPassword"
                   type="password"
@@ -515,6 +597,7 @@ const ProfilePage: React.FC = () => {
                 />
                 <TextField
                   fullWidth
+                  size="small"
                   label={t('profile.fields.confirmPassword')}
                   name="confirmPassword"
                   type="password"
@@ -523,49 +606,36 @@ const ProfilePage: React.FC = () => {
                   error={!!formErrors.confirmPassword}
                   helperText={formErrors.confirmPassword}
                 />
-              </>
-            ) : null}{' '}
-            {!isEditing ? (
-              <Button variant="contained" onClick={() => setIsEditing(true)} sx={{ mt: 2 }}>
-                {t('profile.actions.edit')}
-              </Button>
-            ) : (
-              <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap' }}>
-                <Button
-                  variant="outlined"
-                  onClick={() => {
-                    setIsEditing(false);
-                    setIsChangingPassword(false);
-                    setPasswordData({ password: '', newPassword: '', confirmPassword: '' });
-                    setFormData({
-                      name: user?.name || '',
-                      email: user?.email || '',
-                      phone: user?.phone ? applyPhoneMask(user.phone) : '',
-                      image: user?.image && user.image.trim() !== '' ? user.image : '',
-                      dateOfBirth: user?.dateOfBirth || '',
-                    });
-                  }}
-                  sx={{ flex: 1 }}
-                >
-                  {t('profile.actions.cancel')}
-                </Button>{' '}
-                {!isChangingPassword && (
-                  <Button
-                    variant="outlined"
-                    onClick={() => setIsChangingPassword(true)}
-                    sx={{ flex: 1 }}
-                  >
-                    {t('profile.actions.changePassword')}
-                  </Button>
-                )}
-                <Button variant="contained" onClick={handleSave} sx={{ flex: 1 }}>
-                  {t('profile.actions.save')}
-                </Button>
               </Box>
+            ) : (
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => setIsChangingPassword(true)}
+                sx={{ alignSelf: 'flex-start' }}
+              >
+                {t('profile.actions.changePassword')}
+              </Button>
             )}
-          </Box>
-        </Box>
-      </Paper>
+
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 2,
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'stretch', sm: 'center' },
+              }}
+            >
+              <Button variant="contained" onClick={handleSave} fullWidth>
+                Salvar Alteracoes
+              </Button>
+              <Button variant="outlined" onClick={handleChoosePlan} fullWidth>
+                Escolher plano
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
     </Container>
   );
 };

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   TextField,
@@ -10,24 +9,27 @@ import {
   InputAdornment,
   IconButton,
   CircularProgress,
+  Stack,
+  Divider,
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
+  Instagram as InstagramIcon,
+  YouTube as YouTubeIcon,
+  MusicNote as MusicNoteIcon,
+  WhatsApp as WhatsAppIcon,
 } from '@mui/icons-material';
-import { addNotification } from '@store/slices/uiSlice';
 import { useAuth } from '@hooks/useAuth';
 import useNotification from '@hooks/useNotification';
-import { RootState } from '@store/index';
+import SocialLinks, { SocialLinkItem } from '@components/common/SocialLinks';
 
 // Componente da página de login
 const LoginPage: React.FC = () => {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
   const { login, isAuthenticated, loading, error } = useAuth();
-  const { isAuthenticated: reduxIsAuthenticated } = useSelector((state: RootState) => state.auth);
   const notification = useNotification();
 
   // Estado do formulário
@@ -142,101 +144,141 @@ const LoginPage: React.FC = () => {
     });
   };
 
+  const socialLinks: SocialLinkItem[] = [
+    {
+      label: 'Instagram',
+      href: 'https://www.instagram.com/chefsheilagarcia',
+      icon: <InstagramIcon fontSize="small" />,
+    },
+    {
+      label: 'YouTube',
+      href: 'https://www.youtube.com/@chefsheilagarcia',
+      icon: <YouTubeIcon fontSize="small" />,
+    },
+    {
+      label: 'TikTok',
+      href: 'https://www.tiktok.com/@sheilagarcia0779',
+      icon: <MusicNoteIcon fontSize="small" />,
+    },
+    {
+      label: 'WhatsApp',
+      href: 'https://wa.me/5511956070390',
+      icon: <WhatsAppIcon fontSize="small" />,
+    },
+  ];
+
   return (
-    <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
-      {/* Mensagem de erro do Redux */}
-      {error && (
-        <Typography color="error" align="center" sx={{ mt: 2, mb: 2 }}>
-          Por favor, verifique seu email ou senha e Tente novamente{' '}
+    <Box component="form" onSubmit={handleSubmit} noValidate sx={{ width: '100%' }}>
+      <Stack spacing={{ xs: 2, sm: 2.5, md: 3 }}>
+        <Box>
+          <Typography variant="h3" sx={{ mb: 0.5 }}>
+            Bem vindo a Sheila Garcia!
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Acesse sua conta para continuar.
+          </Typography>
+        </Box>
+
+        {error && (
+          <Typography color="error" align="left">
+            Por favor, verifique seu email ou senha e tente novamente.
+          </Typography>
+        )}
+
+        <TextField
+          margin="dense"
+          required
+          fullWidth
+          id="email"
+          label="Email"
+          name="email"
+          autoComplete="email"
+          autoFocus
+          size="small"
+          value={formData.email}
+          onChange={handleChange}
+          onBlur={(e) => validateField('email', e.target.value)}
+          disabled={loading}
+          error={!!formErrors.email}
+          helperText={formErrors.email}
+          InputProps={{
+            endAdornment: formData.email ? (
+              <InputAdornment position="end">
+                {!formErrors.email ? (
+                  <CheckCircleIcon color="success" />
+                ) : (
+                  <ErrorIcon color="error" />
+                )}
+              </InputAdornment>
+            ) : null,
+          }}
+        />
+
+        <Box>
+          <TextField
+            margin="dense"
+            required
+            fullWidth
+            name="password"
+            label="Senha"
+            type={showPassword ? 'text' : 'password'}
+            id="password"
+            autoComplete="current-password"
+            size="small"
+            value={formData.password}
+            onChange={handleChange}
+            onBlur={(e) => validateField('password', e.target.value)}
+            disabled={loading}
+            error={!!formErrors.password}
+            helperText={formErrors.password}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  {formData.password && !formErrors.password && (
+                    <CheckCircleIcon color="success" sx={{ mr: 1 }} />
+                  )}
+                  {formData.password && formErrors.password && (
+                    <ErrorIcon color="error" sx={{ mr: 1 }} />
+                  )}
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={handleTogglePasswordVisibility}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+            <Link component={RouterLink} to="/forgot-password" variant="body2">
+              Esqueceu a senha?
+            </Link>
+          </Box>
+        </Box>
+
+        <Button
+          type="submit"
+          fullWidth
+          variant="contained"
+          disabled={loading || !isFormValid}
+          sx={{ py: 1.1 }}
+        >
+          {loading ? <CircularProgress size={24} color="inherit" /> : 'Entrar'}
+        </Button>
+
+        <Typography variant="body2" color="text.secondary">
+          Ainda nao tem uma conta?{' '}
+          <Link component={RouterLink} to="/register" underline="hover">
+            Registre-se agora!
+          </Link>
         </Typography>
-      )}
 
-      {/* Campo de email/usuário */}
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        id="email"
-        label="Email ou Nome de Usuário"
-        name="email"
-        autoComplete="email"
-        autoFocus
-        value={formData.email}
-        onChange={handleChange}
-        onBlur={(e) => validateField('email', e.target.value)}
-        disabled={loading}
-        error={!!formErrors.email}
-        helperText={formErrors.email}
-        InputProps={{
-          endAdornment: formData.email ? (
-            <InputAdornment position="end">
-              {!formErrors.email ? (
-                <CheckCircleIcon color="success" />
-              ) : (
-                <ErrorIcon color="error" />
-              )}
-            </InputAdornment>
-          ) : null,
-        }}
-      />
+        <Divider flexItem sx={{ opacity: 0.6 }} />
 
-      {/* Campo de senha */}
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        name="password"
-        label="Senha"
-        type={showPassword ? 'text' : 'password'}
-        id="password"
-        autoComplete="current-password"
-        value={formData.password}
-        onChange={handleChange}
-        onBlur={(e) => validateField('password', e.target.value)}
-        disabled={loading}
-        error={!!formErrors.password}
-        helperText={formErrors.password}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              {formData.password && !formErrors.password && (
-                <CheckCircleIcon color="success" sx={{ mr: 1 }} />
-              )}
-              {formData.password && formErrors.password && (
-                <ErrorIcon color="error" sx={{ mr: 1 }} />
-              )}
-              <IconButton
-                aria-label="toggle password visibility"
-                onClick={handleTogglePasswordVisibility}
-                edge="end"
-              >
-                {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-              </IconButton>
-            </InputAdornment>
-          ),
-        }}
-      />
-
-      {/* Botão de submit com validação */}
-      <Button
-        type="submit"
-        fullWidth
-        variant="contained"
-        disabled={loading || !isFormValid}
-        sx={{ mt: 3, mb: 2 }}
-      >
-        {loading ? <CircularProgress size={24} color="inherit" /> : 'Entrar'}
-      </Button>
-
-      {/* Links de navegação */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-        <Link component={RouterLink} to="/forgot-password" variant="body2">
-          Esqueceu a senha?
-        </Link>
-        <Link component={RouterLink} to="/register" variant="body2">
-          Não tem uma conta? Cadastre-se
-        </Link>
-      </Box>
+        <SocialLinks links={socialLinks} />
+      </Stack>
     </Box>
   );
 };

@@ -35,11 +35,11 @@ export const RecipesStats: React.FC<RecipesStatsProps> = ({
       sx={{
         display: 'flex',
         flexDirection: { xs: 'column', sm: 'row' },
+        alignItems: { sm: 'center' },
         justifyContent: 'space-between',
-        alignItems: { xs: 'flex-start', sm: 'center' },
-        gap: 2,
-        mb: 3,
-        p: 2,
+        gap: 1.5,
+        mb: 2,
+        p: { xs: 1.5, sm: 2 },
         bgcolor: 'background.paper',
         borderRadius: 2,
         border: '1px solid',
@@ -47,51 +47,42 @@ export const RecipesStats: React.FC<RecipesStatsProps> = ({
       }}
     >
       {/* Informações de contagem */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+        <Typography variant="body2" color="text.secondary">
           {hasActiveFilters ? (
             <>
-              Exibindo {filteredCount} de {totalRecipes} receitas
-              {filteredCount > 0 && totalPages > 1 && (
-                <Typography component="span" variant="body2" color="text.secondary">
-                  {' '}
-                  (itens {startItem}-{endItem})
-                </Typography>
-              )}
+              Mostrando {startItem}-{endItem} de {filteredCount} receitas filtradas
+              {totalRecipes !== filteredCount && <> (de {totalRecipes} total)</>}
             </>
           ) : (
             <>
-              Total: {totalRecipes} receitas
-              {totalRecipes > 0 && totalPages > 1 && (
-                <Typography component="span" variant="body2" color="text.secondary">
-                  {' '}
-                  (itens {startItem}-{endItem})
-                </Typography>
-              )}
+              Mostrando {startItem}-{endItem} de {totalRecipes} receitas
             </>
           )}
         </Typography>
 
-        {/* Informações de paginação */}
-        {totalPages > 1 && (
-          <Typography variant="body2" color="text.secondary">
-            Página {currentPage} de {totalPages}
-          </Typography>
+        {hasActiveFilters && (
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            {selectedCategory && (
+              <Chip
+                label={`Categoria: ${selectedCategory}`}
+                size="small"
+                variant="outlined"
+                color="primary"
+              />
+            )}
+            {searchTerm && (
+              <Chip label={`Busca: ${searchTerm}`} size="small" variant="outlined" />
+            )}
+          </Box>
         )}
       </Box>
 
-      {/* Filtros ativos */}
-      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-        {selectedCategory && (
-          <Chip
-            label={`Categoria: ${selectedCategory}`}
-            size="small"
-            variant="outlined"
-            color="secondary"
-            sx={{ borderRadius: 2 }}
-          />
-        )}
-      </Box>
+      {totalPages > 1 && (
+        <Typography variant="body2" color="text.secondary">
+          Pagina {currentPage} de {totalPages}
+        </Typography>
+      )}
     </Box>
   );
 };

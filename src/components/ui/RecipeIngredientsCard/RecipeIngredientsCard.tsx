@@ -23,7 +23,16 @@ import {
   Paper,
   Alert,
 } from '@mui/material';
-import { Search, Delete, Edit, Save, Cancel, Restaurant, AttachMoney } from '@mui/icons-material';
+import {
+  Search,
+  Delete,
+  Edit,
+  Save,
+  Cancel,
+  Restaurant,
+  AttachMoney,
+  InfoOutlined,
+} from '@mui/icons-material';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { getCachedIngredients, updateIngredient } from '../../../services/api/ingredients';
 import { useUnits } from '../../../hooks/useUnits';
@@ -369,14 +378,39 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
   };
 
   return (
-    <Card sx={{ mt: 4, borderRadius: 3, boxShadow: 3 }}>
-      <CardContent sx={{ p: 4 }}>
-        {/* Título */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <Restaurant sx={{ mr: 2, color: 'primary.main', fontSize: 28 }} />
-          <Typography variant="h5" component="h3" sx={{ fontWeight: 600 }}>
-            Ingredientes da Receita
-          </Typography>
+    <Card
+      sx={{
+        mt: { xs: 2, sm: 3 },
+        borderRadius: { xs: 2, sm: 3 },
+        boxShadow: { xs: 1, sm: 2 },
+        border: '1px solid',
+        borderColor: 'divider',
+      }}
+    >
+      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+        {/* Titulo */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            mb: { xs: 2, sm: 2.5 },
+            gap: 2,
+            flexWrap: 'wrap',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Ingredientes
+            </Typography>
+            <InfoOutlined fontSize="small" sx={{ color: 'text.secondary' }} />
+          </Box>
+          <Chip
+            label={`${selectedIngredients.length} itens`}
+            size="small"
+            variant="outlined"
+            color={selectedIngredients.length > 0 ? 'primary' : 'default'}
+          />
         </Box>
 
         {/* Alerta de inconsistências */}
@@ -424,31 +458,35 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
             renderInput={(params) => (
               <TextField
                 {...params}
-                placeholder="Buscar ingredientes para adicionar..."
+                placeholder="Adicione ingredientes digitando aqui"
                 variant="outlined"
                 fullWidth
+                size="small"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
                   ...params.InputProps,
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Search />
+                      <Search fontSize="small" />
                     </InputAdornment>
                   ),
                   endAdornment: [
-                    isSearching && <CircularProgress key="loading" size={20} />,
+                    isSearching && <CircularProgress key="loading" size={18} />,
                     params.InputProps.endAdornment,
                   ].filter(Boolean),
                 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 3,
+                    borderRadius: 2,
+                    bgcolor: 'background.default',
                   },
                 }}
               />
             )}
-            PaperComponent={(props) => <Paper {...props} sx={{ mt: 1, borderRadius: 2 }} />}
+            PaperComponent={(props) => (
+              <Paper {...props} sx={{ mt: 1, borderRadius: 2, boxShadow: 2 }} />
+            )}
           />
         </Box>
 
@@ -456,11 +494,11 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
         {selectedIngredients.length > 0 ? (
           <>
             <Box sx={{ mb: 2 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                💡 Clique em um ingrediente para ver detalhes, preços e tabela nutricional
+              <Typography variant="body2" color="text.secondary">
+                Clique em um ingrediente para ver detalhes e editar informacoes
               </Typography>
             </Box>
-            <List sx={{ mb: 3 }}>
+            <List sx={{ mb: 3, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
               {selectedIngredients.map((recipeIngredient, index) => (
                 <ListItem
                   key={`${recipeIngredient.ingredient._id}-${index}`}
@@ -473,20 +511,15 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
                   }}
                   sx={{
                     border: '1px solid',
-                    borderColor: (theme) =>
-                      theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'divider',
+                    borderColor: 'divider',
                     borderRadius: 2,
-                    mb: 1,
                     cursor: 'pointer',
-                    bgcolor: (theme) =>
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(255, 255, 255, 0.02)'
-                        : 'background.paper',
+                    bgcolor: 'background.paper',
+                    px: 2,
+                    py: 1.5,
+                    boxShadow: { xs: 0, sm: 1 },
                     '&:hover': {
-                      bgcolor: (theme) =>
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(255, 255, 255, 0.08)'
-                          : 'action.hover',
+                      bgcolor: 'action.hover',
                       borderColor: 'primary.main',
                     },
                     transition: 'all 0.2s ease-in-out',
@@ -501,14 +534,13 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
                   </ListItemAvatar>
                   <ListItemText
                     primary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <span style={{ fontWeight: 500 }}>{recipeIngredient.ingredient.name}</span>
-                        <Chip
-                          label={recipeIngredient.ingredient.category}
-                          size="small"
-                          variant="outlined"
-                          color="primary"
-                        />
+                      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                          {recipeIngredient.ingredient.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {recipeIngredient.ingredient.category}
+                        </Typography>
                       </Box>
                     }
                     secondary={
@@ -556,22 +588,28 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
                           </IconButton>
                         </Box>
                       ) : (
-                        <Box>
-                          <span style={{ fontSize: '0.875rem', color: 'gray' }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 2,
+                            mt: 0.5,
+                          }}
+                        >
+                          <Typography variant="body2" color="text.secondary">
                             {recipeIngredient.quantity} {recipeIngredient.unitMeasure}
-                          </span>
-                          <br />
-                          <span style={{ fontSize: '0.875rem', color: 'green', fontWeight: 500 }}>
-                            R$ {recipeIngredient.totalCost.toFixed(2)}
-                          </span>
-                          {recipeIngredient.costPerPortion && (
-                            <>
-                              <br />
-                              <span style={{ fontSize: '0.75rem', color: 'gray' }}>
-                                R$ {recipeIngredient.costPerPortion.toFixed(2)}/porção
-                              </span>
-                            </>
-                          )}
+                          </Typography>
+                          <Box sx={{ textAlign: 'right' }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              R$ {recipeIngredient.totalCost.toFixed(2)}
+                            </Typography>
+                            {recipeIngredient.costPerPortion && (
+                              <Typography variant="caption" color="text.secondary">
+                                R$ {recipeIngredient.costPerPortion.toFixed(2)}/porcao
+                              </Typography>
+                            )}
+                          </Box>
                         </Box>
                       )
                     }
@@ -611,28 +649,28 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 p: 3,
-                bgcolor: 'primary.light',
+                bgcolor: 'background.default',
                 borderRadius: 2,
                 border: '1px solid',
-                borderColor: 'primary.main',
+                borderColor: 'divider',
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <AttachMoney sx={{ color: 'primary.dark' }} />
-                <Typography variant="h6" color="primary.dark" sx={{ fontWeight: 600 }}>
+                <AttachMoney sx={{ color: 'text.secondary' }} />
+                <Typography variant="h6" color="text.primary" sx={{ fontWeight: 600 }}>
                   Total da Receita
                 </Typography>
               </Box>
               <Box sx={{ textAlign: 'right' }}>
-                <Typography variant="h5" color="primary.dark" sx={{ fontWeight: 700 }}>
+                <Typography variant="h5" color="text.primary" sx={{ fontWeight: 700 }}>
                   R$ {totals.totalCost.toFixed(2)}
                 </Typography>
-                <Typography variant="body2" color="primary.dark">
+                <Typography variant="body2" color="text.secondary">
                   {totals.totalWeight.toFixed(2)}g total
                 </Typography>
                 {totals.totalCostPerPortion > 0 && (
-                  <Typography variant="body2" color="error.dark" sx={{ fontWeight: 600 }}>
-                    R$ {totals.totalCostPerPortion.toFixed(2)} por porção
+                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    R$ {totals.totalCostPerPortion.toFixed(2)} por porcao
                   </Typography>
                 )}
               </Box>
@@ -643,15 +681,13 @@ const RecipeIngredientsCard: React.FC<RecipeIngredientsCardProps> = ({
             sx={{
               textAlign: 'center',
               py: 6,
-              bgcolor: (theme) =>
-                theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'background.paper',
+              bgcolor: 'background.default',
               borderRadius: 2,
-              border: '2px dashed',
-              borderColor: (theme) =>
-                theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'divider',
+              border: '1px dashed',
+              borderColor: 'divider',
             }}
           >
-            <Restaurant sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+            <Restaurant sx={{ fontSize: 40, color: 'text.secondary', mb: 2 }} />
             <Typography variant="h6" color="text.secondary" gutterBottom>
               Nenhum ingrediente adicionado
             </Typography>

@@ -9,12 +9,10 @@ import {
   Grid,
   Card,
   CardContent,
-  CardActions,
   IconButton,
   Chip,
   Pagination,
   CircularProgress,
-  Alert,
   Divider,
   Menu,
   MenuItem,
@@ -39,10 +37,9 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { addNotification } from '../../store/slices/uiSlice';
 import { getUserMenus, deleteMenu } from '../../services/api/menu';
-import { MenuListItem, MenusResponse } from '../../types/menu';
+import { MenuListItem } from '../../types/menu';
 import MenuModal from '../../components/ui/MenuModal/index';
 import MenuDeleteModal from '../../components/ui/MenuDeleteModal/index';
-import { MenuActions } from '../../components/pdf';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useMenuPDF } from '../../hooks/useMenuPDF';
 import { usePDFModal } from '../../hooks/usePDFModal';
@@ -238,16 +235,16 @@ const MenuPage: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3 } }}>
       {/* Cabeçalho */}
       <Box
         sx={{
-          mb: 4,
+          mb: { xs: 3, sm: 4 },
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
           flexDirection: { xs: 'column', sm: 'row' },
-          gap: { xs: 2, sm: 0 },
+          gap: { xs: 2, sm: 3 },
         }}
       >
         <Box>
@@ -258,18 +255,18 @@ const MenuPage: React.FC = () => {
             sx={{
               fontWeight: 700,
               color: 'text.primary',
-              mb: 1,
+              mb: 0.5,
             }}
           >
-            Cardápios
+            Cardapios
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-            Gerencie seus cardápios e organize suas receitas
+            Gerencie seus cardapios e organize suas receitas
           </Typography>
           {!loading && total > 0 && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, flexWrap: 'wrap' }}>
               <Chip
-                label={`${total} cardápio${total !== 1 ? 's' : ''}`}
+                label={`${total} cardapio${total !== 1 ? 's' : ''}`}
                 size="small"
                 color="primary"
                 variant="outlined"
@@ -293,47 +290,48 @@ const MenuPage: React.FC = () => {
             startIcon={<Add />}
             onClick={handleCreateMenu}
             sx={{
-              borderRadius: 3,
-              px: 3,
-              py: 1.5,
+              borderRadius: 2,
+              px: 3.5,
+              py: 1.25,
               fontWeight: 600,
               textTransform: 'none',
-              boxShadow: (theme) => theme.shadows[4],
+              boxShadow: (theme) => theme.shadows[2],
               '&:hover': {
-                boxShadow: (theme) => theme.shadows[8],
+                boxShadow: (theme) => theme.shadows[4],
               },
             }}
           >
-            Novo cardápio
+            Novo cardapio
           </Button>
         </IfPermission>
       </Box>
 
       {/* Barra de busca */}
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: { xs: 3, sm: 4 } }}>
         <TextField
           fullWidth
-          placeholder="Digite aqui o nome do cardápio..."
+          placeholder="Digite aqui o nome do cardapio"
           value={searchInput}
           onChange={handleSearchChange}
+          size="small"
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <Search sx={{ color: 'text.secondary' }} />
+                <Search sx={{ color: 'text.secondary' }} fontSize="small" />
               </InputAdornment>
             ),
           }}
           sx={{
-            maxWidth: 600,
+            maxWidth: '100%',
             '& .MuiOutlinedInput-root': {
-              borderRadius: 3,
-              bgcolor: 'background.paper',
+              borderRadius: 2,
+              bgcolor: 'background.default',
               transition: 'all 0.2s ease-in-out',
               '&:hover': {
-                boxShadow: (theme) => theme.shadows[2],
+                boxShadow: (theme) => theme.shadows[1],
               },
               '&.Mui-focused': {
-                boxShadow: (theme) => theme.shadows[4],
+                boxShadow: (theme) => theme.shadows[2],
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderColor: 'primary.main',
                   borderWidth: 2,
@@ -354,10 +352,10 @@ const MenuPage: React.FC = () => {
           sx={{
             p: 6,
             textAlign: 'center',
-            borderRadius: 4,
-            bgcolor: 'background.paper',
-            border: '2px dashed',
-            borderColor: 'grey.300',
+            borderRadius: 3,
+            bgcolor: 'background.default',
+            border: '1px dashed',
+            borderColor: 'divider',
           }}
         >
           <Box
@@ -365,7 +363,9 @@ const MenuPage: React.FC = () => {
               width: 120,
               height: 120,
               borderRadius: '50%',
-              bgcolor: 'primary.50',
+              bgcolor: 'background.paper',
+              border: '1px solid',
+              borderColor: 'divider',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -377,7 +377,7 @@ const MenuPage: React.FC = () => {
           </Box>
 
           <Typography variant="h5" color="text.primary" gutterBottom sx={{ fontWeight: 600 }}>
-            {debouncedSearchTerm ? 'Nenhum cardápio encontrado' : 'Nenhum cardápio criado ainda'}
+            {debouncedSearchTerm ? 'Nenhum cardapio encontrado' : 'Nenhum cardapio criado ainda'}
           </Typography>
 
           <Typography
@@ -386,8 +386,8 @@ const MenuPage: React.FC = () => {
             sx={{ mb: 4, maxWidth: 400, mx: 'auto' }}
           >
             {debouncedSearchTerm
-              ? `Não encontramos cardápios com o termo "${debouncedSearchTerm}". Tente ajustar os termos de busca ou criar um novo cardápio.`
-              : 'Crie seu primeiro cardápio para começar a organizar suas receitas e facilitar o planejamento das suas refeições.'}
+              ? `Nao encontramos cardapios com o termo "${debouncedSearchTerm}". Tente ajustar os termos de busca ou criar um novo cardapio.`
+              : 'Crie seu primeiro cardapio para organizar suas receitas e facilitar o planejamento.'}
           </Typography>
 
           <IfPermission permission="create_user_menu">
@@ -409,7 +409,7 @@ const MenuPage: React.FC = () => {
                   },
                 }}
               >
-                Criar primeiro cardápio
+                Criar primeiro cardapio
               </Button>
             )}
           </IfPermission>
@@ -429,12 +429,13 @@ const MenuPage: React.FC = () => {
                     transition: 'all 0.2s ease-in-out',
                     position: 'relative',
                     bgcolor: 'background.paper',
-                    borderRadius: 3,
+                    borderRadius: 2.5,
                     border: '1px solid',
-                    borderColor: 'grey.200',
+                    borderColor: 'divider',
+                    boxShadow: { xs: 0, sm: 1 },
                     '&:hover': {
                       transform: 'translateY(-4px)',
-                      boxShadow: (theme) => theme.shadows[12],
+                      boxShadow: (theme) => theme.shadows[6],
                       borderColor: 'primary.main',
                     },
                   }}
@@ -450,9 +451,11 @@ const MenuPage: React.FC = () => {
                       right: 8,
                       zIndex: 1,
                       bgcolor: 'background.paper',
-                      boxShadow: 1,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      boxShadow: 0,
                       '&:hover': {
-                        bgcolor: 'grey.100',
+                        bgcolor: 'action.hover',
                       },
                     }}
                   >
@@ -465,17 +468,17 @@ const MenuPage: React.FC = () => {
                       sx={{
                         width: 72,
                         height: 72,
-                        borderRadius: 3,
-                        bgcolor: 'primary.main',
+                        borderRadius: 2,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         mb: 2,
                         mx: 'auto',
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        background: (theme) =>
+                          `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
                       }}
                     >
-                      <Restaurant sx={{ fontSize: 32, color: 'white' }} />
+                      <Restaurant sx={{ fontSize: 32, color: 'primary.contrastText' }} />
                     </Box>
 
                     {/* Nome do cardápio */}
@@ -526,7 +529,7 @@ const MenuPage: React.FC = () => {
                             mb: 0.5,
                           }}
                         >
-                          <FoodBank sx={{ fontSize: 16, color: 'primary.main', mr: 0.5 }} />
+                          <FoodBank sx={{ fontSize: 16, color: 'text.secondary', mr: 0.5 }} />
                           <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
                             {menu.totalItems}
                           </Typography>
@@ -548,10 +551,10 @@ const MenuPage: React.FC = () => {
                                 mb: 0.5,
                               }}
                             >
-                              <Groups sx={{ fontSize: 16, color: 'success.main', mr: 0.5 }} />
+                              <Groups sx={{ fontSize: 16, color: 'text.secondary', mr: 0.5 }} />
                               <Typography
                                 variant="h6"
-                                sx={{ fontWeight: 700, color: 'success.main' }}
+                                sx={{ fontWeight: 700, color: 'primary.main' }}
                               >
                                 {menu.totalPortions}
                               </Typography>
@@ -668,7 +671,11 @@ const MenuPage: React.FC = () => {
                       fontWeight: 500,
                     },
                     '& .Mui-selected': {
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      bgcolor: 'primary.main',
+                      color: 'primary.contrastText',
+                      '&:hover': {
+                        bgcolor: 'primary.dark',
+                      },
                     },
                   }}
                 />
@@ -680,7 +687,7 @@ const MenuPage: React.FC = () => {
               <Typography variant="body2" color="text.secondary">
                 {debouncedSearchTerm ? (
                   <>
-                    Exibindo <strong>{menus.length}</strong> de <strong>{total}</strong> cardápio
+                    Exibindo <strong>{menus.length}</strong> de <strong>{total}</strong> cardapio
                     {total !== 1 ? 's' : ''} encontrado{total !== 1 ? 's' : ''}
                     {debouncedSearchTerm && (
                       <>
@@ -691,7 +698,7 @@ const MenuPage: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    Exibindo <strong>{menus.length}</strong> de <strong>{total}</strong> cardápio
+                    Exibindo <strong>{menus.length}</strong> de <strong>{total}</strong> cardapio
                     {total !== 1 ? 's' : ''}
                   </>
                 )}

@@ -1,217 +1,240 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Grid, Card, CardContent } from '@mui/material';
-import { Restaurant, Kitchen, MenuBook, Person } from '@mui/icons-material';
-import Logo from '@components/common/Logo';
-import { useDevice } from '@hooks/useDevice';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Button,
+  Avatar,
+  IconButton,
+} from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
+import {
+  Restaurant,
+  Kitchen,
+  MenuBook,
+  Settings,
+  ArrowForward,
+} from '@mui/icons-material';
+import { useSelector } from 'react-redux';
+import { RootState } from '@store/index';
 
-// Componente da página inicial - Mobile First
 const HomePage: React.FC = () => {
-  const { isMobile, isTablet, currentBreakpoint } = useDevice();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const { user } = useSelector((state: RootState) => state.auth);
 
-  // Tamanho do logo responsivo
-  const getLogoSize = () => {
-    if (isMobile) return 180;
-    if (isTablet) return 240;
-    return 300;
-  };
+  const planLabel = 'Plano Gratis';
 
-  const quickAccessItems = [
-    {
-      title: 'Receitas',
-      description: 'Explore e crie receitas incríveis',
-      icon: Restaurant,
-      color: 'primary.main',
-      path: '/recipes',
-    },
-    {
-      title: 'Ingredientes',
-      description: 'Gerencie seus ingredientes',
-      icon: Kitchen,
-      color: 'secondary.main',
-      path: '/ingredients',
-    },
-    {
-      title: 'Cardápios',
-      description: 'Monte cardápios personalizados',
-      icon: MenuBook,
-      color: 'success.main',
-      path: '/menu',
-    },
-    {
-      title: 'Perfil',
-      description: 'Configure suas preferências',
-      icon: Person,
-      color: 'info.main',
-      path: '/profile',
-    },
-  ];
+  const userName = user?.name || 'Usuario';
 
-  // Handler para navegação
   const handleNavigation = (path: string) => {
     navigate(path);
   };
+
+  const sectionCardSx = {
+    borderRadius: 2,
+    border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+    backgroundColor: theme.palette.background.paper,
+    transition: 'box-shadow 0.2s ease-out, transform 0.2s ease-out',
+    '&:hover': {
+      boxShadow: theme.shadows[2],
+      transform: 'translateY(-1px)',
+    },
+  } as const;
+
+  const renderSectionHeader = (title: string, to: string) => (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        mb: 2,
+      }}
+    >
+      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+        {title}
+      </Typography>
+      <Button
+        component={RouterLink}
+        to={to}
+        size="small"
+        variant="text"
+        endIcon={<ArrowForward sx={{ fontSize: 16 }} />}
+      >
+        Ver todos
+      </Button>
+    </Box>
+  );
+
+  const renderEmptyCard = (
+    title: string,
+    description: string,
+    actionLabel: string,
+    actionPath: string,
+    icon: React.ReactNode,
+  ) => (
+    <Card
+      sx={{
+        ...sectionCardSx,
+        p: 0,
+        cursor: 'pointer',
+      }}
+      role="button"
+      tabIndex={0}
+      onClick={() => handleNavigation(actionPath)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          handleNavigation(actionPath);
+        }
+      }}
+    >
+      <CardContent
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          p: { xs: 2, sm: 2.5 },
+        }}
+      >
+        <Box
+          sx={{
+            width: 48,
+            height: 48,
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: alpha(theme.palette.primary.main, 0.12),
+            color: theme.palette.primary.main,
+          }}
+        >
+          {icon}
+        </Box>
+        <Box sx={{ flex: 1 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            {title}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {description}
+          </Typography>
+        </Box>
+        <Typography variant="caption" color="primary.main">
+          {actionLabel}
+        </Typography>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <Box
       sx={{
         py: { xs: 2, sm: 3, md: 4 },
         minHeight: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: { xs: 2.5, md: 3.5 },
       }}
     >
-      {/* Seção de Boas-vindas com Logo */}
-      <Box
+      <Card
         sx={{
-          textAlign: 'center',
-          mb: { xs: 4, md: 6 },
-          p: { xs: 2, sm: 3, md: 4 },
-          borderRadius: { xs: 1, md: 2 },
-          background: (theme) =>
-            `linear-gradient(135deg, ${theme.palette.primary.light}20, ${theme.palette.primary.main}10)`,
+          borderRadius: 2,
+          border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          backgroundColor: theme.palette.background.paper,
+          boxShadow: theme.shadows[1],
         }}
       >
-        <Box
+        <CardContent
           sx={{
             display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            py: { xs: 2, sm: 3, md: 4 },
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            gap: 2,
+            flexWrap: 'wrap',
           }}
         >
-          <Logo
-            variant="original"
-            size={getLogoSize()}
-            showText={false}
+          <Avatar src={user?.image} alt={userName} sx={{ width: 56, height: 56 }} />
+          <Box sx={{ flex: 1, minWidth: 200 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              {userName}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {planLabel}
+            </Typography>
+          </Box>
+          <IconButton
+            aria-label="Configurar perfil"
+            onClick={() => handleNavigation('/profile')}
             sx={{
-              mb: { xs: 2, md: 3 },
-              // Garantir que o logo não ultrapasse a tela em mobile
-              maxWidth: '90%',
-              height: 'auto',
-            }}
-          />
-
-          {/* Texto de boas-vindas */}
-          <Typography
-            variant={isMobile ? 'h5' : isTablet ? 'h4' : 'h3'}
-            component="h1"
-            gutterBottom
-            sx={{
-              fontWeight: 600,
-              color: 'primary.main',
-              mt: { xs: 1, md: 2 },
+              alignSelf: { xs: 'flex-start', sm: 'center' },
+              color: theme.palette.primary.main,
+              backgroundColor: alpha(theme.palette.primary.main, 0.08),
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.16),
+              },
             }}
           >
-            Bem-vindo!
-          </Typography>
+            <Settings fontSize="small" />
+          </IconButton>
+        </CardContent>
+      </Card>
 
-          <Typography
-            variant={isMobile ? 'body2' : 'body1'}
-            color="text.secondary"
-            sx={{
-              maxWidth: { xs: '100%', sm: '80%', md: '60%' },
-              px: { xs: 1, sm: 2 },
-            }}
-          >
-            Gerencie suas receitas, ingredientes e cardápios de forma inteligente e organizada.
-          </Typography>
+      <Box>
+        {renderSectionHeader('Ingredientes utilizados', '/ingredients')}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+            gap: 2,
+          }}
+        >
+          {renderEmptyCard(
+            'Nenhum ingrediente utilizado',
+            'Adicione ingredientes para acompanhar custos e receitas.',
+            'Adicionar',
+            '/ingredients',
+            <Kitchen fontSize="small" />,
+          )}
         </Box>
       </Box>
 
-      {/* Grid de acesso rápido */}
-      <Box sx={{ mt: { xs: 3, md: 4 } }}>
-        <Typography
-          variant={isMobile ? 'h6' : 'h5'}
-          component="h2"
-          gutterBottom
+      <Box>
+        {renderSectionHeader('Minhas Receitas', '/recipes')}
+        <Box
           sx={{
-            fontWeight: 500,
-            mb: { xs: 2, md: 3 },
-            px: { xs: 1, sm: 0 },
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+            gap: 2,
           }}
         >
-          Acesso Rápido
-        </Typography>
+          {renderEmptyCard(
+            'Nenhuma receita cadastrada',
+            'Crie receitas para gerar fichas tecnicas completas.',
+            'Criar',
+            '/recipes',
+            <Restaurant fontSize="small" />,
+          )}
+        </Box>
+      </Box>
 
-        <Grid container spacing={{ xs: 2, sm: 2, md: 3 }}>
-          {quickAccessItems.map((item, index) => (
-            <Grid
-              key={item.title}
-              size={{
-                xs: 12,
-                sm: 6,
-                md: 6,
-                lg: 3,
-              }}
-            >
-              <Card
-                component="button"
-                onClick={() => handleNavigation(item.path)}
-                role="button"
-                tabIndex={0}
-                aria-label={`Navegar para ${item.title}: ${item.description}`}
-                sx={{
-                  height: '100%',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease-in-out',
-                  border: 'none',
-                  background: 'inherit',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: 4,
-                  },
-                  '&:active': {
-                    transform: 'translateY(0px)',
-                  },
-                  '&:focus': {
-                    outline: '2px solid',
-                    outlineColor: 'primary.main',
-                    outlineOffset: '2px',
-                  },
-                  // Garantir tamanho mínimo touch-friendly
-                  minHeight: { xs: 120, sm: 140 },
-                }}
-              >
-                <CardContent
-                  sx={{
-                    textAlign: 'center',
-                    p: { xs: 2, sm: 3 },
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <item.icon
-                    sx={{
-                      fontSize: { xs: 32, sm: 40, md: 48 },
-                      color: item.color,
-                      mb: { xs: 1, sm: 2 },
-                    }}
-                  />
-                  <Typography
-                    variant={isMobile ? 'subtitle2' : 'h6'}
-                    component="h3"
-                    gutterBottom
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {item.title}
-                  </Typography>
-                  <Typography
-                    variant={isMobile ? 'caption' : 'body2'}
-                    color="text.secondary"
-                    sx={{
-                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {item.description}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+      <Box>
+        {renderSectionHeader('Meus Cardapios', '/menu')}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+            gap: 2,
+          }}
+        >
+          {renderEmptyCard(
+            'Nenhum cardapio criado',
+            'Monte cardapios personalizados para seus clientes.',
+            'Novo cardapio',
+            '/menu',
+            <MenuBook fontSize="small" />,
+          )}
+        </Box>
       </Box>
     </Box>
   );

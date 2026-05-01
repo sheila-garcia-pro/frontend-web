@@ -26,11 +26,11 @@ import {
   CardContent,
   CardActions,
   Grid,
-  Avatar,
   Collapse,
   Stack,
   Divider,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Search,
   Add,
@@ -197,6 +197,7 @@ const IngredientsPage: React.FC = () => {
       sx={{
         p: { xs: 1, sm: 2, md: 3 },
         minHeight: '100vh',
+        bgcolor: 'background.default',
       }}
     >
       <Container
@@ -208,16 +209,21 @@ const IngredientsPage: React.FC = () => {
         {/* Cabeçalho com título e botões - Mobile First */}
         <Box
           sx={{
-            mb: { xs: 3, md: 5 },
+            mb: { xs: 3, md: 4 },
             p: { xs: 2, md: 3 },
-            borderRadius: 2,
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
             background: (theme) =>
-              `linear-gradient(135deg, ${theme.palette.primary.light}20, ${theme.palette.primary.main}10)`,
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            alignItems: { sm: 'center' },
-            justifyContent: 'space-between',
-            gap: 2,
+              `linear-gradient(135deg, ${alpha(
+                theme.palette.primary.main,
+                0.12,
+              )}, ${alpha(theme.palette.primary.main, 0.03)})`,
+            display: 'grid',
+            gap: { xs: 2, md: 3 },
+            gridTemplateColumns: { xs: '1fr', md: '1fr auto' },
+            alignItems: { md: 'center' },
           }}
         >
           <Box>
@@ -225,7 +231,7 @@ const IngredientsPage: React.FC = () => {
               variant={isMobile ? 'h5' : 'h4'}
               component="h1"
               gutterBottom
-              sx={{ fontWeight: 500 }}
+              sx={{ fontWeight: 600 }}
             >
               {t('ingredients.title')}
             </Typography>
@@ -234,26 +240,29 @@ const IngredientsPage: React.FC = () => {
             </Typography>
           </Box>
 
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              gap: 2,
-              width: { xs: '100%', sm: 'auto' },
-            }}
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+            alignItems={{ sm: 'center' }}
+            justifyContent="flex-end"
+            sx={{ width: { xs: '100%', md: 'auto' } }}
           >
             <Tooltip title={t('common.refresh') || 'Atualizar lista'}>
               <IconButton
                 onClick={handleRefreshList}
                 color="primary"
                 aria-label="atualizar lista"
-                sx={{ borderRadius: 2 }}
+                sx={{
+                  borderRadius: 2,
+                  bgcolor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                }}
               >
                 <Refresh />
               </IconButton>
             </Tooltip>
 
-            {/* Botão para adicionar novo ingrediente */}
             <IfPermission permission="create_user_ingredient">
               <Button
                 variant="contained"
@@ -264,14 +273,14 @@ const IngredientsPage: React.FC = () => {
                 sx={{
                   borderRadius: 3,
                   px: 3,
-                  minHeight: 44, // Touch-friendly
+                  minHeight: 44,
                   fontSize: { xs: '0.875rem', sm: '1rem' },
                 }}
               >
                 {isMobile ? t('ingredients.new') || 'Novo' : t('ingredients.newIngredient')}
               </Button>
             </IfPermission>
-          </Box>
+          </Stack>
         </Box>
 
         {/* Filtros - Mobile First */}
@@ -286,40 +295,36 @@ const IngredientsPage: React.FC = () => {
                 mb: 2,
               }}
             >
-              <Typography variant="h6" sx={{ fontWeight: 500 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 Filtros e Busca
               </Typography>
 
-              <IconButton
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<FilterList />}
+                endIcon={filtersOpen ? <ExpandLess /> : <ExpandMore />}
                 onClick={() => setFiltersOpen(!filtersOpen)}
-                aria-label={filtersOpen ? 'Ocultar filtros' : 'Mostrar filtros'}
-                sx={{
-                  bgcolor: 'primary.main',
-                  color: 'primary.contrastText',
-                  '&:hover': { bgcolor: 'primary.dark' },
-                }}
+                sx={{ borderRadius: 2 }}
               >
-                <FilterList />
-                {filtersOpen ? <ExpandLess /> : <ExpandMore />}
-              </IconButton>
+                {filtersOpen ? 'Ocultar' : 'Mostrar'}
+              </Button>
             </Box>
           )}
 
           {/* Seção de filtros colapsável */}
           <Collapse in={filtersOpen || !isMobile}>
-            <Box
+            <Paper
+              variant="outlined"
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 2,
-                p: { xs: 2, md: 0 },
-                bgcolor: { xs: 'background.paper', md: 'transparent' },
-                borderRadius: { xs: 1, md: 0 },
-                border: { xs: '1px solid', md: 'none' },
-                borderColor: { xs: 'divider', md: 'transparent' },
+                p: { xs: 2, md: 2.5 },
+                borderRadius: 2,
+                bgcolor: 'background.paper',
               }}
             >
-              {/* Busca e Ordenação */}
               <Box
                 sx={{
                   display: 'flex',
@@ -342,15 +347,16 @@ const IngredientsPage: React.FC = () => {
                   }}
                   sx={{
                     flexGrow: 1,
-                    maxWidth: { md: '50%' },
+                    maxWidth: { md: '55%' },
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 3,
-                      minHeight: { xs: 44, sm: 56 },
+                      minHeight: { xs: 44, sm: 52 },
+                      bgcolor: 'background.paper',
                     },
                   }}
                 />
 
-                <FormControl sx={{ minWidth: { xs: '100%', md: 200 } }}>
+                <FormControl sx={{ minWidth: { xs: '100%', md: 220 } }}>
                   <Select
                     value={sortOption}
                     onChange={handleSortChange}
@@ -359,6 +365,7 @@ const IngredientsPage: React.FC = () => {
                     sx={{
                       borderRadius: 3,
                       minHeight: { xs: 44, sm: 40 },
+                      bgcolor: 'background.paper',
                     }}
                   >
                     {sortOptions.map((option) => (
@@ -370,7 +377,6 @@ const IngredientsPage: React.FC = () => {
                 </FormControl>
               </Box>
 
-              {/* Chips de categorias */}
               {!categoriesLoading && (
                 <Box
                   sx={{
@@ -385,6 +391,7 @@ const IngredientsPage: React.FC = () => {
                       label={category.name}
                       onClick={() => handleCategoryToggle(category.name)}
                       color={selectedCategory === category.name ? 'primary' : 'default'}
+                      variant={selectedCategory === category.name ? 'filled' : 'outlined'}
                       sx={{
                         borderRadius: 2,
                         minHeight: { xs: 36, sm: 32 },
@@ -394,13 +401,37 @@ const IngredientsPage: React.FC = () => {
                   ))}
                 </Box>
               )}
-            </Box>
+            </Paper>
           </Collapse>
         </Box>
 
         {/* Tabs Utilizados/Geral */}
-        <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={currentTab} onChange={handleTabChange} aria-label="abas de ingredientes">
+        <Box sx={{ mb: 3 }}>
+          <Tabs
+            value={currentTab}
+            onChange={handleTabChange}
+            aria-label="abas de ingredientes"
+            variant="scrollable"
+            sx={{
+              minHeight: 0,
+              '& .MuiTabs-indicator': { display: 'none' },
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                minHeight: 36,
+                px: 2,
+                borderRadius: 999,
+                border: '1px solid',
+                borderColor: 'divider',
+                color: 'text.secondary',
+                mr: 1,
+              },
+              '& .MuiTab-root.Mui-selected': {
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
+                borderColor: 'primary.main',
+              },
+            }}
+          >
             <Tab label={t('ingredients.filters.used')} value="used" />
             <Tab label={t('ingredients.filters.all')} value="all" />
           </Tabs>
@@ -430,10 +461,13 @@ const IngredientsPage: React.FC = () => {
                     key={ingredient._id}
                     sx={{
                       cursor: 'pointer',
-                      transition: 'all 0.2s ease-in-out',
+                      borderRadius: 2,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      boxShadow: 0,
+                      transition: 'box-shadow 0.2s ease-in-out',
                       '&:hover': {
-                        transform: 'translateY(-2px)',
-                        boxShadow: 4,
+                        boxShadow: 2,
                       },
                     }}
                     onClick={() => handleViewDetails(ingredient._id)}
@@ -502,7 +536,7 @@ const IngredientsPage: React.FC = () => {
                       </Stack>
                     </CardContent>
 
-                    <CardActions sx={{ p: 2, pt: 0 }}>
+                    <CardActions sx={{ p: 2, pt: 0, justifyContent: 'space-between' }}>
                       <Button
                         size="small"
                         startIcon={<Visibility />}
@@ -544,15 +578,19 @@ const IngredientsPage: React.FC = () => {
           </Box>
         ) : (
           /* Layout em Tabela para Desktop/Tablet */
-          <TableContainer component={Paper} sx={{ mb: 3, borderRadius: 2 }}>
+          <TableContainer component={Paper} variant="outlined" sx={{ mb: 3, borderRadius: 2 }}>
             <Table>
-              <TableHead>
+              <TableHead sx={{ bgcolor: 'background.default' }}>
                 <TableRow>
-                  <TableCell>{t('ingredients.fields.name')}</TableCell>
-                  <TableCell>{t('ingredients.fields.category')}</TableCell>
-                  <TableCell>{t('ingredients.fields.price')}</TableCell>
-                  <TableCell>{t('ingredients.fields.quantity')}</TableCell>
-                  <TableCell align="right">Ações</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{t('ingredients.fields.name')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{t('ingredients.fields.category')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{t('ingredients.fields.price')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('ingredients.fields.quantity')}
+                  </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>
+                    Ações
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -560,7 +598,11 @@ const IngredientsPage: React.FC = () => {
                   renderTableSkeletons()
                 ) : paginatedIngredients.length > 0 ? (
                   paginatedIngredients.map((ingredient) => (
-                    <TableRow key={ingredient._id} hover sx={{ cursor: 'pointer' }}>
+                    <TableRow
+                      key={ingredient._id}
+                      hover
+                      sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
+                    >
                       <TableCell onClick={() => handleViewDetails(ingredient._id)}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           <IngredientAvatarDisplay
@@ -587,18 +629,32 @@ const IngredientsPage: React.FC = () => {
                         {`${ingredient.price?.quantity ?? '0'} ${ingredient.price?.unitMeasure ?? 'Quilograma'}`}
                       </TableCell>
                       <TableCell align="right">
-                        <Tooltip title="Gerenciar fornecedores">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenSuppliersModal(ingredient._id, ingredient.name);
-                            }}
-                            color="primary"
-                          >
-                            <Store fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                        <Stack direction="row" spacing={1} justifyContent="flex-end">
+                          <Tooltip title="Detalhes">
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewDetails(ingredient._id);
+                              }}
+                              color="primary"
+                            >
+                              <Visibility fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Gerenciar fornecedores">
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenSuppliersModal(ingredient._id, ingredient.name);
+                              }}
+                              color="primary"
+                            >
+                              <Store fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Stack>
                       </TableCell>
                     </TableRow>
                   ))

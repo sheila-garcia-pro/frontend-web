@@ -363,12 +363,20 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
   };
 
   return (
-    <Card elevation={2} sx={{ mb: 3 }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <AttachMoney sx={{ mr: 1, color: 'primary.main' }} />
-          <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
-            Análise Financeira
+    <Card
+      sx={{
+        mb: { xs: 2, sm: 3 },
+        borderRadius: { xs: 2, sm: 3 },
+        boxShadow: { xs: 1, sm: 2 },
+        border: '1px solid',
+        borderColor: 'divider',
+      }}
+    >
+      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 1 }}>
+          <AttachMoney sx={{ color: 'text.secondary' }} />
+          <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
+            Financeiro
           </Typography>
         </Box>
 
@@ -390,7 +398,11 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
           {/* Seção esquerda - Resumo Total */}
           <Box sx={{ flex: 1, minWidth: 300, width: { xs: '100%', md: '48%' } }}>
             {/* Resumo Total */}
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: '#4a5568' }}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ fontWeight: 600, color: 'text.secondary' }}
+            >
               Resumo {viewType === 'total' ? 'Total' : 'Unitário'}
             </Typography>
 
@@ -401,9 +413,10 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                 <Box
                   sx={{
                     p: 2.5,
-                    border: '2px solid #e53e3e',
+                    border: '2px solid',
+                    borderColor: 'error.main',
                     borderRadius: 3,
-                    bgcolor: '#fed7d7',
+                    bgcolor: 'error.light',
                     textAlign: 'center',
                     height: 100,
                     display: 'flex',
@@ -424,7 +437,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                       sx={{
                         fontSize: '1.3rem',
                         fontWeight: 700,
-                        color: '#c53030',
+                        color: 'error.dark',
                         mr: 0.3,
                       }}
                     >
@@ -434,7 +447,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                       variant="h4"
                       sx={{
                         fontWeight: 700,
-                        color: '#c53030',
+                        color: 'error.dark',
                         fontSize: '1.3rem',
                         lineHeight: 1,
                       }}
@@ -446,7 +459,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                     variant="caption"
                     sx={{
                       fontWeight: 600,
-                      color: '#c53030',
+                      color: 'error.dark',
                       fontSize: '0.75rem',
                       lineHeight: 1,
                     }}
@@ -461,9 +474,10 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                 <Box
                   sx={{
                     p: 2.5,
-                    border: '2px solid #38a169',
+                    border: '2px solid',
+                    borderColor: 'success.main',
                     borderRadius: 3,
-                    bgcolor: '#c6f6d5',
+                    bgcolor: 'success.light',
                     textAlign: 'center',
                     height: 100,
                     display: 'flex',
@@ -484,7 +498,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                       sx={{
                         fontSize: '1.3rem',
                         fontWeight: 700,
-                        color: '#38a169',
+                        color: 'success.dark',
                         mr: 0.3,
                       }}
                     >
@@ -516,10 +530,10 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                             minWidth: '60px',
                             fontSize: '1.3rem',
                             fontWeight: 700,
-                            color: '#38a169',
+                            color: 'success.dark',
                             lineHeight: 1,
                             '&::placeholder': {
-                              color: '#38a169',
+                              color: 'success.dark',
                               opacity: 0.7,
                             },
                           },
@@ -531,7 +545,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                     variant="caption"
                     sx={{
                       fontWeight: 600,
-                      color: '#38a169',
+                      color: 'success.dark',
                       fontSize: '0.75rem',
                       lineHeight: 1,
                     }}
@@ -549,13 +563,16 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                   variant="h5"
                   sx={{
                     fontWeight: 700,
-                    color: '#c53030',
+                    color: 'error.main',
                     fontSize: '1.3rem',
                   }}
                 >
                   {formatPercentage(calculations?.cmv || 0)}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#4a5568', fontSize: '0.75rem' }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: 'text.secondary', fontSize: '0.75rem' }}
+                >
                   CMV
                 </Typography>
               </Box>
@@ -564,13 +581,16 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                   variant="h5"
                   sx={{
                     fontWeight: 700,
-                    color: '#d69e2e',
+                    color: 'warning.main',
                     fontSize: '1.3rem',
                   }}
                 >
                   {formatPercentage(calculations?.profitMargin || 0)}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#4a5568', fontSize: '0.75rem' }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: 'text.secondary', fontSize: '0.75rem' }}
+                >
                   Margem
                 </Typography>
               </Box>
@@ -579,13 +599,16 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                   variant="h5"
                   sx={{
                     fontWeight: 700,
-                    color: '#3182ce',
+                    color: 'info.main',
                     fontSize: '1.3rem',
                   }}
                 >
                   {formatMarkup(calculations?.markup || 1)}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#4a5568', fontSize: '0.75rem' }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: 'text.secondary', fontSize: '0.75rem' }}
+                >
                   Markup
                 </Typography>
               </Box>
@@ -595,7 +618,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
             <Typography
               variant="h6"
               gutterBottom
-              sx={{ fontWeight: 600, color: '#4a5568', fontSize: '1rem' }}
+              sx={{ fontWeight: 600, color: 'text.secondary', fontSize: '1rem' }}
             >
               Ajustar Preço
             </Typography>
@@ -625,10 +648,10 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                 valueLabelFormat={(value) => `${value.toFixed(1)}%`}
                 sx={{
                   '& .MuiSlider-thumb': {
-                    bgcolor: '#38a169',
+                    bgcolor: 'success.main',
                   },
                   '& .MuiSlider-track': {
-                    bgcolor: '#38a169',
+                    bgcolor: 'success.main',
                   },
                 }}
               />
@@ -637,7 +660,11 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
 
           {/* Seção direita - Composição de Custos */}
           <Box sx={{ flex: 1, minWidth: 300, width: { xs: '100%', md: '48%' } }}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: '#4a5568' }}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ fontWeight: 600, color: 'text.secondary' }}
+            >
               Composição de Custos
             </Typography>
 
@@ -654,7 +681,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                     paddingAngle={2}
                     dataKey="value"
                     nameKey="label"
-                    stroke="#fff"
+                    stroke="none"
                     strokeWidth={2}
                   >
                     {chartData.map((entry, index) => (
@@ -697,8 +724,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                       p: 1,
                       borderRadius: 1,
                       '&:hover': {
-                        bgcolor: (theme) =>
-                          theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : '#f7fafc',
+                        bgcolor: 'action.hover',
                       },
                     }}
                   >
@@ -788,10 +814,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                       <TableHead>
                         <TableRow
                           sx={{
-                            bgcolor: (theme) =>
-                              theme.palette.mode === 'dark'
-                                ? 'rgba(255, 255, 255, 0.05)'
-                                : '#f7fafc',
+                            bgcolor: 'background.default',
                           }}
                         >
                           <TableCell sx={{ fontWeight: 600 }}>Ingrediente</TableCell>
@@ -818,10 +841,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                               key={ingredient.ingredient._id || index}
                               sx={{
                                 '&:hover': {
-                                  bgcolor: (theme) =>
-                                    theme.palette.mode === 'dark'
-                                      ? 'rgba(255, 255, 255, 0.08)'
-                                      : '#f7fafc',
+                                  bgcolor: 'action.hover',
                                 },
                               }}
                             >
@@ -851,10 +871,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                         })}
                         <TableRow
                           sx={{
-                            bgcolor: (theme) =>
-                              theme.palette.mode === 'dark'
-                                ? 'rgba(255, 255, 255, 0.05)'
-                                : '#edf2f7',
+                            bgcolor: 'background.default',
                           }}
                         >
                           <TableCell colSpan={3}>
@@ -867,8 +884,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                               variant="body2"
                               sx={{
                                 fontWeight: 700,
-                                color: (theme) =>
-                                  theme.palette.mode === 'dark' ? '#ff6b6b' : '#c53030',
+                                color: 'error.main',
                               }}
                             >
                               {formatCurrency(calculations.totalIngredientsCost)}
@@ -919,10 +935,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                         <TableHead>
                           <TableRow
                             sx={{
-                              bgcolor: (theme) =>
-                                theme.palette.mode === 'dark'
-                                  ? 'rgba(255, 255, 255, 0.05)'
-                                  : '#f7fafc',
+                              bgcolor: 'background.default',
                             }}
                           >
                             <TableCell sx={{ fontWeight: 600 }}>Nome</TableCell>
@@ -944,10 +957,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                               key={cost.id}
                               sx={{
                                 '&:hover': {
-                                  bgcolor: (theme) =>
-                                    theme.palette.mode === 'dark'
-                                      ? 'rgba(255, 255, 255, 0.08)'
-                                      : '#f7fafc',
+                                  bgcolor: 'action.hover',
                                 },
                               }}
                             >
@@ -972,7 +982,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                                 <IconButton
                                   size="small"
                                   onClick={() => removeDirectCost(cost.id, viewType === 'total')}
-                                  sx={{ color: '#c53030' }}
+                                  sx={{ color: 'error.main' }}
                                 >
                                   <Delete fontSize="small" />
                                 </IconButton>
@@ -1035,10 +1045,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                         <TableHead>
                           <TableRow
                             sx={{
-                              bgcolor: (theme) =>
-                                theme.palette.mode === 'dark'
-                                  ? 'rgba(255, 255, 255, 0.05)'
-                                  : '#f7fafc',
+                              bgcolor: 'background.default',
                             }}
                           >
                             <TableCell sx={{ fontWeight: 600 }}>Nome</TableCell>
@@ -1057,10 +1064,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                               key={cost.id}
                               sx={{
                                 '&:hover': {
-                                  bgcolor: (theme) =>
-                                    theme.palette.mode === 'dark'
-                                      ? 'rgba(255, 255, 255, 0.08)'
-                                      : '#f7fafc',
+                                  bgcolor: 'action.hover',
                                 },
                               }}
                             >
@@ -1083,7 +1087,7 @@ const RecipeFinancialCard: React.FC<RecipeFinancialCardProps> = ({
                                 <IconButton
                                   size="small"
                                   onClick={() => removeIndirectCost(cost.id)}
-                                  sx={{ color: '#c53030' }}
+                                  sx={{ color: 'error.main' }}
                                 >
                                   <Delete fontSize="small" />
                                 </IconButton>

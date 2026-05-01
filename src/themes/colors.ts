@@ -151,6 +151,25 @@ export const DARK_THEME_COLORS = {
   },
 } as const;
 
+// ==================== CORES ESPECIFICAS DO AUTH ====================
+
+export const AUTH_THEME_COLORS = {
+  light: {
+    background: '#FAFCFF',
+    panel: '#FFFFFF',
+    heroOverlay: 'rgba(250, 252, 255, 0.78)',
+    heroOverlayStrong: 'rgba(250, 252, 255, 0.96)',
+    heroTint: 'rgba(79, 109, 72, 0.08)',
+  },
+  dark: {
+    background: '#1C1F1E',
+    panel: '#262B29',
+    heroOverlay: 'rgba(20, 22, 21, 0.55)',
+    heroOverlayStrong: 'rgba(20, 22, 21, 0.82)',
+    heroTint: 'rgba(79, 109, 72, 0.22)',
+  },
+} as const;
+
 // ==================== CORES FUNCIONAIS ====================
 
 /**
