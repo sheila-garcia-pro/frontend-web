@@ -129,11 +129,6 @@ const RecipeSaveManager: React.FC<RecipeSaveManagerProps> = ({
       // Converter ingredientes com conversão automática de unidades
       const convertedIngredients = convertRecipeIngredientsForAPI(recipeIngredients);
 
-      // Log para debug
-      console.log(
-        '📊 (Save Manager) ' + formatIngredientsForLog(recipeIngredients, convertedIngredients),
-      );
-
       const recipeData = {
         name: recipe.name,
         category: recipe.category,
